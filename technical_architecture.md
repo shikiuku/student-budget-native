@@ -4,15 +4,15 @@
 
 ## 1. 全体アーキテクチャ
 
-本アプリケーションは、Next.jsをベースとしたフルスタックアプリケーションとして構築されます。クライアントサイドはReactとTypeScriptで開発され、サーバーサイドのAPIルーティングはNext.jsのAPI Routesを利用します。データ永続化には、現時点ではローカルストレージまたは簡易的なJSONファイルベースのストレージを検討し、将来的にデータベースへの移行を考慮した設計とします。
+本アプリケーションは、Next.jsをベースとしたフルスタックアプリケーションとして構築されます。クライアントサイドはReactとTypeScriptで開発され、サーバーサイドのAPIルーティングはNext.jsのAPI Routesを利用します。データ永続化と認証には**Supabase**を利用し、リアルタイム機能やスケーラビリティを考慮した設計とします。
 
 ```mermaid
 graph TD
     User -->|HTTP/HTTPS| Next.js_App
     Next.js_App -->|Client-side Rendering| Browser
     Next.js_App -->|Server-side Rendering/API Routes| Backend_Logic
-    Backend_Logic -->|Data Access| Local_Storage_or_JSON_Files
-    Browser -->|API Calls| Backend_Logic
+    Backend_Logic -->|Data Access/Auth| Supabase
+    Browser -->|Direct API Calls/Auth| Supabase
 ```
 
 ## 2. コンポーネント構成
@@ -42,6 +42,7 @@ Next.jsのApp Routerに基づく各ページのルートコンポーネント。
 ### 2.4. ユーティリティ (`lib/`)
 アプリケーション全体で利用される共通のヘルパー関数やユーティリティ。
 *   `utils.ts`: 汎用的なユーティリティ関数（例: 日付フォーマット、文字列操作など）。
+*   `supabase.ts`: Supabaseクライアントの初期化と設定。
 
 ### 2.5. フック (`hooks/`)
 Reactのカスタムフック。
@@ -61,6 +62,7 @@ Reactのカスタムフック。
         date: string; // ISO 8601形式 (YYYY-MM-DD)
         description?: string;
         source?: 'manual' | 'paypay';
+        user_id: string; // SupabaseのユーザーID
     }
     ```
 *   **PayPay CSVデータ (解析後)**
@@ -96,8 +98,9 @@ Reactのカスタムフック。
 *   **言語**: TypeScript
 *   **スタイリング**: Tailwind CSS, shadcn/ui
 *   **パッケージマネージャー**: pnpm
-*   **データ永続化**: (初期段階) ローカルストレージ / JSONファイル (将来的にデータベース検討)
-*   **その他**: `date-fns` (日付操作), `csv-parser` (CSV解析 - 必要に応じて)
+*   **データベース**: Supabase (PostgreSQL)
+*   **認証**: Supabase Auth (Email/Password, Google, Apple)
+*   **その他**: `date-fns` (日付操作), `papaparse` (CSV解析)
 
 ## 5. 開発標準
 
