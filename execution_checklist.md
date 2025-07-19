@@ -73,7 +73,7 @@
 
 ### 3.8. 通知ページ (`app/notifications/page.tsx`)
 
--   [ ] 通知リストの表示UI
+-   [x] 通知リストの表示UI
 
 ### 3.9. プロフィールページ (`app/profile/page.tsx`)
 
