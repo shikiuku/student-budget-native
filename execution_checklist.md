@@ -53,7 +53,7 @@
 
 ### 3.4. PayPay連携ページ (`app/paypay/page.tsx`)
 
--   [ ] CSVファイルアップロードUIの作成
+-   [x] CSVファイルアップロードUIの作成
 -   [ ] アップロード後のメッセージ表示UI
 
 ### 3.5. 補助金情報ページ (`app/subsidies/page.tsx`)
