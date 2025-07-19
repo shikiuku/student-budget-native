@@ -87,30 +87,30 @@
     -   [x] POST: 新規支出追加
     -   [x] PUT: 特定の支出の更新
     -   [x] DELETE: 特定の支出の削除
--   [ ] PayPay CSV解析API (`/api/paypay/upload`)
+-   [x] PayPay CSV解析API (`/api/paypay/upload`)
     -   [x] CSVファイルの受け取りと解析ロジック
--   [x] 解析結果を支出データとして保存するロジック
--   [ ] 節約術データAPI (`/api/tips`)
+    -   [ ] 解析結果を支出データとして保存するロジック (Firebaseへの保存に変更)
+-   [x] 節約術データAPI (`/api/tips`)
     -   [x] GET: 節約術リスト取得（モックデータ）
--   [ ] 補助金データAPI (`/api/subsidies`)
+-   [x] 補助金データAPI (`/api/subsidies`)
     -   [x] GET: 補助金リスト取得（モックデータ）
 
 ## 5. データ永続化
 
--   [x] **Supabaseのセットアップと接続**
-    -   [x] Supabaseプロジェクトの作成とAPIキーの取得
-    -   [x] `lib/supabase.ts` の作成とクライアント初期化
-    -   [x] 環境変数の設定 (`.env.local`)
--   [ ] **Supabaseへのデータ移行とAPIの修正**
-    -   [ ] `expenses` テーブルの作成 (Supabase)
-    -   [ ] `/api/expenses` をSupabaseと連携するように修正
-    -   [ ] `/api/paypay/upload` からSupabaseへ支出を保存するように修正
-    -   [ ] `tips` および `subsidies` データのSupabaseへの移行（任意、必要に応じて）
+-   [ ] **Firebaseのセットアップと接続**
+    -   [ ] Firebaseプロジェクトの作成と設定情報の取得
+    -   [ ] `lib/firebase.ts` の作成とクライアント初期化
+    -   [ ] 環境変数の設定 (`.env.local`)
+-   [ ] **Firebase Firestoreへのデータ移行とAPIの修正**
+    -   [ ] Firestore `expenses` コレクションの作成とセキュリティルールの設定
+    -   [ ] `/api/expenses` をFirebaseと連携するように修正
+    -   [ ] `/api/paypay/upload` からFirebaseへ支出を保存するように修正
+    -   [ ] `tips` および `subsidies` データのFirebaseへの移行（任意、必要に応じて）
 
 ## 6. 認証機能の実装
 
--   [ ] **Supabase Authのセットアップ**
-    -   [ ] Supabaseダッシュボードでの認証プロバイダー (Email, Google, Apple) の設定
+-   [ ] **Firebase Authenticationのセットアップ**
+    -   [ ] Firebaseコンソールでの認証プロバイダー (Email, Google, Apple) の設定
 -   [ ] **サインアップ/サインインUIの作成**
     -   [ ] Email/Passwordでのサインアップ/サインインフォーム
     -   [ ] Google/Apple OAuthでのサインインボタン

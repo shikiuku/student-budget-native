@@ -4,15 +4,15 @@
 
 ## 1. 全体アーキテクチャ
 
-本アプリケーションは、Next.jsをベースとしたフルスタックアプリケーションとして構築されます。クライアントサイドはReactとTypeScriptで開発され、サーバーサイドのAPIルーティングはNext.jsのAPI Routesを利用します。データ永続化と認証には**Supabase**を利用し、リアルタイム機能やスケーラビリティを考慮した設計とします。
+本アプリケーションは、Next.jsをベースとしたフルスタックアプリケーションとして構築されます。クライアントサイドはReactとTypeScriptで開発され、サーバーサイドのAPIルーティングはNext.jsのAPI Routesを利用します。データ永続化と認証には**Firebase**を利用し、リアルタイム機能やスケーラビリティを考慮した設計とします。
 
 ```mermaid
 graph TD
     User -->|HTTP/HTTPS| Next.js_App
     Next.js_App -->|Client-side Rendering| Browser
     Next.js_App -->|Server-side Rendering/API Routes| Backend_Logic
-    Backend_Logic -->|Data Access/Auth| Supabase
-    Browser -->|Direct API Calls/Auth| Supabase
+    Backend_Logic -->|Data Access/Auth| Firebase
+    Browser -->|Direct API Calls/Auth| Firebase
 ```
 
 ## 2. コンポーネント構成
@@ -42,7 +42,7 @@ Next.jsのApp Routerに基づく各ページのルートコンポーネント。
 ### 2.4. ユーティリティ (`lib/`)
 アプリケーション全体で利用される共通のヘルパー関数やユーティリティ。
 *   `utils.ts`: 汎用的なユーティリティ関数（例: 日付フォーマット、文字列操作など）。
-*   `supabase.ts`: Supabaseクライアントの初期化と設定。
+*   `firebase.ts`: Firebaseクライアントの初期化と設定。
 
 ### 2.5. フック (`hooks/`)
 Reactのカスタムフック。
@@ -56,13 +56,13 @@ Reactのカスタムフック。
 *   **支出データ (`Expense`)**
     ```typescript
     interface Expense {
-        id: string;
+        id: string; // FirestoreのドキュメントID
         amount: number;
         category: string; // 例: 食費, 交通費, 娯楽費
         date: string; // ISO 8601形式 (YYYY-MM-DD)
         description?: string;
         source?: 'manual' | 'paypay';
-        user_id: string; // SupabaseのユーザーID
+        user_id: string; // Firebase AuthenticationのユーザーID
     }
     ```
 *   **PayPay CSVデータ (解析後)**
@@ -98,8 +98,8 @@ Reactのカスタムフック。
 *   **言語**: TypeScript
 *   **スタイリング**: Tailwind CSS, shadcn/ui
 *   **パッケージマネージャー**: pnpm
-*   **データベース**: Supabase (PostgreSQL)
-*   **認証**: Supabase Auth (Email/Password, Google, Apple)
+*   **データベース**: Firebase Firestore (NoSQL)
+*   **認証**: Firebase Authentication (Email/Password, Google, Apple)
 *   **その他**: `date-fns` (日付操作), `papaparse` (CSV解析)
 
 ## 5. 開発標準
