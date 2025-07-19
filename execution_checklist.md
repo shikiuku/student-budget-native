@@ -103,7 +103,7 @@
     -   [x] 環境変数の設定 (`.env.local`)
 -   [ ] **Firebase Firestoreへのデータ移行とAPIの修正**
     -   [x] Firestore `expenses` コレクションの作成とセキュリティルールの設定
-    -   [ ] `/api/expenses` をFirebaseと連携するように修正
+    -   [x] `/api/expenses` をFirebaseと連携するように修正
     -   [ ] `/api/paypay/upload` からFirebaseへ支出を保存するように修正
     -   [ ] `tips` および `subsidies` データのFirebaseへの移行（任意、必要に応じて）
 
