@@ -30,9 +30,11 @@ export async function POST(request: Request) {
               date: formattedDate,
               description: row['内容'],
               source: 'paypay',
-              user_id: 'placeholder_user_id', // TODO: Replace with actual authenticated user ID
+              user_id: 'fixed_test_user_id', // 一時的に固定のユーザーIDを使用
             };
           }).filter((expense: any) => !isNaN(expense.amount) && expense.date);
+
+          console.log('Expenses to save:', expensesToSave); // デバッグ用にログ出力
 
           try {
             const savePromises = expensesToSave.map(async (expense: any) => {
