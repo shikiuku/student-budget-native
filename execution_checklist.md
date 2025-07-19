@@ -4,11 +4,11 @@
 
 ## 1. 環境構築と初期設定
 
--   [ ] Next.jsプロジェクトの初期セットアップ
--   [ ] Tailwind CSSのセットアップ
--   [ ] shadcn/uiのセットアップと基本コンポーネントの導入
--   [ ] TypeScriptの基本設定
--   [ ] ESLint, Prettierの設定
+-   [x] Next.jsプロジェクトの初期セットアップ
+-   [x] Tailwind CSSのセットアップ
+-   [x] shadcn/uiのセットアップと基本コンポーネントの導入
+-   [x] TypeScriptの基本設定
+-   [x] ESLint, Prettierの設定
 
 ## 2. UIコンポーネントの実装
 
