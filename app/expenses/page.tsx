@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,24 +11,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Plus, Receipt, Calendar, MapPin } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
+import { collection, getDocs, addDoc, query, orderBy } from "firebase/firestore"
+import { db } from "@/lib/firebase" // Firebase dbインスタンスをインポート
+
+interface Expense {
+  id: string | number;
+  amount: number;
+  category: string;
+  description: string;
+  date: string;
+  location?: string;
+  user_id?: string; // Firebaseのuser_idを追加
+}
 
 export default function ExpensesPage() {
   const [showAddForm, setShowAddForm] = useState(false)
-  const [expenses, setExpenses] = useState([
-    {
-      id: 1,
-      amount: 500,
-      category: "食費",
-      description: "コンビニ弁当",
-      date: "2024-01-15",
-      location: "セブンイレブン",
-    },
-    { id: 2, amount: 300, category: "交通費", description: "電車代", date: "2024-01-15", location: "駅" },
-    { id: 3, amount: 1200, category: "娯楽", description: "映画鑑賞", date: "2024-01-14", location: "映画館" },
-  ])
+  const [expenses, setExpenses] = useState<Expense[]>([])
+  const [newExpenseData, setNewExpenseData] = useState({
+    amount: '',
+    category: '',
+    description: '',
+    date: new Date().toISOString().split('T')[0],
+    location: '',
+  });
 
   const categories = ["食費", "交通費", "娯楽", "学用品", "衣類", "その他"]
-  const categoryColors = {
+  const categoryColors: { [key: string]: string } = {
     食費: "bg-orange-100 text-orange-800",
     交通費: "bg-blue-100 text-blue-800",
     娯楽: "bg-purple-100 text-purple-800",
@@ -37,20 +45,64 @@ export default function ExpensesPage() {
     その他: "bg-gray-100 text-gray-800",
   }
 
-  const handleAddExpense = (e: React.FormEvent) => {
-    e.preventDefault()
-    const formData = new FormData(e.target as HTMLFormElement)
-    const newExpense = {
-      id: expenses.length + 1,
-      amount: Number.parseInt(formData.get("amount") as string),
-      category: formData.get("category") as string,
-      description: formData.get("description") as string,
-      date: formData.get("date") as string,
-      location: formData.get("location") as string,
+  // Fetch expenses from Firebase
+  useEffect(() => {
+    const fetchExpenses = async () => {
+      try {
+        // TODO: Replace with actual authenticated user ID
+        const userId = "placeholder_user_id"; // For now, use a placeholder
+        const q = query(collection(db, "expenses"), orderBy("date", "desc")); // Order by date
+        const querySnapshot = await getDocs(q);
+        const fetchedExpenses: Expense[] = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data() as Omit<Expense, 'id'>
+        }));
+        setExpenses(fetchedExpenses);
+      } catch (error) {
+        console.error("Error fetching expenses:", error);
+      }
+    };
+    fetchExpenses();
+  }, []); // Empty dependency array means this runs once on mount
+
+  const handleAddExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      // TODO: Replace with actual authenticated user ID
+      const userId = "placeholder_user_id"; // For now, use a placeholder
+
+      const expenseToAdd = {
+        amount: parseFloat(newExpenseData.amount),
+        category: newExpenseData.category,
+        description: newExpenseData.description,
+        date: newExpenseData.date,
+        location: newExpenseData.location,
+        user_id: userId,
+      };
+
+      const docRef = await addDoc(collection(db, "expenses"), expenseToAdd);
+      setExpenses([{ id: docRef.id, ...expenseToAdd }, ...expenses]);
+      setShowAddForm(false);
+      setNewExpenseData({ // Reset form
+        amount: '',
+        category: '',
+        description: '',
+        date: new Date().toISOString().split('T')[0],
+        location: '',
+      });
+    } catch (error) {
+      console.error("Error adding expense:", error);
     }
-    setExpenses([newExpense, ...expenses])
-    setShowAddForm(false)
-  }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setNewExpenseData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setNewExpenseData(prev => ({ ...prev, [name]: value }));
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -80,11 +132,20 @@ export default function ExpensesPage() {
               <form onSubmit={handleAddExpense} className="space-y-4">
                 <div>
                   <Label htmlFor="amount">金額</Label>
-                  <Input id="amount" name="amount" type="number" placeholder="500" required className="mt-1" />
+                  <Input
+                    id="amount"
+                    name="amount"
+                    type="number"
+                    placeholder="500"
+                    required
+                    className="mt-1"
+                    value={newExpenseData.amount}
+                    onChange={handleChange}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="category">カテゴリ</Label>
-                  <Select name="category" required>
+                  <Select name="category" required value={newExpenseData.category} onValueChange={(value) => handleSelectChange('category', value)}>
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="カテゴリを選択" />
                     </SelectTrigger>
@@ -99,11 +160,27 @@ export default function ExpensesPage() {
                 </div>
                 <div>
                   <Label htmlFor="description">内容</Label>
-                  <Input id="description" name="description" placeholder="何を買ったか" required className="mt-1" />
+                  <Input
+                    id="description"
+                    name="description"
+                    placeholder="何を買ったか"
+                    required
+                    className="mt-1"
+                    value={newExpenseData.description}
+                    onChange={handleChange}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="location">場所</Label>
-                  <Input id="location" name="location" placeholder="どこで買ったか" required className="mt-1" />
+                  <Input
+                    id="location"
+                    name="location"
+                    placeholder="どこで買ったか"
+                    required
+                    className="mt-1"
+                    value={newExpenseData.location}
+                    onChange={handleChange}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="date">日付</Label>
@@ -113,7 +190,8 @@ export default function ExpensesPage() {
                     type="date"
                     required
                     className="mt-1"
-                    defaultValue={new Date().toISOString().split("T")[0]}
+                    value={newExpenseData.date}
+                    onChange={handleChange}
                   />
                 </div>
                 <div className="flex gap-2">
@@ -147,34 +225,40 @@ export default function ExpensesPage() {
         {/* Expense List */}
         <div className="space-y-3">
           <h2 className="text-lg font-bold text-gray-800">最近の支出</h2>
-          {expenses.map((expense) => (
-            <Card key={expense.id} className="bg-white border border-gray-200 shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge className={categoryColors[expense.category as keyof typeof categoryColors]}>
-                        {expense.category}
-                      </Badge>
-                      <span className="text-lg font-bold text-gray-800">¥{expense.amount.toLocaleString()}</span>
-                    </div>
-                    <p className="font-medium text-gray-700 mb-1">{expense.description}</p>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {expense.date}
+          {expenses.length === 0 ? (
+            <p className="text-center text-gray-500">まだ支出がありません。</p>
+          ) : (
+            expenses.map((expense) => (
+              <Card key={expense.id} className="bg-white border border-gray-200 shadow-sm">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge className={categoryColors[expense.category as keyof typeof categoryColors]}>
+                          {expense.category}
+                        </Badge>
+                        <span className="text-lg font-bold text-gray-800">¥{expense.amount.toLocaleString()}</span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {expense.location}
+                      <p className="font-medium text-gray-700 mb-1">{expense.description}</p>
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {expense.date}
+                        </div>
+                        {expense.location && (
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {expense.location}
+                          </div>
+                        )}
                       </div>
                     </div>
+                    <Receipt className="h-5 w-5 text-gray-400" />
                   </div>
-                  <Receipt className="h-5 w-5 text-gray-400" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
       </div>
 
@@ -182,3 +266,4 @@ export default function ExpensesPage() {
     </div>
   )
 }
+
