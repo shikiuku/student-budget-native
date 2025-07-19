@@ -97,10 +97,10 @@
 
 ## 5. データ永続化
 
--   [ ] **Supabaseのセットアップと接続**
-    -   [ ] Supabaseプロジェクトの作成とAPIキーの取得
-    -   [ ] `lib/supabase.ts` の作成とクライアント初期化
-    -   [ ] 環境変数の設定 (`.env.local`)
+-   [x] **Supabaseのセットアップと接続**
+    -   [x] Supabaseプロジェクトの作成とAPIキーの取得
+    -   [x] `lib/supabase.ts` の作成とクライアント初期化
+    -   [x] 環境変数の設定 (`.env.local`)
 -   [ ] **Supabaseへのデータ移行とAPIの修正**
     -   [ ] `expenses` テーブルの作成 (Supabase)
     -   [ ] `/api/expenses` をSupabaseと連携するように修正
