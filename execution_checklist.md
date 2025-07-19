@@ -85,8 +85,8 @@
 -   [ ] 支出データ管理API (`/api/expenses`)
     -   [ ] GET: 支出リスト取得
     -   [ ] POST: 新規支出追加
-    -   [ ] PUT: 支出更新
-    -   [ ] DELETE: 支出削除
+    -   [ ] PUT: 特定の支出の更新
+    -   [ ] DELETE: 特定の支出の削除
 -   [ ] PayPay CSV解析API (`/api/paypay/upload`)
     -   [ ] CSVファイルの受け取りと解析ロジック
     -   [ ] 解析結果を支出データとして保存するロジック
