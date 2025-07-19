@@ -1,63 +1,71 @@
 
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import Papa from 'papaparse';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { collection, addDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { toast } from '@/components/ui/use-toast';
+import { auth } from '@/lib/firebase'; // Firebase authをインポート
 
 interface PayPayCsvUploadProps {
   onUploadSuccess?: () => void;
 }
 
 export default function PayPayCsvUpload({ onUploadSuccess }: PayPayCsvUploadProps) {
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    acceptedFiles.forEach((file) => {
-      const reader = new FileReader();
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    console.log('onDrop called', acceptedFiles);
+    if (acceptedFiles.length === 0) {
+      console.log('No files were accepted. Check file type or accept settings.');
+    }
+    const file = acceptedFiles[0];
+    if (!file) {
+      return;
+    }
 
-      reader.onabort = () => console.log('file reading was aborted');
-      reader.onerror = () => console.log('file reading has failed');
-      reader.onload = async () => {
-        const csvText = reader.result as string;
-        Papa.parse(csvText, {
-          header: true,
-          complete: async (results) => {
-            const expensesToSave = results.data.map((row: any) => {
-              const [year, month, day] = (row['日付'] || '').split('/');
-              const formattedDate = year && month && day ? `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}` : '';
+    const user = auth.currentUser; // 現在のユーザーを取得
+    if (!user) {
+      toast({
+        title: '認証エラー',
+        description: 'ユーザーが認証されていません。ログインしてください。',
+        variant: 'destructive',
+      });
+      return;
+    }
 
-              return {
-                amount: parseFloat(row['金額']),
-                category: '未分類', // Default category, can be improved later
-                date: formattedDate,
-                description: row['内容'],
-                source: 'paypay',
-                user_id: 'placeholder_user_id', // TODO: Replace with actual authenticated user ID
-              };
-            }).filter((expense: any) => !isNaN(expense.amount) && expense.date);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('userId', user.uid); // ユーザーIDをFormDataに追加
 
-            try {
-              const savePromises = expensesToSave.map(async (expense: any) => {
-                await addDoc(collection(db, 'expenses'), expense);
-              });
-              await Promise.all(savePromises);
-              if (onUploadSuccess) {
-                onUploadSuccess();
-              }
-            } catch (saveError: any) {
-              console.error('Error saving expenses to Firebase:', saveError);
-              // TODO: Show error message to user
-            }
-          },
-          error: (error: any) => {
-            console.error('CSV parsing error:', error);
-            // TODO: Show error message to user
-          },
+    try {
+      const response = await fetch('/api/paypay/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      console.log('Fetch response:', response);
+      if (response.ok) {
+        toast({
+          title: 'アップロード成功',
+          description: 'PayPayの支出データが正常に保存されました。',
         });
-      };
-      reader.readAsText(file);
-    });
+        if (onUploadSuccess) {
+          onUploadSuccess();
+        }
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: 'アップロード失敗',
+          description: `データの保存中にエラーが発生しました: ${errorData.message || response.statusText}`,
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast({
+        title: 'アップロード失敗',
+        description: 'ファイルのアップロード中に予期せぬエラーが発生しました。',
+        variant: 'destructive',
+      });
+    }
   }, [onUploadSuccess]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({

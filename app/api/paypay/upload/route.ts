@@ -7,9 +7,14 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
+    const userId = formData.get('userId') as string; // userIdを取得
 
     if (!file) {
       return NextResponse.json({ message: 'No file uploaded' }, { status: 400 });
+    }
+
+    if (!userId) {
+      return NextResponse.json({ message: 'User ID is missing' }, { status: 400 });
     }
 
     const fileContent = await file.text();
@@ -30,7 +35,7 @@ export async function POST(request: Request) {
               date: formattedDate,
               description: row['内容'],
               source: 'paypay',
-              user_id: 'fixed_test_user_id', // 一時的に固定のユーザーIDを使用
+              user_id: userId, // クライアントから受け取ったユーザーIDを使用
             };
           }).filter((expense: any) => !isNaN(expense.amount) && expense.date);
 
@@ -41,6 +46,7 @@ export async function POST(request: Request) {
               await addDoc(collection(db, 'expenses'), expense);
             });
             await Promise.all(savePromises);
+            console.log('Expenses saved to Firebase successfully.');
             resolve(NextResponse.json({ message: 'File uploaded, parsed, and expenses saved to Firebase successfully' }));
           } catch (saveError: any) {
             console.error('Error saving expenses to Firebase:', saveError);
