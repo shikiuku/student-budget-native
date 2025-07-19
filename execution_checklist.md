@@ -97,10 +97,10 @@
 
 ## 5. データ永続化
 
--   [ ] **Firebaseのセットアップと接続**
-    -   [ ] Firebaseプロジェクトの作成と設定情報の取得
-    -   [ ] `lib/firebase.ts` の作成とクライアント初期化
-    -   [ ] 環境変数の設定 (`.env.local`)
+-   [x] **Firebaseのセットアップと接続**
+    -   [x] Firebaseプロジェクトの作成と設定情報の取得
+    -   [x] `lib/firebase.ts` の作成とクライアント初期化
+    -   [x] 環境変数の設定 (`.env.local`)
 -   [ ] **Firebase Firestoreへのデータ移行とAPIの修正**
     -   [ ] Firestore `expenses` コレクションの作成とセキュリティルールの設定
     -   [ ] `/api/expenses` をFirebaseと連携するように修正
