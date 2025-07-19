@@ -15,7 +15,6 @@ export function BottomNav({ currentPage }: BottomNavProps) {
     { href: "/map", icon: Map, label: "マップ", id: "map" },
     { href: "/subsidies", icon: Gift, label: "補助金", id: "subsidies" },
     { href: "/tips", icon: Lightbulb, label: "節約", id: "tips" },
-    { href: "/notifications", icon: Bell, label: "通知", id: "notifications" },
     { href: "/profile", icon: User, label: "設定", id: "profile" },
   ]
 

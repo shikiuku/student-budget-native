@@ -13,6 +13,9 @@ import { Plus, Receipt, Calendar, MapPin } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { collection, getDocs, addDoc, query, orderBy } from "firebase/firestore"
 import { db } from "@/lib/firebase" // Firebase dbインスタンスをインポート
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'; // Dialogコンポーネントをインポート
+import PayPayCsvUpload from '@/components/paypay-csv-upload'; // PayPayCsvUploadコンポーネントをインポート
+import { useToast } from '@/components/ui/use-toast'; // useToastをインポート
 
 interface Expense {
   id: string | number;
@@ -34,6 +37,18 @@ export default function ExpensesPage() {
     date: new Date().toISOString().split('T')[0],
     location: '',
   });
+  const [isPayPayDialogOpen, setIsPayPayDialogOpen] = useState(false); // PayPayダイアログの状態
+  const { toast } = useToast(); // useToastを初期化
+
+  const handlePayPayUploadSuccess = () => {
+    setIsPayPayDialogOpen(false); // ダイアログを閉じる
+    toast({
+      title: "アップロード完了",
+      description: "PayPayの支出履歴が正常に記録されました。",
+    });
+    // 支出リストを再フェッチして最新の状態を反映
+    fetchExpenses();
+  };
 
   const categories = ["食費", "交通費", "娯楽", "学用品", "衣類", "その他"]
   const categoryColors: { [key: string]: string } = {
@@ -46,22 +61,23 @@ export default function ExpensesPage() {
   }
 
   // Fetch expenses from Firebase
+  const fetchExpenses = async () => {
+    try {
+      // TODO: Replace with actual authenticated user ID
+      const userId = "placeholder_user_id"; // For now, use a placeholder
+      const q = query(collection(db, "expenses"), orderBy("date", "desc")); // Order by date
+      const querySnapshot = await getDocs(q);
+      const fetchedExpenses: Expense[] = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data() as Omit<Expense, 'id'>
+      }));
+      setExpenses(fetchedExpenses);
+    } catch (error) {
+      console.error("Error fetching expenses:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchExpenses = async () => {
-      try {
-        // TODO: Replace with actual authenticated user ID
-        const userId = "placeholder_user_id"; // For now, use a placeholder
-        const q = query(collection(db, "expenses"), orderBy("date", "desc")); // Order by date
-        const querySnapshot = await getDocs(q);
-        const fetchedExpenses: Expense[] = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data() as Omit<Expense, 'id'>
-        }));
-        setExpenses(fetchedExpenses);
-      } catch (error) {
-        console.error("Error fetching expenses:", error);
-      }
-    };
     fetchExpenses();
   }, []); // Empty dependency array means this runs once on mount
 
@@ -215,9 +231,19 @@ export default function ExpensesPage() {
                 <h3 className="font-bold text-gray-900">PayPay連携</h3>
                 <p className="text-sm text-gray-600">自動で支出を記録</p>
               </div>
-              <Button variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-50">
-                連携する
-              </Button>
+              <Dialog open={isPayPayDialogOpen} onOpenChange={setIsPayPayDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-50">
+                    連携する
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>PayPay CSVファイルをアップロード</DialogTitle>
+                  </DialogHeader>
+                  <PayPayCsvUpload onUploadSuccess={handlePayPayUploadSuccess} />
+                </DialogContent>
+              </Dialog>
             </div>
           </CardContent>
         </Card>
