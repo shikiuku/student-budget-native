@@ -26,7 +26,7 @@
 -   [x] `BottomNav` コンポーネントの実装
     -   [x] 主要ページへのナビゲーションリンク設定
     -   [x] アクティブ状態のスタイリング
--   [ ] `PayPayCsvUpload` コンポーネントの骨格作成
+-   [x] `PayPayCsvUpload` コンポーネントの骨格作成
 -   [ ] `ThemeProvider` の確認/実装
 
 ## 3. ページの実装
