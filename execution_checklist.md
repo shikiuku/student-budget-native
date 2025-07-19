@@ -33,8 +33,8 @@
 
 ### 3.1. レイアウトとナビゲーション
 
--   [ ] `app/layout.tsx` の基本レイアウト設定
--   [ ] `app/globals.css` の基本スタイル設定
+-   [x] `app/layout.tsx` の基本レイアウト設定
+-   [x] `app/globals.css` の基本スタイル設定
 
 ### 3.2. トップページ (`app/page.tsx`)
 
