@@ -2,6 +2,11 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "devCommand": "npm run dev",
-  "installCommand": "npm install",
-  "framework": "nextjs"
+  "installCommand": "npm ci || npm install",
+  "framework": "nextjs",
+  "functions": {
+    "app/**/*.{js,ts,tsx}": {
+      "maxDuration": 10
+    }
+  }
 }
