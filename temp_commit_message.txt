@@ -1,0 +1,24 @@
+feat: Implement Firebase Authentication integration and expense management enhancements
+
+This commit introduces Firebase Authentication to the application, enabling user-specific data management for expenses.
+
+Key changes include:
+- `app/expenses/page.tsx`:
+  - Integrated Firebase Authentication to fetch, add, and delete expenses based on the currently authenticated user's UID.
+  - Replaced placeholder user IDs with `currentUser.uid` for all Firestore operations.
+  - Added authentication checks for expense operations, prompting users to log in if not authenticated.
+  - Corrected a syntax error by adding a missing closing brace.
+- `app/api/paypay/upload/route.ts`:
+  - Modified to accept `userId` from the client and use it when saving PayPay CSV data to Firestore, aligning with security rules.
+- `components/paypay-csv-upload.tsx`:
+  - Updated to retrieve the authenticated user's UID via `auth.currentUser` and send it with the CSV upload request.
+  - Added authentication check before uploading, providing a toast notification if the user is not logged in.
+- `app/layout.tsx`:
+  - Integrated `AuthProvider`, `ThemeProvider`, `Toaster`, and `AuthStatus` components to provide global authentication context, theming, and toast notifications.
+- `app/paypay/page.tsx`:
+  - Enhanced to fetch and display user-specific PayPay expenses from Firestore.
+  - Implemented redirection to the login page if the user is not authenticated.
+- Added new authentication-related components: `app/layout.client.tsx`, `app/login/`, `components/auth-provider.tsx`, `components/auth-status.tsx`.
+- Updated `package.json` and `pnpm-lock.yaml` to include Firebase dependencies.
+
+This significantly improves the application's data security and user experience by ensuring that each user can only access and manage their own expense data.
