@@ -1,362 +1,268 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Calendar, MapPin, Pencil, Trash2 } from "lucide-react"
+import { PlusCircle, Calendar, Receipt, Utensils, Car, ShoppingBag, BookOpen, Home, Edit, Trash2 } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
-import { collection, getDocs, addDoc, query, orderBy, doc, deleteDoc, where } from "firebase/firestore"
-import { db, auth } from "@/lib/firebase" // Firebase dbインスタンスとauthをインポート
-import { onAuthStateChanged } from "firebase/auth"; // 認証状態の変更を監視
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'; // Dialogコンポーネントをインポート
-import PayPayCsvUpload from '@/components/paypay-csv-upload'; // PayPayCsvUploadコンポーネントをインポート
-import { useToast } from '@/components/ui/use-toast'; // useToastをインポート
-
-interface Expense {
-  id: string | number;
-  amount: number;
-  category: string;
-  description: string;
-  date: string;
-  location?: string;
-  user_id?: string; // Firebaseのuser_idを追加
-}
 
 export default function ExpensesPage() {
+  const [expenses, setExpenses] = useState([
+    {
+      id: 1,
+      amount: 500,
+      category: "食費",
+      description: "コンビニ弁当",
+      date: "2024-01-31",
+      icon: Utensils,
+      color: "#f97316"
+    },
+    {
+      id: 2,
+      amount: 300,
+      category: "交通費",
+      description: "電車代",
+      date: "2024-01-30",
+      icon: Car,
+      color: "#3b82f6"
+    },
+    {
+      id: 3,
+      amount: 1200,
+      category: "娯楽",
+      description: "映画鑑賞",
+      date: "2024-01-29",
+      icon: ShoppingBag,
+      color: "#a855f7"
+    },
+    {
+      id: 4,
+      amount: 800,
+      category: "学用品",
+      description: "参考書",
+      date: "2024-01-28",
+      icon: BookOpen,
+      color: "#22c55e"
+    }
+  ])
+
   const [showAddForm, setShowAddForm] = useState(false)
-  const [expenses, setExpenses] = useState<Expense[]>([])
-  const [currentUser, setCurrentUser] = useState<any>(null); // Firebaseユーザー情報を保持
+  const [newExpense, setNewExpense] = useState({
+    amount: "",
+    category: "",
+    description: "",
+    date: new Date().toISOString().split('T')[0]
+  })
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-    });
-    return () => unsubscribe();
-  }, []);
-  const [newExpenseData, setNewExpenseData] = useState({
-    amount: '',
-    category: '',
-    description: '',
-    date: new Date().toISOString().split('T')[0],
-    location: '',
-  });
-  const [isPayPayDialogOpen, setIsPayPayDialogOpen] = useState(false); // PayPayダイアログの状態
-  const { toast } = useToast(); // useToastを初期化
+  const categoryOptions = [
+    { name: "食費", icon: Utensils, color: "#f97316" },
+    { name: "交通費", icon: Car, color: "#3b82f6" },
+    { name: "娯楽", icon: ShoppingBag, color: "#a855f7" },
+    { name: "学用品", icon: BookOpen, color: "#22c55e" },
+    { name: "その他", icon: Home, color: "#6b7280" }
+  ]
 
-  const handlePayPayUploadSuccess = () => {
-    setIsPayPayDialogOpen(false); // ダイアログを閉じる
-    toast({
-      title: "アップロード完了",
-      description: "PayPayの支出履歴が正常に記録されました。",
-    });
-    // 支出リストを再フェッチして最新の状態を反映
-    fetchExpenses();
-  };
+  const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0)
 
-  const categories = ["食費", "交通費", "娯楽", "学用品", "衣類", "その他"]
-  const categoryColors: { [key: string]: string } = {
-    食費: "bg-orange-100 text-orange-800",
-    交通費: "bg-blue-100 text-blue-800",
-    娯楽: "bg-purple-100 text-purple-800",
-    学用品: "bg-green-100 text-green-800",
-    衣類: "bg-pink-100 text-pink-800",
-    その他: "bg-gray-100 text-gray-800",
+  const handleAddExpense = () => {
+    if (newExpense.amount && newExpense.category && newExpense.description) {
+      const categoryData = categoryOptions.find(cat => cat.name === newExpense.category)
+      const expense = {
+        id: Date.now(),
+        amount: parseInt(newExpense.amount),
+        category: newExpense.category,
+        description: newExpense.description,
+        date: newExpense.date,
+        icon: categoryData?.icon || Home,
+        color: categoryData?.color || "#6b7280"
+      }
+      setExpenses([expense, ...expenses])
+      setNewExpense({
+        amount: "",
+        category: "",
+        description: "",
+        date: new Date().toISOString().split('T')[0]
+      })
+      setShowAddForm(false)
+    }
   }
 
-  // Fetch expenses from Firebase
-  const fetchExpenses = async () => {
-    try {
-      // TODO: Replace with actual authenticated user ID
-      if (!currentUser) {
-        console.warn("No authenticated user for fetching expenses.");
-        return;
-      }
-      const userId = currentUser.uid;
-      const q = query(collection(db, "expenses"), where("user_id", "==", userId), orderBy("date", "desc")); // Order by date and filter by user_id
-      const querySnapshot = await getDocs(q);
-      const fetchedExpenses: Expense[] = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data() as Omit<Expense, 'id'>
-      }));
-      setExpenses(fetchedExpenses);
-    } catch (error) {
-      console.error("Error fetching expenses:", error);
-      toast({ title: "エラー", description: "支出の取得中にエラーが発生しました。", variant: "destructive" });
-    }
-  };
-
-  useEffect(() => {
-    if (currentUser) {
-      fetchExpenses();
-    }
-  }, [currentUser]); // currentUserが変更されたときに再フェッチ
-
-  const handleAddExpense = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (!currentUser) {
-        toast({
-          title: "認証エラー",
-          description: "支出を追加するにはログインしてください。",
-          variant: "destructive",
-        });
-        return;
-      }
-      const userId = currentUser.uid;
-
-      const expenseToAdd = {
-        amount: parseFloat(newExpenseData.amount),
-        category: newExpenseData.category,
-        description: newExpenseData.description,
-        date: newExpenseData.date,
-        location: newExpenseData.location,
-        user_id: userId,
-      };
-
-      const docRef = await addDoc(collection(db, "expenses"), expenseToAdd);
-      
-      // 状態を更新してUIに即時反映
-      setExpenses(prev => [{ id: docRef.id, ...expenseToAdd }, ...prev]);
-
-      setShowAddForm(false);
-      setNewExpenseData({ // Reset form
-        amount: '',
-        category: '',
-        description: '',
-        date: new Date().toISOString().split('T')[0],
-        location: '',
-      });
-      toast({ title: "成功", description: "新しい支出を記録しました。" });
-    } catch (error) {
-      console.error("Error adding expense:", error);
-      toast({ title: "エラー", description: "支出の追加中にエラーが発生しました。", variant: "destructive" });
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setNewExpenseData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setNewExpenseData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleEdit = (expense: Expense) => {
-    // TODO: 編集フォームをダイアログで表示するなどの実装
-    console.log("Editing expense:", expense);
-    toast({
-      title: "編集機能は開発中です",
-      description: `ID: ${expense.id}`,
-    });
-  };
-
-  const handleDeleteExpense = async (id: string | number) => {
-    try {
-      if (!currentUser) {
-        toast({
-          title: "認証エラー",
-          description: "支出を削除するにはログインしてください。",
-          variant: "destructive",
-        });
-        return;
-      }
-      await deleteDoc(doc(db, "expenses", String(id)));
-      setExpenses(prev => prev.filter(expense => expense.id !== id));
-      toast({ title: "成功", description: "支出を削除しました。" });
-    } catch (error) {
-      console.error("Error deleting expense:", error);
-      toast({ title: "エラー", description: "支出の削除中にエラーが発生しました。", variant: "destructive" });
-    }
-  };
+  const deleteExpense = (id: number) => {
+    setExpenses(expenses.filter(expense => expense.id !== id))
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <div className="p-4 space-y-6">
-        {/* Header */}
-        <div className="text-center py-4">
-          <h1 className="text-2xl font-bold text-gray-900">支出記録</h1>
-          <p className="text-gray-600 text-sm">お金の使い道を記録しよう</p>
-          {currentUser ? (
-            <p className="text-sm text-green-600">Authenticated as: {currentUser.email} (UID: {currentUser.uid})</p>
-          ) : (
-            <p className="text-sm text-red-600">Not authenticated.</p>
-          )}
+    <div className="min-h-screen bg-white pb-20">
+      <div className="p-4 space-y-6 pt-6">
+        {/* Summary Card */}
+        <div className="bg-zaim-green-50 border border-zaim-green-500 rounded-lg p-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-black">¥{totalSpent.toLocaleString()}</div>
+            <div className="text-sm text-gray-600">今月の支出合計</div>
+          </div>
         </div>
 
-        {/* Add Button */}
-        <Button
+        {/* Add Expense Button */}
+        <Button 
           onClick={() => setShowAddForm(!showAddForm)}
-          className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white"
+          className="w-full bg-zaim-green-500 hover:bg-zaim-green-600 text-white h-12"
         >
-          <Plus className="h-5 w-5 mr-2" />
-          支出を追加
+          <PlusCircle className="h-4 w-4 mr-2" />
+          支出を記録
         </Button>
 
-        {/* Add Form */}
+        {/* Add Expense Form */}
         {showAddForm && (
-          <Card className="bg-white border border-gray-200 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg">新しい支出を記録</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleAddExpense} className="space-y-4">
-                <div>
-                  <Label htmlFor="amount">金額</Label>
-                  <Input
-                    id="amount"
-                    name="amount"
-                    type="number"
-                    placeholder="500"
-                    required
-                    className="mt-1"
-                    value={newExpenseData.amount}
-                    onChange={handleChange}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="category">カテゴリ</Label>
-                  <Select name="category" required value={newExpenseData.category} onValueChange={(value) => handleSelectChange('category', value)}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="カテゴリを選択" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="description">内容</Label>
-                  <Input
-                    id="description"
-                    name="description"
-                    placeholder="何を買ったか"
-                    required
-                    className="mt-1"
-                    value={newExpenseData.description}
-                    onChange={handleChange}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="location">場所</Label>
-                  <Input
-                    id="location"
-                    name="location"
-                    placeholder="どこで買ったか"
-                    required
-                    className="mt-1"
-                    value={newExpenseData.location}
-                    onChange={handleChange}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="date">日付</Label>
-                  <Input
-                    id="date"
-                    name="date"
-                    type="date"
-                    required
-                    className="mt-1"
-                    value={newExpenseData.date}
-                    onChange={handleChange}
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button type="submit" className="flex-1">
-                    記録する
-                  </Button>
-                  <Button type="button" variant="outline" onClick={() => setShowAddForm(false)} className="flex-1">
-                    キャンセル
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+          <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
+            <h2 className="text-lg font-bold text-black">新しい支出を記録</h2>
+            
+            <div>
+              <Label htmlFor="amount">金額</Label>
+              <Input
+                id="amount"
+                type="number"
+                placeholder="500"
+                value={newExpense.amount}
+                onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="category">カテゴリ</Label>
+              <Select
+                value={newExpense.category}
+                onValueChange={(value) => setNewExpense({ ...newExpense, category: value })}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="カテゴリを選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoryOptions.map((category) => (
+                    <SelectItem key={category.name} value={category.name}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="description">説明</Label>
+              <Input
+                id="description"
+                placeholder="コンビニ弁当"
+                value={newExpense.description}
+                onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="date">日付</Label>
+              <Input
+                id="date"
+                type="date"
+                value={newExpense.date}
+                onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
+                className="mt-1"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button onClick={handleAddExpense} className="flex-1 bg-zaim-green-500 hover:bg-zaim-green-600 text-white">
+                記録する
+              </Button>
+              <Button onClick={() => setShowAddForm(false)} variant="outline" className="flex-1 border-zaim-blue-200 text-zaim-blue-600 hover:bg-zaim-blue-50">
+                キャンセル
+              </Button>
+            </div>
+          </div>
         )}
 
-        {/* PayPay Integration */}
-        <Card className="bg-orange-50 border border-orange-200 shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-gray-900">PayPay連携</h3>
-                <p className="text-sm text-gray-600">自動で支出を記録</p>
-              </div>
-              <Dialog open={isPayPayDialogOpen} onOpenChange={setIsPayPayDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-50">
-                    連携する
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>PayPay CSVファイルをアップロード</DialogTitle>
-                  </DialogHeader>
-                  <PayPayCsvUpload onUploadSuccess={handlePayPayUploadSuccess} />
-                </DialogContent>
-              </Dialog>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Expense List */}
-        <div className="space-y-3">
-          <h2 className="text-lg font-bold text-gray-800">最近の支出</h2>
-          {expenses.length === 0 ? (
-            <p className="text-center text-gray-500">まだ支出がありません。</p>
-          ) : (
-            expenses.map((expense) => (
-              <Card key={expense.id} className="bg-white border border-gray-200 shadow-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge className={categoryColors[expense.category as keyof typeof categoryColors]}>
+        {/* Expenses List */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-bold text-black">支出履歴</h2>
+          
+          {expenses.map((expense) => {
+            const Icon = expense.icon
+            return (
+              <div key={expense.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-10 h-10 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: expense.color }}
+                    >
+                      <Icon className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-bold text-black">¥{expense.amount.toLocaleString()}</span>
+                        <Badge className="bg-gray-100 text-gray-800">
                           {expense.category}
                         </Badge>
-                        <span className="text-lg font-bold text-gray-800">¥{expense.amount.toLocaleString()}</span>
                       </div>
-                      <p className="font-medium text-gray-700 mb-1">{expense.description}</p>
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {expense.date}
-                        </div>
-                        {expense.location && (
-                          <div className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {expense.location}
-                          </div>
-                        )}
+                      <p className="text-sm font-medium text-black">{expense.description}</p>
+                      <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                        <Calendar className="h-3 w-3" />
+                        {expense.date}
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(expense)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteExpense(expense.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+                  <div className="flex items-center gap-2">
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-zaim-blue-600 hover:bg-zaim-blue-50">
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      className="h-8 w-8 text-zaim-red-500 hover:text-zaim-red-600"
+                      onClick={() => deleteExpense(expense.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Category Summary */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <h2 className="text-lg font-bold text-black mb-4">カテゴリ別集計</h2>
+          <div className="space-y-3">
+            {categoryOptions.map((category) => {
+              const categoryExpenses = expenses.filter(exp => exp.category === category.name)
+              const categoryTotal = categoryExpenses.reduce((sum, exp) => sum + exp.amount, 0)
+              const Icon = category.icon
+              
+              if (categoryTotal === 0) return null
+              
+              return (
+                <div key={category.name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-8 h-8 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: category.color }}
+                    >
+                      <Icon className="h-4 w-4 text-white" />
+                    </div>
+                    <span className="text-sm font-medium text-black">{category.name}</span>
+                  </div>
+                  <span className="text-sm font-bold text-black">¥{categoryTotal.toLocaleString()}</span>
+                </div>
+              )
+            })}
+          </div>
         </div>
       </div>
 
       <BottomNav currentPage="expenses" />
     </div>
-  );
+  )
 }

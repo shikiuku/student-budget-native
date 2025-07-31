@@ -104,11 +104,11 @@ export default function NotificationsPage() {
 
         {/* Quick Actions */}
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="flex-1">
+          <Button variant="outline" size="sm" className="flex-1 border-zaim-blue-200 text-zaim-blue-600 hover:bg-zaim-blue-50">
             <Check className="h-4 w-4 mr-1" />
             すべて既読
           </Button>
-          <Button variant="outline" size="sm" className="flex-1">
+          <Button variant="outline" size="sm" className="flex-1 border-zaim-blue-200 text-zaim-blue-600 hover:bg-zaim-blue-50">
             <X className="h-4 w-4 mr-1" />
             すべて削除
           </Button>
@@ -144,11 +144,11 @@ export default function NotificationsPage() {
                         <span className="text-xs text-gray-500">{notification.time}</span>
                         <div className="flex gap-2">
                           {!notification.read && (
-                            <Button size="sm" variant="ghost" className="h-6 px-2 text-xs">
+                            <Button size="sm" variant="ghost" className="h-6 px-2 text-xs text-zaim-blue-600 hover:bg-zaim-blue-50">
                               既読にする
                             </Button>
                           )}
-                          <Button size="sm" variant="ghost" className="h-6 px-2 text-xs text-red-600">
+                          <Button size="sm" variant="ghost" className="h-6 px-2 text-xs text-red-600 hover:bg-red-50">
                             削除
                           </Button>
                         </div>
@@ -198,7 +198,7 @@ export default function NotificationsPage() {
                 <div className="text-lg font-bold text-pink-600">20:00</div>
               </div>
             </div>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full border-zaim-blue-200 text-zaim-blue-600 hover:bg-zaim-blue-50">
               時間を変更
             </Button>
           </CardContent>

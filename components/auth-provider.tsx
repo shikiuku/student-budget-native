@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useState, createContext, useContext } from "react";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { User } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
 interface AuthContextType {
@@ -18,12 +18,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
       setLoading(false);
-    });
+    };
 
-    return () => unsubscribe();
+    getSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   return (

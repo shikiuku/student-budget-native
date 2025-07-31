@@ -2,8 +2,7 @@
 
 import { useAuth } from "@/components/auth-provider"
 import { Button } from "@/components/ui/button"
-import { auth } from "@/lib/firebase"
-import { signOut } from "firebase/auth"
+import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
 import React from "react"
 
@@ -13,7 +12,7 @@ export function AuthStatus() {
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth);
+      await supabase.auth.signOut();
       router.push("/login");
     } catch (error) {
       console.error("Error signing out:", error);

@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Inter, Nunito } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/components/auth-provider"
@@ -8,6 +8,12 @@ import { Toaster } from "@/components/ui/toaster"
 import { AuthStatus } from "@/components/auth-status"
 
 const inter = Inter({ subsets: ["latin"] })
+const nunito = Nunito({ 
+  subsets: ["latin"],
+  display: 'swap',
+  variable: '--font-nunito'
+})
+// 一時的にローカルフォントを使用
 
 export const metadata: Metadata = {
   title: "マネー管理 - 中高生向け家計管理アプリ",
@@ -22,7 +28,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${inter.className} ${nunito.variable}`}>
         <AuthProvider>
           <ThemeProvider
             attribute="class"

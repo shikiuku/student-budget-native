@@ -10,7 +10,62 @@ const config: Config = {
   ],
   theme: {
   	extend: {
+  		fontFamily: {
+  			'sans': ['var(--font-m-plus-rounded)', 'M PLUS Rounded 1c', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic UI', 'Meiryo', 'system-ui', 'sans-serif'],
+  			'rounded': ['var(--font-m-plus-rounded)', 'M PLUS Rounded 1c', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic UI', 'Meiryo', 'system-ui', 'sans-serif'],
+  		},
   		colors: {
+  			// 落ち着いた雰囲気のカラーパレット（低彩度・高明度）
+  			zaim: {
+  				blue: {
+  					50: '#f8fafc',
+  					100: '#f1f5f9',
+  					200: '#e2e8f0',
+  					300: '#cbd5e1',
+  					400: '#94a3b8',
+  					500: '#64748b',
+  					600: '#475569',
+  					700: '#334155',
+  					800: '#1e293b',
+  					900: '#0f172a',
+  				},
+  				green: {
+  					50: '#f0f9f0',
+  					100: '#e0f2e0',
+  					200: '#c6e6c6',
+  					300: '#a3d3a3',
+  					400: '#7db87d',
+  					500: '#5a9c5a',
+  					600: '#4a8a4a',
+  					700: '#3d7c3d',
+  					800: '#2f6b2f',
+  					900: '#1f4d1f',
+  				},
+  				yellow: {
+  					50: '#fcfcf0',
+  					100: '#f9f9e0',
+  					200: '#f4f4c6',
+  					300: '#ebeba3',
+  					400: '#dddd7d',
+  					500: '#cccc5a',
+  					600: '#b8b84a',
+  					700: '#a3a33d',
+  					800: '#8e8e2f',
+  					900: '#6b6b1f',
+  				},
+  				red: {
+  					50: '#fcf0f0',
+  					100: '#f9e0e0',
+  					200: '#f4c6c6',
+  					300: '#eba3a3',
+  					400: '#dd7d7d',
+  					500: '#cc5a5a',
+  					600: '#b84a4a',
+  					700: '#a33d3d',
+  					800: '#8e2f2f',
+  					900: '#6b1f1f',
+  				},
+  			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
