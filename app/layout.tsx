@@ -1,24 +1,25 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter, Nunito } from "next/font/google"
+// Temporarily disabled due to network issues
+// import { M_PLUS_Rounded_1c } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/components/auth-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { AuthStatus } from "@/components/auth-status"
 
-const inter = Inter({ subsets: ["latin"] })
-const nunito = Nunito({ 
-  subsets: ["latin"],
-  display: 'swap',
-  variable: '--font-nunito'
-})
-// 一時的にローカルフォントを使用
+// Temporarily disabled due to network issues
+// const mPlusRounded = M_PLUS_Rounded_1c({ 
+//   subsets: ["latin", "latin-ext"],
+//   weight: ["100", "300", "400", "500", "700", "800", "900"],
+//   display: 'swap',
+//   variable: '--font-m-plus-rounded'
+// })
 
 export const metadata: Metadata = {
   title: "マネー管理 - 中高生向け家計管理アプリ",
   description: "中高生が楽しく・簡単にお金を管理し、節約の意識を持てるアプリ",
-    generator: 'v0.dev'
+  generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -28,7 +29,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja" suppressHydrationWarning>
-      <body className={`${inter.className} ${nunito.variable}`}>
+      <body className="font-sans">
         <AuthProvider>
           <ThemeProvider
             attribute="class"

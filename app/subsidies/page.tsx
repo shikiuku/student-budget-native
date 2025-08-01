@@ -65,7 +65,7 @@ export default function SubsidiesPage() {
 
   const statusColors = {
     申請可能: "bg-zaim-green-100 text-zaim-green-600",
-    受付終了: "bg-gray-100 text-gray-600",
+    受付終了: "bg-zaim-red-100 text-zaim-red-600",
     準備中: "bg-zaim-yellow-100 text-zaim-yellow-600",
   }
 

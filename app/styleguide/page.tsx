@@ -1,9 +1,13 @@
+// @refresh reset
 'use client';
 
+import React, { useState } from 'react';
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Switch } from "@/components/ui/switch"
+import { SwitchVariants } from "@/components/ui/switch-variants"
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -32,29 +36,59 @@ import {
 } from "lucide-react"
 
 export default function StyleGuidePage() {
+  // スイッチの状態管理
+  const [switchStates, setSwitchStates] = useState({
+    basic1: true,
+    basic2: false,
+    notification1: true,
+    notification2: false,
+    solid1: true,
+    solid2: false,
+    solid3: true,
+    solid4: false,
+    solid5: true,
+    solid6: false,
+    solid7: true,
+    solid8: false
+  });
+
+  const handleSwitchToggle = (key: string) => {
+    console.log(`Toggle switch: ${key}`); // デバッグ用
+    setSwitchStates(prev => ({
+      ...prev,
+      [key]: !prev[key as keyof typeof prev]
+    }));
+  };
+
   return (
     <div className="min-h-screen bg-white p-6">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-black mb-2">UIスタイルガイド</h1>
+          <h1 className="text-3xl font-bold text-black mb-2">26 UIスタイルガイド</h1>
           <p className="text-black mb-6">学生向け節約アプリで使用中のUIコンポーネント一覧</p>
           
           {/* Table of Contents */}
           <div className="bg-gray-50 p-6 rounded-lg">
             <h3 className="text-lg font-semibold text-black mb-4">目次</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
-              <a href="#colors" className="text-zaim-green-600 hover:text-zaim-green-700">カラーパレット</a>
-              <a href="#typography" className="text-zaim-green-600 hover:text-zaim-green-700">タイポグラフィ</a>
-              <a href="#buttons" className="text-zaim-green-600 hover:text-zaim-green-700">ボタン</a>
-              <a href="#progress" className="text-zaim-green-600 hover:text-zaim-green-700">プログレスバー</a>
-              <a href="#cards" className="text-zaim-green-600 hover:text-zaim-green-700">カード</a>
-              <a href="#lists" className="text-zaim-green-600 hover:text-zaim-green-700">リストアイテム</a>
-              <a href="#charts" className="text-zaim-green-600 hover:text-zaim-green-700">チャート</a>
-              <a href="#icons" className="text-zaim-green-600 hover:text-zaim-green-700">アイコン</a>
-              <a href="#dialogs" className="text-zaim-green-600 hover:text-zaim-green-700">ダイアログ</a>
-              <a href="#spacing" className="text-zaim-green-600 hover:text-zaim-green-700">スペーシング</a>
-              <a href="#forms" className="text-zaim-green-600 hover:text-zaim-green-700">フォーム要素</a>
+              <a href="#colors" className="text-gray-600 hover:text-gray-700">カラーパレット</a>
+              <a href="#typography" className="text-gray-600 hover:text-gray-700">タイポグラフィ</a>
+              <a href="#buttons" className="text-gray-600 hover:text-gray-700">ボタン</a>
+              <a href="#progress" className="text-gray-600 hover:text-gray-700">プログレスバー</a>
+              <a href="#cards" className="text-gray-600 hover:text-gray-700">カード</a>
+              <a href="#lists" className="text-gray-600 hover:text-gray-700">リストアイテム</a>
+              <a href="#charts" className="text-gray-600 hover:text-gray-700">チャート</a>
+              <a href="#icons" className="text-gray-600 hover:text-gray-700">アイコン</a>
+              <a href="#dialogs" className="text-gray-600 hover:text-gray-700">ダイアログ</a>
+              <a href="#spacing" className="text-gray-600 hover:text-gray-700">スペーシング</a>
+              <a href="#forms" className="text-gray-600 hover:text-gray-700">フォーム要素</a>
+              <a href="#switches" className="text-gray-600 hover:text-gray-700">スイッチ</a>
+              <a href="#badges" className="text-gray-600 hover:text-gray-700">バッジ</a>
+              <a href="#alerts" className="text-gray-600 hover:text-gray-700">アラート</a>
+              <a href="#statistics" className="text-gray-600 hover:text-gray-700">統計カード</a>
+              <a href="#auth" className="text-gray-600 hover:text-gray-700">認証UI</a>
+              <a href="#onboarding" className="text-gray-600 hover:text-gray-700">オンボーディング</a>
             </div>
           </div>
         </div>
@@ -63,7 +97,29 @@ export default function StyleGuidePage() {
         <section id="colors">
           <h2 className="text-2xl font-bold mb-4 text-black">カラーパレット</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+            <div className="space-y-2">
+              <h3 className="font-semibold text-black">Switch Gray</h3>
+              <div className="space-y-1">
+                <div className="bg-gray-50 p-3 rounded border border-gray-200">
+                  <div className="text-xs font-mono text-black">gray-50</div>
+                  <div className="text-xs text-gray-500 font-mono">#f9fafb</div>
+                </div>
+                <div className="bg-gray-100 p-3 rounded">
+                  <div className="text-xs font-mono text-black">gray-100</div>
+                  <div className="text-xs text-gray-500 font-mono">#f3f4f6</div>
+                </div>
+                <div className="bg-gray-300 p-3 rounded text-white">
+                  <div className="text-xs font-mono">gray-300</div>
+                  <div className="text-xs opacity-80 font-mono">#d1d5db</div>
+                </div>
+                <div className="bg-gray-600 p-3 rounded text-white">
+                  <div className="text-xs font-mono">gray-600</div>
+                  <div className="text-xs opacity-80 font-mono">#4b5563</div>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <h3 className="font-semibold text-black">Calm Blue</h3>
               <div className="space-y-1">
@@ -151,6 +207,7 @@ export default function StyleGuidePage() {
                 </div>
               </div>
             </div>
+
           </div>
         </section>
 
@@ -221,6 +278,21 @@ export default function StyleGuidePage() {
               <Button size="sm">Small Button</Button>
               <Button>Default Button</Button>
               <Button size="lg">Large Button</Button>
+            </div>
+
+            <div className="flex flex-wrap gap-4">
+              <Button className="border border-black bg-white text-black hover:bg-gray-50">
+                Black Outlined
+              </Button>
+              <Button className="border border-gray-400 bg-white text-gray-800 hover:bg-gray-50">
+                Gray Outlined
+              </Button>
+              <Button className="border border-zaim-blue-500 bg-white text-zaim-blue-600 hover:bg-zaim-blue-50">
+                Blue Outlined
+              </Button>
+              <Button className="border border-zaim-green-500 bg-white text-zaim-green-600 hover:bg-zaim-green-50">
+                Green Outlined
+              </Button>
             </div>
 
             <div className="grid grid-cols-2 gap-4 max-w-md">
@@ -664,6 +736,626 @@ export default function StyleGuidePage() {
                 rows={3}
                 className="w-full px-3 py-2 border border-zaim-blue-200 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black"
               />
+            </div>
+          </div>
+        </section>
+
+        {/* Switches */}
+        <section id="switches">
+          <h2 className="text-2xl font-bold mb-4 text-black">スイッチ</h2>
+          
+          {/* 基本スイッチ */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <Card className="bg-white border border-gray-200 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg">基本スイッチ（インタラクティブ）</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-black">
+                    オン/オフ切り替え ({switchStates.basic1 ? 'ON' : 'OFF'})
+                  </span>
+                  <Switch 
+                    checked={switchStates.basic1} 
+                    onCheckedChange={() => handleSwitchToggle('basic1')} 
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-black">
+                    別のスイッチ ({switchStates.basic2 ? 'ON' : 'OFF'})
+                  </span>
+                  <Switch 
+                    checked={switchStates.basic2} 
+                    onCheckedChange={() => handleSwitchToggle('basic2')} 
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white border border-gray-200 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg">通知設定例</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-gray-800">プッシュ通知</p>
+                    <p className="text-sm text-gray-600">アプリからの通知を受け取る</p>
+                  </div>
+                  <Switch 
+                    checked={switchStates.notification1} 
+                    onCheckedChange={() => handleSwitchToggle('notification1')} 
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-gray-800">メール通知</p>
+                    <p className="text-sm text-gray-600">重要な情報をメールで受け取る</p>
+                  </div>
+                  <Switch 
+                    checked={switchStates.notification2} 
+                    onCheckedChange={() => handleSwitchToggle('notification2')} 
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* グレースイッチのみ */}
+          <h3 className="text-xl font-bold mb-4 text-black">✨ スイッチ（メインカラー）</h3>
+          <div className="max-w-md">
+            {/* グレー */}
+            <Card className="bg-white border border-gray-200 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-base text-black">グレースイッチ</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-black">
+                    状態: {switchStates.solid5 ? 'ON' : 'OFF'}
+                  </span>
+                  <SwitchVariants 
+                    variant="solid5"
+                    checked={switchStates.solid5} 
+                    onCheckedChange={() => handleSwitchToggle('solid5')} 
+                  />
+                </div>
+                <p className="text-xs text-gray-600">グレー単色（メインカラー）</p>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
+        {/* Badges */}
+        <section id="badges">
+          <h2 className="text-2xl font-bold mb-4 text-black">バッジ</h2>
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-4">基本バッジ</h3>
+              <div className="flex flex-wrap gap-3">
+                <span className="px-3 py-1 bg-gray-100 text-gray-800 text-sm rounded-full">デフォルト</span>
+                <span className="px-3 py-1 bg-zaim-blue-100 text-zaim-blue-800 text-sm rounded-full">情報</span>
+                <span className="px-3 py-1 bg-zaim-green-100 text-zaim-green-800 text-sm rounded-full">成功</span>
+                <span className="px-3 py-1 bg-zaim-yellow-100 text-zaim-yellow-800 text-sm rounded-full">警告</span>
+                <span className="px-3 py-1 bg-zaim-red-100 text-zaim-red-800 text-sm rounded-full">エラー</span>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-4">カテゴリバッジ</h3>
+              <div className="flex flex-wrap gap-3">
+                <span className="px-3 py-1 bg-orange-100 text-orange-800 text-sm rounded-full">食費</span>
+                <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">交通費</span>
+                <span className="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">娯楽</span>
+                <span className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">学用品</span>
+                <span className="px-3 py-1 bg-pink-100 text-pink-800 text-sm rounded-full">衣類</span>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-4">ステータスバッジ</h3>
+              <div className="flex flex-wrap gap-3">
+                <span className="px-3 py-1 bg-zaim-green-500 text-white text-sm rounded-full">申請可能</span>
+                <span className="px-3 py-1 bg-zaim-red-500 text-white text-sm rounded-full">受付終了</span>
+                <span className="px-3 py-1 bg-gray-500 text-white text-sm rounded-full">準備中</span>
+                <span className="px-3 py-1 bg-zaim-yellow-500 text-white text-sm rounded-full">審査中</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Alert Cards */}
+        <section id="alerts">
+          <h2 className="text-2xl font-bold mb-4 text-black">アラート・通知カード</h2>
+          <div className="space-y-4 max-w-2xl">
+            <div className="bg-zaim-yellow-50 border border-zaim-yellow-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 bg-zaim-yellow-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Lightbulb className="h-4 w-4 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-black mb-1">プロフィール設定のお願い</h4>
+                  <p className="text-sm text-gray-700 mb-3">より適切な補助金情報をお届けするため、プロフィール設定をお願いします。</p>
+                  <Button size="sm" className="bg-zaim-yellow-500 hover:bg-zaim-yellow-600 text-white">
+                    設定する
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-zaim-blue-50 border border-zaim-blue-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 bg-zaim-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Bell className="h-4 w-4 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-black mb-1">新しい節約アドバイス</h4>
+                  <p className="text-sm text-gray-700">あなたの支出パターンから、月3,000円の節約方法を見つけました。</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-zaim-green-50 border border-zaim-green-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 bg-zaim-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Target className="h-4 w-4 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-black mb-1">目標達成おめでとう！</h4>
+                  <p className="text-sm text-gray-700">今月の節約目標を達成しました。素晴らしいです！</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Statistics Cards */}
+        <section id="statistics">
+          <h2 className="text-2xl font-bold mb-4 text-black">統計カード</h2>
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-4">基本統計</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-black mb-1">¥15,000</div>
+                  <div className="text-sm text-gray-600">今月の支出</div>
+                </div>
+                <div className="bg-zaim-green-50 border border-zaim-green-200 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-zaim-green-600 mb-1">¥3,500</div>
+                  <div className="text-sm text-gray-600">節約額</div>
+                </div>
+                <div className="bg-zaim-blue-50 border border-zaim-blue-200 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-zaim-blue-600 mb-1">12</div>
+                  <div className="text-sm text-gray-600">利用した補助金</div>
+                </div>
+                <div className="bg-zaim-yellow-50 border border-zaim-yellow-200 rounded-lg p-4 text-center">
+                  <div className="text-2xl font-bold text-zaim-yellow-600 mb-1">8</div>
+                  <div className="text-sm text-gray-600">実践したアドバイス</div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-4">詳細統計</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-medium text-black">通知設定</h4>
+                    <Settings className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">プッシュ通知</span>
+                      <span className="text-sm font-medium text-zaim-green-600">ON</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">メール通知</span>
+                      <span className="text-sm font-medium text-gray-400">OFF</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">週次レポート</span>
+                      <span className="text-sm font-medium text-zaim-green-600">ON</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-medium text-black">支出分析</h4>
+                    <BarChart3 className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                        <span className="text-sm text-gray-600">食費</span>
+                      </div>
+                      <span className="text-sm font-medium text-black">40%</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                        <span className="text-sm text-gray-600">交通費</span>
+                      </div>
+                      <span className="text-sm font-medium text-black">25%</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                        <span className="text-sm text-gray-600">娯楽</span>
+                      </div>
+                      <span className="text-sm font-medium text-black">20%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Authentication UI */}
+        <section id="auth">
+          <h2 className="text-2xl font-bold mb-4 text-black">認証UI</h2>
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-4">認証ボタン（現在のデザイン）</h3>
+              <div className="space-y-6">
+                
+                {/* 現在のデザイン */}
+                <div>
+                  <h4 className="font-medium text-black mb-3">現在のデザイン（丸いソリッド青）</h4>
+                  <div className="relative bg-gray-50 border border-gray-200 rounded-lg p-8 h-32">
+                    <div className="absolute top-4 right-4 flex gap-2">
+                      <Button className="rounded-full bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white px-6">
+                        サインイン
+                      </Button>
+                      <Button className="rounded-full bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white px-6">
+                        ログイン
+                      </Button>
+                    </div>
+                    <p className="text-sm text-gray-600">右上に固定された認証ボタン（サインイン + ログイン）</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-black mb-3">ログイン済み状態</h4>
+                  <div className="relative bg-gray-50 border border-gray-200 rounded-lg p-8 h-32">
+                    <div className="absolute top-4 right-4">
+                      <Button className="rounded-full bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white px-6">
+                        ログアウト
+                      </Button>
+                    </div>
+                    <p className="text-sm text-gray-600">ログイン済みの場合はログアウトボタンのみ表示</p>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-4">ログインフォーム</h3>
+              <div className="max-w-md space-y-4 bg-white border border-gray-200 rounded-lg p-6">
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">メールアドレス</label>
+                  <input
+                    type="email"
+                    placeholder="example@student.ac.jp"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">パスワード</label>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black"
+                  />
+                </div>
+                <Button className="w-full bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white">
+                  ログイン
+                </Button>
+                
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-gray-300" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white px-2 text-gray-500">または</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Button className="w-full border border-gray-300 bg-white text-black hover:bg-gray-50">
+                    <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Googleでログイン
+                  </Button>
+                  <Button className="w-full border border-gray-300 bg-white text-black hover:bg-gray-50">
+                    <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                      <path fill="#000000" d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/>
+                    </svg>
+                    Appleでログイン
+                  </Button>
+                </div>
+
+                <div className="text-center">
+                  <p className="text-sm text-gray-600">
+                    アカウントをお持ちでない場合は{" "}
+                    <a href="#" className="text-zaim-blue-600 hover:text-zaim-blue-700 underline">
+                      新規登録
+                    </a>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-4">新規登録フォーム</h3>
+              <div className="max-w-md space-y-4 bg-white border border-gray-200 rounded-lg p-6">
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">メールアドレス</label>
+                  <input
+                    type="email"
+                    placeholder="example@student.ac.jp"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">パスワード</label>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">パスワード確認</label>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black"
+                  />
+                </div>
+                
+                <div className="flex items-start space-x-2">
+                  <input
+                    type="checkbox"
+                    id="terms"
+                    className="mt-1 rounded border-gray-300 text-zaim-blue-600 focus:ring-zaim-blue-400"
+                  />
+                  <label htmlFor="terms" className="text-sm text-gray-700">
+                    <a href="#" className="text-zaim-blue-600 hover:text-zaim-blue-700 underline">利用規約</a>
+                    と
+                    <a href="#" className="text-zaim-blue-600 hover:text-zaim-blue-700 underline">プライバシーポリシー</a>
+                    に同意します
+                  </label>
+                </div>
+
+                <Button className="w-full rounded-full bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white px-6">
+                  新規登録
+                </Button>
+                
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-gray-300" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white px-2 text-gray-500">または</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Button className="w-full border border-gray-300 bg-white text-black hover:bg-gray-50">
+                    <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Googleで新規登録
+                  </Button>
+                  <Button className="w-full border border-gray-300 bg-white text-black hover:bg-gray-50">
+                    <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                      <path fill="#000000" d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/>
+                    </svg>
+                    Appleで新規登録
+                  </Button>
+                </div>
+
+                <div className="text-center">
+                  <p className="text-sm text-gray-600">
+                    すでにアカウントをお持ちの場合は{" "}
+                    <a href="#" className="text-zaim-blue-600 hover:text-zaim-blue-700 underline">
+                      ログイン
+                    </a>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Onboarding Forms */}
+        <section id="onboarding">
+          <h2 className="text-2xl font-bold mb-4 text-black">オンボーディング（初期設定）</h2>
+          <div className="space-y-8">
+            
+            {/* 基本情報入力 */}
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-4">基本情報入力</h3>
+              <div className="max-w-2xl bg-white border border-gray-200 rounded-lg p-6">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-2">名前</label>
+                      <input
+                        type="text"
+                        placeholder="田中太郎"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-2">年齢</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black">
+                        <option>選択してください</option>
+                        <option>15歳</option>
+                        <option>16歳</option>
+                        <option>17歳</option>
+                        <option>18歳</option>
+                        <option>19歳</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-black mb-2">学校種別</label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      <Button className="border border-gray-300 bg-white text-black hover:bg-zaim-blue-50 hover:border-zaim-blue-400">
+                        中学校
+                      </Button>
+                      <Button className="border border-zaim-blue-500 bg-zaim-blue-50 text-zaim-blue-700">
+                        高等学校
+                      </Button>
+                      <Button className="border border-gray-300 bg-white text-black hover:bg-zaim-blue-50 hover:border-zaim-blue-400">
+                        専門学校
+                      </Button>
+                      <Button className="border border-gray-300 bg-white text-black hover:bg-zaim-blue-50 hover:border-zaim-blue-400">
+                        大学
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 学校情報入力 */}
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-4">学校情報入力</h3>
+              <div className="max-w-2xl bg-white border border-gray-200 rounded-lg p-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-black mb-2">都道府県</label>
+                    <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black">
+                      <option>選択してください</option>
+                      <option>北海道</option>
+                      <option>青森県</option>
+                      <option>岩手県</option>
+                      <option>宮城県</option>
+                      <option>秋田県</option>
+                      <option>山形県</option>
+                      <option>福島県</option>
+                      <option>茨城県</option>
+                      <option>栃木県</option>
+                      <option>群馬県</option>
+                      <option>埼玉県</option>
+                      <option>千葉県</option>
+                      <option>東京都</option>
+                      <option>神奈川県</option>
+                      <option>新潟県</option>
+                      <option>富山県</option>
+                      <option>石川県</option>
+                      <option>福井県</option>
+                      <option>山梨県</option>
+                      <option>長野県</option>
+                      <option>岐阜県</option>
+                      <option>静岡県</option>
+                      <option>愛知県</option>
+                      <option>三重県</option>
+                      <option>滋賀県</option>
+                      <option>京都府</option>
+                      <option>大阪府</option>
+                      <option>兵庫県</option>
+                      <option>奈良県</option>
+                      <option>和歌山県</option>
+                      <option>鳥取県</option>
+                      <option>島根県</option>
+                      <option>岡山県</option>
+                      <option>広島県</option>
+                      <option>山口県</option>
+                      <option>徳島県</option>
+                      <option>香川県</option>
+                      <option>愛媛県</option>
+                      <option>高知県</option>
+                      <option>福岡県</option>
+                      <option>佐賀県</option>
+                      <option>長崎県</option>
+                      <option>熊本県</option>
+                      <option>大分県</option>
+                      <option>宮崎県</option>
+                      <option>鹿児島県</option>
+                      <option>沖縄県</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-black mb-2">学校名</label>
+                    <input
+                      type="text"
+                      placeholder="○○高等学校"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-black mb-2">学年</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <Button className="border border-gray-300 bg-white text-black hover:bg-zaim-blue-50 hover:border-zaim-blue-400">
+                        1年生
+                      </Button>
+                      <Button className="border border-zaim-blue-500 bg-zaim-blue-50 text-zaim-blue-700">
+                        2年生
+                      </Button>
+                      <Button className="border border-gray-300 bg-white text-black hover:bg-zaim-blue-50 hover:border-zaim-blue-400">
+                        3年生
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 予算設定 */}
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-4">予算設定</h3>
+              <div className="max-w-2xl bg-white border border-gray-200 rounded-lg p-6">
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-black mb-2">月の総予算</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2 text-gray-500">¥</span>
+                      <input
+                        type="number"
+                        placeholder="30000"
+                        className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">お小遣いやアルバイト代など、月に使える金額を入力してください</p>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+            {/* アクションボタン */}
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-4">進行ボタン</h3>
+              <div className="max-w-2xl space-y-4">
+                <div className="flex gap-3">
+                  <Button className="border border-gray-300 bg-white text-black hover:bg-gray-50">
+                    戻る
+                  </Button>
+                  <Button className="flex-1 bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white">
+                    次へ進む
+                  </Button>
+                </div>
+                <Button className="w-full bg-zaim-green-500 hover:bg-zaim-green-600 text-white">
+                  設定完了
+                </Button>
+              </div>
             </div>
           </div>
         </section>

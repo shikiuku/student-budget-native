@@ -1,23 +1,89 @@
 "use client"
 
+import { useState, useEffect } from "react"
+import { useAuth } from "@/components/auth-provider"
+import { userProfileService, expenseService, expenseCategoryService } from "@/lib/database"
 import { Progress } from "@/components/ui/progress"
 import { TrendingUp, TrendingDown, PlusCircle, BarChart3, Utensils, Car, ShoppingBag, Home, BookOpen, Shirt } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
+import type { UserProfile, ExpenseWithCategory, ExpenseCategory } from "@/lib/types"
+import { useRouter } from "next/navigation"
 
 export default function HomePage() {
-  const monthlyBudget = 15000
-  const spent = 8500
+  const { user, loading } = useAuth()
+  const router = useRouter()
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  const [expenses, setExpenses] = useState<ExpenseWithCategory[]>([])
+  const [categories, setCategories] = useState<ExpenseCategory[]>([])
+  const [dataLoading, setDataLoading] = useState(true)
+
+  const iconMap = {
+    "Utensils": Utensils,
+    "Car": Car,
+    "ShoppingBag": ShoppingBag,
+    "BookOpen": BookOpen,
+    "Shirt": Home,
+    "Home": Home
+  }
+
+  // Load user data on component mount
+  useEffect(() => {
+    if (user) {
+      loadUserData()
+    }
+  }, [user])
+
+  const loadUserData = async () => {
+    if (!user) return
+
+    setDataLoading(true)
+    try {
+      // Load user profile
+      const profileResult = await userProfileService.getProfile(user.id)
+      if (profileResult.success && profileResult.data) {
+        setUserProfile(profileResult.data)
+      }
+
+      // Load categories
+      const categoriesResult = await expenseCategoryService.getCategories()
+      if (categoriesResult.success && categoriesResult.data) {
+        setCategories(categoriesResult.data)
+      }
+
+      // Load current month expenses
+      const now = new Date()
+      const expensesResult = await expenseService.getExpensesByMonth(user.id, now.getFullYear(), now.getMonth() + 1)
+      if (expensesResult.success && expensesResult.data) {
+        setExpenses(expensesResult.data)
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error)
+    } finally {
+      setDataLoading(false)
+    }
+  }
+
+  // Calculate budget and spending data
+  const monthlyBudget = userProfile?.monthly_budget || 15000
+  const spent = expenses.reduce((sum, expense) => sum + expense.amount, 0)
   const remaining = monthlyBudget - spent
-  const spentPercentage = (spent / monthlyBudget) * 100
-  
-  // カテゴリ別支出データ
-  const categories = [
-    { name: "食費", amount: 3500, icon: Utensils, color: "#f97316", percentage: 41 },
-    { name: "交通費", amount: 2000, icon: Car, color: "#3b82f6", percentage: 24 },
-    { name: "娯楽", amount: 2000, icon: ShoppingBag, color: "#a855f7", percentage: 24 },
-    { name: "学用品", amount: 500, icon: BookOpen, color: "#22c55e", percentage: 6 },
-    { name: "その他", amount: 500, icon: Home, color: "#6b7280", percentage: 5 },
-  ]
+  const spentPercentage = monthlyBudget > 0 ? (spent / monthlyBudget) * 100 : 0
+
+  // Calculate category breakdown
+  const categoryBreakdown = categories.map(category => {
+    const categoryExpenses = expenses.filter(exp => exp.category_id === category.id)
+    const amount = categoryExpenses.reduce((sum, exp) => sum + exp.amount, 0)
+    const percentage = spent > 0 ? Math.round((amount / spent) * 100) : 0
+    const IconComponent = category.icon ? iconMap[category.icon as keyof typeof iconMap] || Home : Home
+    
+    return {
+      name: category.name,
+      amount,
+      icon: IconComponent,
+      color: category.color || "#6b7280",
+      percentage
+    }
+  }).filter(cat => cat.amount > 0) // Only show categories with expenses
   
   // Zaim style: 緑=余裕、黄=注意、赤=危険
   const getBudgetStatus = (percentage: number) => {
@@ -27,6 +93,58 @@ export default function HomePage() {
   }
   
   const budgetStatus = getBudgetStatus(spentPercentage)
+
+  // Wait for auth loading to complete first
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center pb-20">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
+          <p className="text-gray-600">認証状態を確認中...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center pb-20">
+        <div className="text-center space-y-4">
+          <p className="text-gray-600 mb-4">ログインが必要です</p>
+          <button 
+            onClick={() => router.push('/login')}
+            className="bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white px-6 py-2 rounded-full"
+          >
+            ログイン
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (dataLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center pb-20">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
+          <p className="text-gray-600">データを読み込み中...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // If user has no profile, redirect to onboarding
+  if (!userProfile) {
+    router.push('/onboarding')
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center pb-20">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
+          <p className="text-gray-600">初期設定にリダイレクト中...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-white pb-20">
@@ -64,6 +182,9 @@ export default function HomePage() {
             <div className="space-y-2">
               <div className="text-3xl font-bold text-black">¥{remaining.toLocaleString()}</div>
               <div className="text-sm text-gray-600">今月使える金額</div>
+              {userProfile?.name && (
+                <div className="text-xs text-gray-500">{userProfile.name}さんの予算</div>
+              )}
             </div>
             
             {/* Budget bar - Zaim style */}
@@ -99,7 +220,7 @@ export default function HomePage() {
                 </div>
                 <span className="text-sm font-medium text-black">収入</span>
               </div>
-              <span className="text-sm font-bold text-black">¥15,000</span>
+              <span className="text-sm font-bold text-black">¥{monthlyBudget.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between p-4">
               <div className="flex items-center gap-3">
@@ -122,16 +243,22 @@ export default function HomePage() {
               <div className="relative w-56 h-56">
                 <svg viewBox="0 0 200 200" className="w-full h-full transform -rotate-90">
                   {/* ドーナツチャートの描画 */}
-                  <circle cx="100" cy="100" r="80" fill="none" stroke="#f97316" strokeWidth="16" 
-                    strokeDasharray={`${categories[0].percentage * 5.03} 502.65`} strokeDashoffset="0"/>
-                  <circle cx="100" cy="100" r="80" fill="none" stroke="#3b82f6" strokeWidth="16" 
-                    strokeDasharray={`${categories[1].percentage * 5.03} 502.65`} strokeDashoffset={`-${categories[0].percentage * 5.03}`}/>
-                  <circle cx="100" cy="100" r="80" fill="none" stroke="#a855f7" strokeWidth="16" 
-                    strokeDasharray={`${categories[2].percentage * 5.03} 502.65`} strokeDashoffset={`-${(categories[0].percentage + categories[1].percentage) * 5.03}`}/>
-                  <circle cx="100" cy="100" r="80" fill="none" stroke="#22c55e" strokeWidth="16" 
-                    strokeDasharray={`${categories[3].percentage * 5.03} 502.65`} strokeDashoffset={`-${(categories[0].percentage + categories[1].percentage + categories[2].percentage) * 5.03}`}/>
-                  <circle cx="100" cy="100" r="80" fill="none" stroke="#6b7280" strokeWidth="16" 
-                    strokeDasharray={`${categories[4].percentage * 5.03} 502.65`} strokeDashoffset={`-${(categories[0].percentage + categories[1].percentage + categories[2].percentage + categories[3].percentage) * 5.03}`}/>
+                  {categoryBreakdown.map((category, index) => {
+                    const prevPercentage = categoryBreakdown.slice(0, index).reduce((sum, cat) => sum + cat.percentage, 0)
+                    return (
+                      <circle 
+                        key={category.name}
+                        cx="100" 
+                        cy="100" 
+                        r="80" 
+                        fill="none" 
+                        stroke={category.color} 
+                        strokeWidth="16" 
+                        strokeDasharray={`${category.percentage * 5.03} 502.65`} 
+                        strokeDashoffset={`-${prevPercentage * 5.03}`}
+                      />
+                    )
+                  })}
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
@@ -141,13 +268,15 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="space-y-2">
-                {categories.map((category) => (
+                {categoryBreakdown.length > 0 ? categoryBreakdown.map((category) => (
                   <div key={category.name} className="flex items-center gap-3">
                     <div className="w-4 h-4 rounded-full" style={{ backgroundColor: category.color }}></div>
                     <span className="text-sm font-medium text-black w-16">{category.name}</span>
                     <span className="text-sm text-gray-600">{category.percentage}% (¥{category.amount.toLocaleString()})</span>
                   </div>
-                ))}
+                )) : (
+                  <div className="text-sm text-gray-500">まだ支出データがありません</div>
+                )}
               </div>
             </div>
           </div>
@@ -158,7 +287,7 @@ export default function HomePage() {
               <h2 className="text-sm font-medium text-black">カテゴリ別支出</h2>
             </div>
             <div className="divide-y divide-gray-100">
-              {categories.map((category) => {
+              {categoryBreakdown.length > 0 ? categoryBreakdown.map((category) => {
                 const Icon = category.icon
                 return (
                   <div key={category.name} className="flex items-center justify-between p-4">
@@ -171,7 +300,9 @@ export default function HomePage() {
                     <span className="text-sm font-bold text-black">¥{category.amount.toLocaleString()}</span>
                   </div>
                 )
-              })}
+              }) : (
+                <div className="p-4 text-center text-sm text-gray-500">まだ支出データがありません</div>
+              )}
             </div>
           </div>
         </div>
@@ -182,13 +313,19 @@ export default function HomePage() {
             <h2 className="text-sm font-medium text-black">アクション</h2>
           </div>
           <div className="divide-y divide-gray-100">
-            <button className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors">
+            <button 
+              onClick={() => router.push('/expenses')}
+              className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors"
+            >
               <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#e0f2e0' }}>
                 <PlusCircle className="h-4 w-4" style={{ color: '#5a9c5a' }} />
               </div>
               <span className="text-sm font-medium text-black">支出を記録</span>
             </button>
-            <button className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors">
+            <button 
+              onClick={() => router.push('/expenses')}
+              className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors"
+            >
               <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#f1f5f9' }}>
                 <BarChart3 className="h-4 w-4" style={{ color: '#475569' }} />
               </div>

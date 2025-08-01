@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
+import { SwitchVariants } from "@/components/ui/switch-variants"
 import { Bell, AlertTriangle, Target, Gift, Lightbulb, Check, X } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 
@@ -176,7 +176,7 @@ export default function NotificationsPage() {
                   <p className="font-medium text-gray-800">{setting.title}</p>
                   <p className="text-sm text-gray-600">{setting.description}</p>
                 </div>
-                <Switch defaultChecked={setting.enabled} />
+                <SwitchVariants variant="solid5" defaultChecked={setting.enabled} />
               </div>
             ))}
           </CardContent>

@@ -1,118 +1,322 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
+import { useAuth } from "@/components/auth-provider"
+import { expenseService, expenseCategoryService, csvImportService } from "@/lib/database"
+import { PayPayCsvParser } from "@/lib/csv-parser"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { PlusCircle, Calendar, Receipt, Utensils, Car, ShoppingBag, BookOpen, Home, Edit, Trash2 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { PlusCircle, Calendar, Receipt, Utensils, Car, ShoppingBag, BookOpen, Home, Edit, Trash2, Upload, FileText } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
+import type { ExpenseWithCategory, ExpenseCategory, ExpenseForm } from "@/lib/types"
 
 export default function ExpensesPage() {
-  const [expenses, setExpenses] = useState([
-    {
-      id: 1,
-      amount: 500,
-      category: "食費",
-      description: "コンビニ弁当",
-      date: "2024-01-31",
-      icon: Utensils,
-      color: "#f97316"
-    },
-    {
-      id: 2,
-      amount: 300,
-      category: "交通費",
-      description: "電車代",
-      date: "2024-01-30",
-      icon: Car,
-      color: "#3b82f6"
-    },
-    {
-      id: 3,
-      amount: 1200,
-      category: "娯楽",
-      description: "映画鑑賞",
-      date: "2024-01-29",
-      icon: ShoppingBag,
-      color: "#a855f7"
-    },
-    {
-      id: 4,
-      amount: 800,
-      category: "学用品",
-      description: "参考書",
-      date: "2024-01-28",
-      icon: BookOpen,
-      color: "#22c55e"
-    }
-  ])
-
+  const { user, loading } = useAuth()
+  const { toast } = useToast()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  
+  const [expenses, setExpenses] = useState<ExpenseWithCategory[]>([])
+  const [categories, setCategories] = useState<ExpenseCategory[]>([])
+  const [dataLoading, setDataLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
-  const [newExpense, setNewExpense] = useState({
+  const [csvImporting, setCsvImporting] = useState(false)
+  
+  const [newExpense, setNewExpense] = useState<ExpenseForm>({
     amount: "",
-    category: "",
+    category_id: "",
     description: "",
     date: new Date().toISOString().split('T')[0]
   })
 
-  const categoryOptions = [
-    { name: "食費", icon: Utensils, color: "#f97316" },
-    { name: "交通費", icon: Car, color: "#3b82f6" },
-    { name: "娯楽", icon: ShoppingBag, color: "#a855f7" },
-    { name: "学用品", icon: BookOpen, color: "#22c55e" },
-    { name: "その他", icon: Home, color: "#6b7280" }
-  ]
+  const iconMap = {
+    "Utensils": Utensils,
+    "Car": Car,
+    "ShoppingBag": ShoppingBag,
+    "BookOpen": BookOpen,
+    "Shirt": Home, // Default for shirt
+    "Home": Home
+  }
 
-  const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0)
+  // Load data on component mount
+  useEffect(() => {
+    if (user) {
+      loadData()
+    }
+  }, [user])
 
-  const handleAddExpense = () => {
-    if (newExpense.amount && newExpense.category && newExpense.description) {
-      const categoryData = categoryOptions.find(cat => cat.name === newExpense.category)
-      const expense = {
-        id: Date.now(),
-        amount: parseInt(newExpense.amount),
-        category: newExpense.category,
-        description: newExpense.description,
-        date: newExpense.date,
-        icon: categoryData?.icon || Home,
-        color: categoryData?.color || "#6b7280"
+  const loadData = async () => {
+    if (!user) return
+
+    setDataLoading(true)
+    try {
+      // Load categories
+      const categoriesResult = await expenseCategoryService.getCategories()
+      if (categoriesResult.success && categoriesResult.data) {
+        setCategories(categoriesResult.data)
       }
-      setExpenses([expense, ...expenses])
-      setNewExpense({
-        amount: "",
-        category: "",
-        description: "",
-        date: new Date().toISOString().split('T')[0]
+
+      // Load expenses
+      const expensesResult = await expenseService.getExpenses(user.id, 50)
+      if (expensesResult.success && expensesResult.data) {
+        setExpenses(expensesResult.data)
+      }
+    } catch (error) {
+      toast({
+        title: "データ読み込みエラー",
+        description: "データの読み込みに失敗しました。",
+        variant: "destructive",
       })
-      setShowAddForm(false)
+    } finally {
+      setDataLoading(false)
     }
   }
 
-  const deleteExpense = (id: number) => {
-    setExpenses(expenses.filter(expense => expense.id !== id))
+  const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0)
+
+  const handleAddExpense = async () => {
+    if (!user || !newExpense.amount || !newExpense.category_id || !newExpense.description) {
+      toast({
+        title: "入力エラー",
+        description: "すべての項目を入力してください。",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      const result = await expenseService.createExpense(user.id, {
+        amount: parseInt(newExpense.amount),
+        category_id: newExpense.category_id,
+        description: newExpense.description,
+        date: newExpense.date,
+        source: 'manual'
+      })
+
+      if (result.success) {
+        toast({
+          title: "支出を追加しました",
+          description: `¥${parseInt(newExpense.amount).toLocaleString()} - ${newExpense.description}`,
+          variant: "success",
+        })
+        
+        // Reset form
+        setNewExpense({
+          amount: "",
+          category_id: "",
+          description: "",
+          date: new Date().toISOString().split('T')[0]
+        })
+        setShowAddForm(false)
+        
+        // Reload data
+        loadData()
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      toast({
+        title: "支出追加エラー",
+        description: (error as Error).message,
+        variant: "destructive",
+      })
+    }
+  }
+
+  const deleteExpense = async (expenseId: string) => {
+    try {
+      const result = await expenseService.deleteExpense(expenseId)
+      
+      if (result.success) {
+        toast({
+          title: "支出を削除しました",
+          variant: "success",
+        })
+        loadData()
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      toast({
+        title: "削除エラー",
+        description: (error as Error).message,
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleCsvUpload = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file || !user) return
+
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      toast({
+        title: "ファイル形式エラー",
+        description: "CSVファイルを選択してください。",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setCsvImporting(true)
+    try {
+      const fileContent = await file.text()
+      const records = PayPayCsvParser.parseCSV(fileContent)
+      
+      if (records.length === 0) {
+        toast({
+          title: "インポートエラー",
+          description: "有効な支出データが見つかりませんでした。",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Convert to expense format
+      const expenseData = PayPayCsvParser.convertToExpenses(records, categories, user.id)
+      
+      // Insert expenses
+      let successCount = 0
+      let errorCount = 0
+      const errors: string[] = []
+
+      for (const expense of expenseData) {
+        try {
+          const result = await expenseService.createExpense(user.id, expense)
+          if (result.success) {
+            successCount++
+          } else {
+            errorCount++
+            errors.push(result.error || 'Unknown error')
+          }
+        } catch (error) {
+          errorCount++
+          errors.push((error as Error).message)
+        }
+      }
+
+      // Log import
+      await csvImportService.createImportLog(user.id, {
+        filename: file.name,
+        source_type: 'paypay',
+        total_records: records.length,
+        successful_imports: successCount,
+        failed_imports: errorCount,
+        errors: errors.length > 0 ? { errors } : undefined
+      })
+
+      toast({
+        title: "CSVインポート完了",
+        description: `${successCount}件の支出を追加しました。${errorCount > 0 ? `${errorCount}件のエラーがありました。` : ''}`,
+        variant: "success",
+      })
+
+      // Reload data
+      loadData()
+    } catch (error) {
+      toast({
+        title: "CSVインポートエラー",
+        description: (error as Error).message,
+        variant: "destructive",
+      })
+    } finally {
+      setCsvImporting(false)
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  // Wait for auth loading to complete first
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center pb-20">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
+          <p className="text-gray-600">認証状態を確認中...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center pb-20">
+        <div className="text-center space-y-4">
+          <p className="text-gray-600">ログインが必要です</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (dataLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center pb-20">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
+          <p className="text-gray-600">データを読み込み中...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-white pb-20">
       <div className="p-4 space-y-6 pt-6">
         {/* Summary Card */}
-        <div className="bg-zaim-green-50 border border-zaim-green-500 rounded-lg p-4">
+        <div className="bg-zaim-blue-50 border border-zaim-blue-200 rounded-lg p-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-black">¥{totalSpent.toLocaleString()}</div>
             <div className="text-sm text-gray-600">今月の支出合計</div>
           </div>
         </div>
 
-        {/* Add Expense Button */}
-        <Button 
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="w-full bg-zaim-green-500 hover:bg-zaim-green-600 text-white h-12"
-        >
-          <PlusCircle className="h-4 w-4 mr-2" />
-          支出を記録
-        </Button>
+        {/* Add Expense Buttons */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Button 
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white h-12"
+          >
+            <PlusCircle className="h-4 w-4 mr-2" />
+            手動で支出を記録
+          </Button>
+          
+          <Button 
+            onClick={handleCsvUpload}
+            className="bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white h-12"
+            disabled={csvImporting}
+          >
+            {csvImporting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                インポート中...
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4 mr-2" />
+                PayPay CSVをインポート
+              </>
+            )}
+          </Button>
+        </div>
+
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv"
+          onChange={handleFileChange}
+          className="hidden"
+        />
 
         {/* Add Expense Form */}
         {showAddForm && (
@@ -134,15 +338,15 @@ export default function ExpensesPage() {
             <div>
               <Label htmlFor="category">カテゴリ</Label>
               <Select
-                value={newExpense.category}
-                onValueChange={(value) => setNewExpense({ ...newExpense, category: value })}
+                value={newExpense.category_id}
+                onValueChange={(value) => setNewExpense({ ...newExpense, category_id: value })}
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="カテゴリを選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categoryOptions.map((category) => (
-                    <SelectItem key={category.name} value={category.name}>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
                       {category.name}
                     </SelectItem>
                   ))}
@@ -173,7 +377,7 @@ export default function ExpensesPage() {
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={handleAddExpense} className="flex-1 bg-zaim-green-500 hover:bg-zaim-green-600 text-white">
+              <Button onClick={handleAddExpense} className="flex-1 bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white">
                 記録する
               </Button>
               <Button onClick={() => setShowAddForm(false)} variant="outline" className="flex-1 border-zaim-blue-200 text-zaim-blue-600 hover:bg-zaim-blue-50">
@@ -188,23 +392,29 @@ export default function ExpensesPage() {
           <h2 className="text-lg font-bold text-black">支出履歴</h2>
           
           {expenses.map((expense) => {
-            const Icon = expense.icon
+            const IconComponent = expense.category?.icon ? iconMap[expense.category.icon as keyof typeof iconMap] || Home : Home
             return (
               <div key={expense.id} className="bg-white border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div 
                       className="w-10 h-10 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: expense.color }}
+                      style={{ backgroundColor: expense.category?.color || "#6b7280" }}
                     >
-                      <Icon className="h-5 w-5 text-white" />
+                      <IconComponent className="h-5 w-5 text-white" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-bold text-black">¥{expense.amount.toLocaleString()}</span>
-                        <Badge className="bg-gray-100 text-gray-800">
-                          {expense.category}
+                        <Badge className="bg-zaim-blue-100 text-zaim-blue-600">
+                          {expense.category?.name || "未分類"}
                         </Badge>
+                        {expense.source === 'paypay_csv' && (
+                          <Badge className="bg-zaim-yellow-100 text-zaim-yellow-600">
+                            <FileText className="h-3 w-3 mr-1" />
+                            PayPay
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-sm font-medium text-black">{expense.description}</p>
                       <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
@@ -236,21 +446,21 @@ export default function ExpensesPage() {
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <h2 className="text-lg font-bold text-black mb-4">カテゴリ別集計</h2>
           <div className="space-y-3">
-            {categoryOptions.map((category) => {
-              const categoryExpenses = expenses.filter(exp => exp.category === category.name)
+            {categories.map((category) => {
+              const categoryExpenses = expenses.filter(exp => exp.category_id === category.id)
               const categoryTotal = categoryExpenses.reduce((sum, exp) => sum + exp.amount, 0)
-              const Icon = category.icon
+              const IconComponent = category.icon ? iconMap[category.icon as keyof typeof iconMap] || Home : Home
               
               if (categoryTotal === 0) return null
               
               return (
-                <div key={category.name} className="flex items-center justify-between">
+                <div key={category.id} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div 
                       className="w-8 h-8 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: category.color }}
+                      style={{ backgroundColor: category.color || "#6b7280" }}
                     >
-                      <Icon className="h-4 w-4 text-white" />
+                      <IconComponent className="h-4 w-4 text-white" />
                     </div>
                     <span className="text-sm font-medium text-black">{category.name}</span>
                   </div>
