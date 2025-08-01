@@ -1,3 +1,5 @@
+import path from 'path'
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -11,6 +13,12 @@ const nextConfig = {
   },
   // WSL環境でのホットリロード対応
   webpack: (config, { dev, isServer }) => {
+    // Path alias resolution for Vercel
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': path.resolve('./'),
+    }
+    
     if (dev && !isServer) {
       // ファイル監視の設定
       config.watchOptions = {
