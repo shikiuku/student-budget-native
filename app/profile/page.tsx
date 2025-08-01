@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useAuth } from "@/components/auth-provider"
+import { userProfileService } from "@/lib/database"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,6 +12,8 @@ import { SwitchVariants } from "@/components/ui/switch-variants"
 import { Badge } from "@/components/ui/badge"
 import { User, MapPin, School, Bell, Shield, Target } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
+import { useToast } from "@/hooks/use-toast"
+import type { UserProfile, SchoolType } from "@/lib/types"
 
 const PREFECTURES = [
   "北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
@@ -54,8 +58,24 @@ const CITIES_BY_PREFECTURE: Record<string, string[]> = {
 }
 
 export default function ProfilePage() {
-  const [selectedPrefecture, setSelectedPrefecture] = useState("東京都")
-  const [selectedCity, setSelectedCity] = useState("渋谷区")
+  const { user, loading: authLoading } = useAuth()
+  const { toast } = useToast()
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  
+  // フォーム状態
+  const [formData, setFormData] = useState({
+    name: "",
+    age: 15,
+    school_type: "middle_school" as SchoolType,
+    prefecture: "",
+    city: "",
+    school_name: "",
+    grade: "",
+    monthly_budget: 30000
+  })
+  
   const [notifications, setNotifications] = useState({
     spending: true,
     savings: true,
@@ -63,10 +83,99 @@ export default function ProfilePage() {
     tips: true,
   })
 
+  // ユーザーデータを読み込み
+  useEffect(() => {
+    if (user) {
+      loadUserProfile()
+    }
+  }, [user])
+
+  const loadUserProfile = async () => {
+    if (!user) return
+    
+    setLoading(true)
+    try {
+      const result = await userProfileService.getProfile(user.id)
+      if (result.success && result.data) {
+        setUserProfile(result.data)
+        setFormData({
+          name: result.data.name || "",
+          age: result.data.age || 15,
+          school_type: result.data.school_type || "middle_school",
+          prefecture: result.data.prefecture || "",
+          city: result.data.city || "",
+          school_name: result.data.school_name || "",
+          grade: result.data.grade || "",
+          monthly_budget: result.data.monthly_budget || 30000
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "データ読み込みエラー",
+        description: "プロフィール情報の読み込みに失敗しました。",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // フォームデータ更新
+  const handleInputChange = (field: string, value: string | number) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
   // 都道府県が変更されたときに市区町村をリセット
   const handlePrefectureChange = (prefecture: string) => {
-    setSelectedPrefecture(prefecture)
-    setSelectedCity("") // 市区町村をリセット
+    setFormData(prev => ({ ...prev, prefecture, city: "" }))
+  }
+
+  // プロフィール保存
+  const handleSaveProfile = async () => {
+    if (!user) return
+    
+    setSaving(true)
+    try {
+      const result = await userProfileService.updateProfile(user.id, formData)
+      if (result.success) {
+        toast({
+          title: "保存完了",
+          description: "プロフィール情報を更新しました。",
+        })
+        loadUserProfile() // データを再読み込み
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      toast({
+        title: "保存エラー",
+        description: (error as Error).message,
+        variant: "destructive",
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center pb-20">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
+          <p className="text-gray-600">プロフィール情報を読み込み中...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center pb-20">
+        <div className="text-center space-y-4">
+          <p className="text-gray-600 mb-4">ログインが必要です</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -80,11 +189,15 @@ export default function ProfilePage() {
               <User className="h-8 w-8 text-zaim-blue-500" />
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-bold text-black">田中 太郎</h2>
-              <p className="text-gray-600">高校2年生</p>
+              <h2 className="text-xl font-bold text-black">{formData.name || "未設定"}</h2>
+              <p className="text-gray-600">{formData.grade || "未設定"}</p>
               <div className="flex gap-2 mt-2">
-                <Badge className="bg-zaim-blue-100 text-zaim-blue-600 border-zaim-blue-200">東京都</Badge>
-                <Badge className="bg-gray-100 text-gray-800 border-gray-200">17歳</Badge>
+                <Badge className="bg-zaim-blue-100 text-zaim-blue-600 border-zaim-blue-200">
+                  {formData.prefecture || "未設定"}
+                </Badge>
+                <Badge className="bg-gray-100 text-gray-800 border-gray-200">
+                  {formData.age}歳
+                </Badge>
               </div>
             </div>
           </div>
@@ -97,25 +210,25 @@ export default function ProfilePage() {
             基本情報
           </h2>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="firstName" className="text-black font-medium">名前（姓）</Label>
-                <Input id="firstName" defaultValue="田中" className="mt-1 border-zaim-blue-200 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black" />
-              </div>
-              <div>
-                <Label htmlFor="lastName" className="text-black font-medium">名前（名）</Label>
-                <Input id="lastName" defaultValue="太郎" className="mt-1 border-zaim-blue-200 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black" />
-              </div>
+            <div>
+              <Label htmlFor="name" className="text-black font-medium">名前</Label>
+              <Input 
+                id="name" 
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder="田中 太郎"
+                className="mt-1 border-zaim-blue-200 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black" 
+              />
             </div>
 
             <div>
               <Label htmlFor="age" className="text-black font-medium">年齢</Label>
-              <Select defaultValue="17">
+              <Select value={formData.age.toString()} onValueChange={(value) => handleInputChange('age', parseInt(value))}>
                 <SelectTrigger className="mt-1 border-zaim-blue-200 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-200" position="popper" side="bottom" align="start" avoidCollisions={false} sticky="always">
-                  {Array.from({ length: 8 }, (_, i) => i + 13).map((age) => (
+                  {Array.from({ length: 8 }, (_, i) => i + 12).map((age) => (
                     <SelectItem key={age} value={age.toString()} className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">
                       {age}歳
                     </SelectItem>
@@ -126,17 +239,17 @@ export default function ProfilePage() {
 
             <div>
               <Label htmlFor="grade" className="text-black font-medium">学年</Label>
-              <Select defaultValue="high2">
+              <Select value={formData.grade} onValueChange={(value) => handleInputChange('grade', value)}>
                 <SelectTrigger className="mt-1 border-zaim-blue-200 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black">
-                  <SelectValue />
+                  <SelectValue placeholder="学年を選択" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-200" position="popper" side="bottom" align="start" avoidCollisions={false} sticky="always">
-                  <SelectItem value="junior1" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">中学1年生</SelectItem>
-                  <SelectItem value="junior2" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">中学2年生</SelectItem>
-                  <SelectItem value="junior3" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">中学3年生</SelectItem>
-                  <SelectItem value="high1" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">高校1年生</SelectItem>
-                  <SelectItem value="high2" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">高校2年生</SelectItem>
-                  <SelectItem value="high3" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">高校3年生</SelectItem>
+                  <SelectItem value="中学1年生" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">中学1年生</SelectItem>
+                  <SelectItem value="中学2年生" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">中学2年生</SelectItem>
+                  <SelectItem value="中学3年生" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">中学3年生</SelectItem>
+                  <SelectItem value="高校1年生" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">高校1年生</SelectItem>
+                  <SelectItem value="高校2年生" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">高校2年生</SelectItem>
+                  <SelectItem value="高校3年生" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">高校3年生</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -152,9 +265,9 @@ export default function ProfilePage() {
           <div className="space-y-4">
             <div>
               <Label htmlFor="prefecture" className="text-black font-medium">都道府県</Label>
-              <Select value={selectedPrefecture} onValueChange={handlePrefectureChange}>
+              <Select value={formData.prefecture} onValueChange={handlePrefectureChange}>
                 <SelectTrigger className="mt-1 border-zaim-blue-200 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black">
-                  <SelectValue />
+                  <SelectValue placeholder="都道府県を選択" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-200" position="popper" side="bottom" align="start" avoidCollisions={false} sticky="always">
                   {PREFECTURES.map(prefecture => (
@@ -168,13 +281,13 @@ export default function ProfilePage() {
 
             <div>
               <Label htmlFor="city" className="text-black font-medium">市区町村</Label>
-              <Select value={selectedCity} onValueChange={setSelectedCity}>
+              <Select value={formData.city} onValueChange={(value) => handleInputChange('city', value)}>
                 <SelectTrigger className="mt-1 border-zaim-blue-200 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black">
-                  <SelectValue placeholder="選択してください" />
+                  <SelectValue placeholder="市区町村を選択" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-200" position="popper" side="bottom" align="start" avoidCollisions={false} sticky="always">
-                  {selectedPrefecture && CITIES_BY_PREFECTURE[selectedPrefecture] ? 
-                    CITIES_BY_PREFECTURE[selectedPrefecture].map(city => (
+                  {formData.prefecture && CITIES_BY_PREFECTURE[formData.prefecture] ? 
+                    CITIES_BY_PREFECTURE[formData.prefecture].map(city => (
                       <SelectItem key={city} value={city} className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">
                         {city}
                       </SelectItem>
@@ -208,20 +321,26 @@ export default function ProfilePage() {
           <div className="space-y-4">
             <div>
               <Label htmlFor="schoolName" className="text-black font-medium">学校名</Label>
-              <Input id="schoolName" placeholder="○○高等学校" className="mt-1 border-zaim-blue-200 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black" />
+              <Input 
+                id="schoolName" 
+                value={formData.school_name}
+                onChange={(e) => handleInputChange('school_name', e.target.value)}
+                placeholder="○○高等学校" 
+                className="mt-1 border-zaim-blue-200 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black" 
+              />
             </div>
 
             <div>
               <Label htmlFor="schoolType" className="text-black font-medium">学校種別</Label>
-              <Select>
+              <Select value={formData.school_type} onValueChange={(value) => handleInputChange('school_type', value)}>
                 <SelectTrigger className="mt-1 border-zaim-blue-200 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black">
-                  <SelectValue placeholder="選択してください" />
+                  <SelectValue placeholder="学校種別を選択" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-200" position="popper" side="bottom" align="start" avoidCollisions={false} sticky="always">
-                  <SelectItem value="public-junior" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">公立中学校</SelectItem>
-                  <SelectItem value="private-junior" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">私立中学校</SelectItem>
-                  <SelectItem value="public-high" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">公立高等学校</SelectItem>
-                  <SelectItem value="private-high" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">私立高等学校</SelectItem>
+                  <SelectItem value="middle_school" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">中学校</SelectItem>
+                  <SelectItem value="high_school" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">高等学校</SelectItem>
+                  <SelectItem value="vocational_school" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">専門学校</SelectItem>
+                  <SelectItem value="university" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">大学</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -237,23 +356,18 @@ export default function ProfilePage() {
           <div className="space-y-4">
             <div>
               <Label htmlFor="monthlyBudget" className="text-black font-medium">月の予算</Label>
-              <Input id="monthlyBudget" type="number" placeholder="15000" className="mt-1 border-zaim-blue-200 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black" defaultValue="15000" />
-            </div>
-
-            <div>
-              <Label htmlFor="savingsGoal" className="text-black font-medium">月の貯金目標</Label>
-              <Input id="savingsGoal" type="number" placeholder="5000" className="mt-1 border-zaim-blue-200 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black" defaultValue="5000" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="foodBudget" className="text-black font-medium">食費予算</Label>
-                <Input id="foodBudget" type="number" placeholder="8000" className="mt-1 border-zaim-blue-200 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black" defaultValue="8000" />
+              <div className="relative mt-1">
+                <span className="absolute left-3 top-2 text-gray-500">¥</span>
+                <Input 
+                  id="monthlyBudget" 
+                  type="number" 
+                  value={formData.monthly_budget}
+                  onChange={(e) => handleInputChange('monthly_budget', parseInt(e.target.value) || 0)}
+                  placeholder="30000" 
+                  className="pl-8 border-zaim-blue-200 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black" 
+                />
               </div>
-              <div>
-                <Label htmlFor="entertainmentBudget" className="text-black font-medium">娯楽予算</Label>
-                <Input id="entertainmentBudget" type="number" placeholder="4000" className="mt-1 border-zaim-blue-200 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black" defaultValue="4000" />
-              </div>
+              <p className="text-xs text-gray-500 mt-1">お小遣いやアルバイト代など、月に使える金額</p>
             </div>
           </div>
         </div>
@@ -316,7 +430,13 @@ export default function ProfilePage() {
         </div>
 
         {/* Save Button */}
-        <Button className="w-full h-12 bg-zaim-green-500 hover:bg-zaim-green-600 text-white">設定を保存</Button>
+        <Button 
+          onClick={handleSaveProfile}
+          disabled={saving}
+          className="w-full h-12 bg-zaim-green-500 hover:bg-zaim-green-600 text-white disabled:opacity-50"
+        >
+          {saving ? "保存中..." : "設定を保存"}
+        </Button>
       </div>
 
       <BottomNav currentPage="profile" />
