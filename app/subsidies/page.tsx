@@ -89,22 +89,22 @@ export default function SubsidiesPage() {
                 <SelectTrigger className="border-zaim-blue-200 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black">
                   <SelectValue placeholder="地域を選択" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全国</SelectItem>
-                  <SelectItem value="tokyo">東京都</SelectItem>
-                  <SelectItem value="osaka">大阪府</SelectItem>
-                  <SelectItem value="kanagawa">神奈川県</SelectItem>
+                <SelectContent className="bg-white border-gray-200">
+                  <SelectItem value="all" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">全国</SelectItem>
+                  <SelectItem value="tokyo" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">東京都</SelectItem>
+                  <SelectItem value="osaka" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">大阪府</SelectItem>
+                  <SelectItem value="kanagawa" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">神奈川県</SelectItem>
                 </SelectContent>
               </Select>
               <Select>
                 <SelectTrigger className="border-zaim-blue-200 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black">
                   <SelectValue placeholder="カテゴリ" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">すべて</SelectItem>
-                  <SelectItem value="education">教育</SelectItem>
-                  <SelectItem value="support">生活支援</SelectItem>
-                  <SelectItem value="transport">交通</SelectItem>
+                <SelectContent className="bg-white border-gray-200">
+                  <SelectItem value="all" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">すべて</SelectItem>
+                  <SelectItem value="education" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">教育</SelectItem>
+                  <SelectItem value="support" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">生活支援</SelectItem>
+                  <SelectItem value="transport" className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">交通</SelectItem>
                 </SelectContent>
               </Select>
             </div>

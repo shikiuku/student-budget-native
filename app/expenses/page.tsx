@@ -341,12 +341,12 @@ export default function ExpensesPage() {
                 value={newExpense.category_id}
                 onValueChange={(value) => setNewExpense({ ...newExpense, category_id: value })}
               >
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="mt-1 border-zaim-blue-200 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black">
                   <SelectValue placeholder="カテゴリを選択" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border-gray-200">
                   {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
+                    <SelectItem key={category.id} value={category.id} className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">
                       {category.name}
                     </SelectItem>
                   ))}
