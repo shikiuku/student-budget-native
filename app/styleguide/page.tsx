@@ -65,7 +65,7 @@ export default function StyleGuidePage() {
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-black mb-2">26 UIスタイルガイド</h1>
+          <h1 className="text-3xl font-bold text-black mb-2">27 UIスタイルガイド</h1>
           <p className="text-black mb-6">学生向け節約アプリで使用中のUIコンポーネント一覧</p>
           
           {/* Table of Contents */}
