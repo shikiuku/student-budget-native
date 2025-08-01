@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { category_id, amount, description, expense_date, payment_method, tags } = body
+    const { category_id, amount, description, date, source = 'manual' } = body
 
     if (!category_id || !amount) {
       return NextResponse.json(
@@ -76,9 +76,8 @@ export async function POST(request: NextRequest) {
       category_id,
       amount,
       description,
-      expense_date,
-      payment_method,
-      tags
+      date: date || new Date().toISOString().split('T')[0],
+      source
     })
 
     if (!result.success) {

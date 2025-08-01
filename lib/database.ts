@@ -218,8 +218,9 @@ export const expenseService = {
       // Group by category
       const categoryTotals: Record<string, { name: string; amount: number }> = {};
       expenses.forEach(expense => {
-        const categoryId = expense.category.id;
-        const categoryName = expense.category.name;
+        const category = Array.isArray(expense.category) ? expense.category[0] : expense.category;
+        const categoryId = category?.id || 'unknown';
+        const categoryName = category?.name || 'Unknown';
         
         if (!categoryTotals[categoryId]) {
           categoryTotals[categoryId] = { name: categoryName, amount: 0 };
