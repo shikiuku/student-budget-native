@@ -1,0 +1,5 @@
+Student Budget Tracker
+Deployment Version: 2025-08-01-21:20
+Features: Complete Supabase Integration, Prefecture/City Dropdowns, Profile Management
+Styleguide: Version 27
+Status: Ready for Production
