@@ -1,5 +1,6 @@
 "use client"
 
+// Student Budget Tracker - Version 2025-08-01 - Complete with Supabase Integration
 import { useState, useEffect } from "react"
 import { useAuth } from "@/components/auth-provider"
 import { userProfileService, expenseService, expenseCategoryService } from "@/lib/database"
