@@ -22,11 +22,22 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
   const handleGoogleAuth = async () => {
     setLoading(true);
     try {
+      // 本番環境とローカル環境を自動判定
+      const redirectUrl = window.location.hostname === 'localhost' 
+        ? 'http://localhost:3000/auth/callback'
+        : `${window.location.origin}/auth/callback`;
+      
+      console.log('Redirect URL:', redirectUrl);
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          skipBrowserRedirect: false
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: false,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       });
       
