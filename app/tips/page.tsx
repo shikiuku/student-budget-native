@@ -28,6 +28,7 @@ import { BottomNav } from "@/components/bottom-nav"
 import { createPost, getPosts, type Post } from '@/lib/api/posts'
 import { likePost, unlikePost, checkUserLikedPosts } from '@/lib/api/likes'
 import { bookmarkPost, unbookmarkPost, checkUserBookmarkedPosts } from '@/lib/api/bookmarks'
+import { PostCard } from '@/components/post-card'
 
 export default function TipsPage() {
   const [selectedCategory, setSelectedCategory] = useState('')
@@ -163,31 +164,23 @@ export default function TipsPage() {
     }
   }
 
-  // 時間表示のフォーマット
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
-    
-    if (diffInHours < 1) return '数分前'
-    if (diffInHours < 24) return `${diffInHours}時間前`
-    
-    const diffInDays = Math.floor(diffInHours / 24)
-    if (diffInDays < 7) return `${diffInDays}日前`
-    
-    return date.toLocaleDateString('ja-JP')
+  // 投稿削除処理
+  const handleDelete = (postId: string) => {
+    // 投稿一覧から削除
+    setPosts(prev => prev.filter(post => post.id !== postId))
+    // いいね・ブックマーク状態からも削除
+    setLikedPosts(prev => {
+      const newState = { ...prev }
+      delete newState[postId]
+      return newState
+    })
+    setBookmarkedPosts(prev => {
+      const newState = { ...prev }
+      delete newState[postId]
+      return newState
+    })
   }
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case '食費': return Utensils
-      case '交通費': return Car
-      case '娯楽': return Gift
-      case '学用品': return BookOpen
-      case '衣類': return Shirt
-      default: return PlusCircle
-    }
-  }
 
   return (
     <div className="min-h-screen bg-white pb-20">
@@ -237,71 +230,19 @@ export default function TipsPage() {
           ) : (
             <div className="space-y-4">
               {posts.map((post) => {
-                const CategoryIcon = getCategoryIcon(post.category);
                 const isLiked = likedPosts[post.id] || false;
                 const isBookmarked = bookmarkedPosts[post.id] || false;
                 
                 return (
-                  <Card key={post.id} className="bg-white border border-gray-200 shadow-sm">
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3 mb-3">
-                        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                          <User className="h-5 w-5 text-gray-600" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-medium text-black">
-                              {post.user_profiles?.name || '匿名ユーザー'}
-                            </h3>
-                            {post.user_profiles?.school_type && post.user_profiles?.grade && (
-                              <Badge variant="secondary" className="text-xs">
-                                {post.user_profiles.grade}
-                              </Badge>
-                            )}
-                            <span className="text-xs text-gray-500">{formatTimeAgo(post.created_at)}</span>
-                          </div>
-                          <h4 className="font-bold text-black mb-2">{post.title}</h4>
-                          <p className="text-sm text-gray-700 mb-3">{post.content}</p>
-                          <div className="flex items-center gap-2 mb-3">
-                            <div className="flex items-center gap-1">
-                              <CategoryIcon className="h-4 w-4 text-gray-600" />
-                              <Badge className="bg-gray-100 text-gray-800">{post.category}</Badge>
-                            </div>
-                            {post.savings_effect && (
-                              <Badge className="bg-zaim-green-100 text-zaim-green-600">
-                                {post.savings_effect}
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                              <button 
-                                onClick={() => handleLike(post.id, isLiked)}
-                                className={`flex items-center gap-1 text-sm ${
-                                  isLiked ? 'text-red-500' : 'text-gray-500'
-                                } hover:text-red-500 transition-colors`}
-                              >
-                                <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
-                                {post.likes_count}
-                              </button>
-                              <button className="flex items-center gap-1 text-sm text-gray-500 hover:text-blue-500 transition-colors">
-                                <MessageCircle className="h-4 w-4" />
-                                {post.comments_count}
-                              </button>
-                            </div>
-                            <button 
-                              onClick={() => handleBookmark(post.id, isBookmarked)}
-                              className={`p-1 rounded ${
-                                isBookmarked ? 'text-yellow-500' : 'text-gray-400'
-                              } hover:text-yellow-500 transition-colors`}
-                            >
-                              <Bookmark className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`} />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    isLiked={isLiked}
+                    isBookmarked={isBookmarked}
+                    onLike={handleLike}
+                    onBookmark={handleBookmark}
+                    onDelete={handleDelete}
+                  />
                 );
               })}
             </div>

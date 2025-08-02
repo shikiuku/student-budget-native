@@ -1,20 +1,13 @@
-# データベースマイグレーション手順
+-- ====================================================================
+-- 学生向け節約アプリ - データベースマイグレーション
+-- ====================================================================
+-- 以下のSQLコマンドをSupabase SQL Editorで実行してください
+-- https://supabase.com/dashboard/project/hvxyvrquvszdwmjoycsj/sql
 
-## 現在の状況
-- Supabaseプロジェクト: `hvxyvrquvszdwmjoycsj`
-- 必要なテーブル: `posts`, `post_likes`, `post_bookmarks`, `post_comments`
-- 問題: テーブルが存在しないため404エラーが発生
+-- ====================================================================
+-- 1. 投稿テーブルの作成
+-- ====================================================================
 
-## 解決方法
-
-### 手順1: Supabase SQL Editorにアクセス
-以下のURLにアクセスしてください：
-https://supabase.com/dashboard/project/hvxyvrquvszdwmjoycsj/sql
-
-### 手順2: 以下のSQLを順番に実行
-
-#### 1. 投稿テーブル（posts）の作成
-```sql
 -- 節約投稿テーブルの作成
 CREATE TABLE public.posts (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -67,10 +60,11 @@ $$ language 'plpgsql';
 
 CREATE TRIGGER update_posts_updated_at BEFORE UPDATE ON public.posts
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-```
 
-#### 2. いいね・ブックマークテーブルの作成
-```sql
+-- ====================================================================
+-- 2. いいね・ブックマークテーブルの作成
+-- ====================================================================
+
 -- いいねテーブルの作成
 CREATE TABLE public.post_likes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -144,10 +138,11 @@ $$ language 'plpgsql';
 CREATE TRIGGER trigger_update_likes_count 
   AFTER INSERT OR DELETE ON public.post_likes
   FOR EACH ROW EXECUTE FUNCTION update_post_likes_count();
-```
 
-#### 3. コメントテーブルの作成
-```sql
+-- ====================================================================
+-- 3. コメントテーブルの作成
+-- ====================================================================
+
 -- コメントテーブルの作成
 CREATE TABLE public.post_comments (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -217,24 +212,19 @@ CREATE TRIGGER trigger_update_comments_count
 -- コメント更新日時の自動更新トリガー
 CREATE TRIGGER update_post_comments_updated_at BEFORE UPDATE ON public.post_comments
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-```
 
-### 手順3: 実行完了の確認
-全ての SQL を実行後、以下のクエリで作成されたテーブルを確認してください：
+-- ====================================================================
+-- マイグレーション完了確認
+-- ====================================================================
 
-```sql
+-- テーブル一覧確認
 SELECT table_name 
 FROM information_schema.tables 
 WHERE table_schema = 'public' 
   AND table_name IN ('posts', 'post_likes', 'post_bookmarks', 'post_comments');
-```
 
-4つのテーブルが表示されれば完了です。
-
-### 手順4: アプリケーションの404エラー解決確認
-マイグレーション完了後、アプリケーションをリロードして404エラーが解消されることを確認してください。
-
-## 備考
-- 各SQLブロックは順番に実行してください
-- エラーが発生した場合は、既存のテーブルやポリシーと競合していないか確認してください
-- Row Level Security（RLS）が有効になっているため、認証されたユーザーのみデータアクセス可能です
+-- 作成されたテーブルの構造確認
+\d public.posts;
+\d public.post_likes;
+\d public.post_bookmarks;
+\d public.post_comments;

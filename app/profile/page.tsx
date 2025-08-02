@@ -10,11 +10,16 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SwitchVariants } from "@/components/ui/switch-variants"
 import { Badge } from "@/components/ui/badge"
-import { User, MapPin, School, Bell, Shield, Target } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { User, MapPin, School, Bell, Shield, Target, Heart, Bookmark, FileText, Settings } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { useToast } from "@/hooks/use-toast"
 import type { UserProfile, SchoolType } from "@/lib/types"
 import { CITIES_BY_PREFECTURE } from "@/lib/prefecture-data"
+import { getUserPosts, getUserLikedPosts, getUserBookmarkedPosts, type Post } from '@/lib/api/posts'
+import { PostCard } from '@/components/post-card'
+import { likePost, unlikePost, checkUserLikedPosts } from '@/lib/api/likes'
+import { bookmarkPost, unbookmarkPost, checkUserBookmarkedPosts } from '@/lib/api/bookmarks'
 
 const PREFECTURES = [
   "北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
@@ -32,6 +37,17 @@ export default function ProfilePage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  
+  // タブ状態
+  const [activeTab, setActiveTab] = useState('posts')
+  
+  // 投稿関連の状態
+  const [userPosts, setUserPosts] = useState<Post[]>([])
+  const [likedPosts, setLikedPosts] = useState<Post[]>([])
+  const [bookmarkedPosts, setBookmarkedPosts] = useState<Post[]>([])
+  const [postsLoading, setPostsLoading] = useState(false)
+  const [likedPostsState, setLikedPostsState] = useState<Record<string, boolean>>({})
+  const [bookmarkedPostsState, setBookmarkedPostsState] = useState<Record<string, boolean>>({})
   
   // フォーム状態
   const [formData, setFormData] = useState({
@@ -56,8 +72,16 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user) {
       loadUserProfile()
+      loadUserPosts()
     }
   }, [user])
+
+  // タブが変更されたときの投稿読み込み
+  useEffect(() => {
+    if (user && activeTab !== 'settings') {
+      loadPostsForTab(activeTab)
+    }
+  }, [activeTab, user])
 
   const loadUserProfile = async () => {
     if (!user) return
@@ -87,6 +111,147 @@ export default function ProfilePage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // ユーザーの投稿データを読み込み
+  const loadUserPosts = async () => {
+    if (!user) return
+    
+    setPostsLoading(true)
+    try {
+      const { data } = await getUserPosts(user.id, 20)
+      if (data) {
+        setUserPosts(data)
+        await loadLikeBookmarkStates(data)
+      }
+    } catch (error) {
+      console.error('ユーザー投稿読み込みエラー:', error)
+    } finally {
+      setPostsLoading(false)
+    }
+  }
+
+  // タブに応じた投稿データを読み込み
+  const loadPostsForTab = async (tabName: string) => {
+    if (!user) return
+
+    setPostsLoading(true)
+    try {
+      let data: Post[] = []
+      
+      switch (tabName) {
+        case 'posts':
+          const userPostsResult = await getUserPosts(user.id, 20)
+          data = userPostsResult.data || []
+          setUserPosts(data)
+          break
+        case 'liked':
+          const likedResult = await getUserLikedPosts(user.id, 20)
+          data = likedResult.data || []
+          setLikedPosts(data)
+          break
+        case 'bookmarked':
+          const bookmarkedResult = await getUserBookmarkedPosts(user.id, 20)
+          data = bookmarkedResult.data || []
+          setBookmarkedPosts(data)
+          break
+      }
+      
+      if (data.length > 0) {
+        await loadLikeBookmarkStates(data)
+      }
+    } catch (error) {
+      console.error('投稿読み込みエラー:', error)
+    } finally {
+      setPostsLoading(false)
+    }
+  }
+
+  // いいね・ブックマーク状態を読み込み
+  const loadLikeBookmarkStates = async (posts: Post[]) => {
+    if (!posts.length) return
+
+    const postIds = posts.map(post => post.id)
+    const [likedResult, bookmarkedResult] = await Promise.all([
+      checkUserLikedPosts(postIds),
+      checkUserBookmarkedPosts(postIds)
+    ])
+
+    if (likedResult.data) {
+      setLikedPostsState(likedResult.data)
+    }
+
+    if (bookmarkedResult.data) {
+      setBookmarkedPostsState(bookmarkedResult.data)
+    }
+  }
+
+  // いいね処理
+  const handleLike = async (postId: string, isCurrentlyLiked: boolean) => {
+    try {
+      if (isCurrentlyLiked) {
+        await unlikePost(postId)
+        setLikedPostsState(prev => ({ ...prev, [postId]: false }))
+        // 投稿のいいね数を更新
+        updatePostLikesCount(postId, -1)
+      } else {
+        await likePost(postId)
+        setLikedPostsState(prev => ({ ...prev, [postId]: true }))
+        // 投稿のいいね数を更新
+        updatePostLikesCount(postId, 1)
+      }
+    } catch (error) {
+      console.error('いいね処理エラー:', error)
+    }
+  }
+
+  // ブックマーク処理
+  const handleBookmark = async (postId: string, isCurrentlyBookmarked: boolean) => {
+    try {
+      if (isCurrentlyBookmarked) {
+        await unbookmarkPost(postId)
+        setBookmarkedPostsState(prev => ({ ...prev, [postId]: false }))
+      } else {
+        await bookmarkPost(postId)
+        setBookmarkedPostsState(prev => ({ ...prev, [postId]: true }))
+      }
+    } catch (error) {
+      console.error('ブックマーク処理エラー:', error)
+    }
+  }
+
+  // 投稿削除処理
+  const handleDelete = (postId: string) => {
+    // 全ての投稿配列から削除
+    setUserPosts(prev => prev.filter(post => post.id !== postId))
+    setLikedPosts(prev => prev.filter(post => post.id !== postId))
+    setBookmarkedPosts(prev => prev.filter(post => post.id !== postId))
+    
+    // 状態からも削除
+    setLikedPostsState(prev => {
+      const newState = { ...prev }
+      delete newState[postId]
+      return newState
+    })
+    setBookmarkedPostsState(prev => {
+      const newState = { ...prev }
+      delete newState[postId]
+      return newState
+    })
+  }
+
+  // 投稿のいいね数を更新
+  const updatePostLikesCount = (postId: string, change: number) => {
+    const updatePosts = (posts: Post[]) => 
+      posts.map(post => 
+        post.id === postId 
+          ? { ...post, likes_count: post.likes_count + change }
+          : post
+      )
+    
+    setUserPosts(prev => updatePosts(prev))
+    setLikedPosts(prev => updatePosts(prev))
+    setBookmarkedPosts(prev => updatePosts(prev))
   }
 
   // フォームデータ更新
@@ -124,6 +289,47 @@ export default function ProfilePage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  // 投稿リストを表示するヘルパー関数
+  const renderPostsList = (posts: Post[], emptyMessage: string) => {
+    if (postsLoading) {
+      return (
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zaim-blue-500 mx-auto mb-2"></div>
+          <div className="text-gray-500">読み込み中...</div>
+        </div>
+      )
+    }
+
+    if (posts.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <div className="text-gray-500">{emptyMessage}</div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="space-y-4">
+        {posts.map((post) => {
+          const isLiked = likedPostsState[post.id] || false
+          const isBookmarked = bookmarkedPostsState[post.id] || false
+          
+          return (
+            <PostCard
+              key={post.id}
+              post={post}
+              isLiked={isLiked}
+              isBookmarked={isBookmarked}
+              onLike={handleLike}
+              onBookmark={handleBookmark}
+              onDelete={handleDelete}
+            />
+          )
+        })}
+      </div>
+    )
   }
 
   if (authLoading || loading) {
@@ -171,6 +377,63 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* Tabbed Content */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 bg-gray-100">
+            <TabsTrigger 
+              value="posts" 
+              className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-zaim-blue-600"
+            >
+              <FileText className="h-4 w-4" />
+              投稿
+            </TabsTrigger>
+            <TabsTrigger 
+              value="liked" 
+              className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-red-600"
+            >
+              <Heart className="h-4 w-4" />
+              いいね
+            </TabsTrigger>
+            <TabsTrigger 
+              value="bookmarked" 
+              className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-yellow-600"
+            >
+              <Bookmark className="h-4 w-4" />
+              保存済み
+            </TabsTrigger>
+            <TabsTrigger 
+              value="settings" 
+              className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-gray-800"
+            >
+              <Settings className="h-4 w-4" />
+              設定
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="posts" className="mt-6">
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold text-black">自分の投稿</h2>
+              {renderPostsList(userPosts, "まだ投稿がありません")}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="liked" className="mt-6">
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold text-black">いいねした投稿</h2>
+              {renderPostsList(likedPosts, "いいねした投稿がありません")}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="bookmarked" className="mt-6">
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold text-black">保存した投稿</h2>
+              {renderPostsList(bookmarkedPosts, "保存した投稿がありません")}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="settings" className="mt-6">
+            <div className="space-y-6">
 
         {/* Basic Information */}
         <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
@@ -406,6 +669,10 @@ export default function ProfilePage() {
         >
           {saving ? "保存中..." : "設定を保存"}
         </Button>
+
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       <BottomNav currentPage="profile" />

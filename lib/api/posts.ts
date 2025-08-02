@@ -45,14 +45,7 @@ export async function getPosts(filters?: PostsFilters) {
   try {
     let query = supabase
       .from('posts')
-      .select(`
-        *,
-        user_profiles:user_id (
-          name,
-          school_type,
-          grade
-        )
-      `)
+      .select('*')
       .order('created_at', { ascending: false })
 
     // フィルターを適用
@@ -76,11 +69,29 @@ export async function getPosts(filters?: PostsFilters) {
       query = query.range(filters.offset, (filters.offset || 0) + (filters.limit || 10) - 1)
     }
 
-    const { data, error } = await query
+    const { data: postsData, error } = await query
 
     if (error) throw error
 
-    return { data: data as Post[], error: null }
+    // 投稿に関連するユーザープロフィールを取得
+    if (postsData && postsData.length > 0) {
+      const userIds = [...new Set(postsData.map(post => post.user_id))]
+      
+      const { data: profilesData } = await supabase
+        .from('user_profiles')
+        .select('id, name, school_type, grade')
+        .in('id', userIds)
+
+      // 投稿データにプロフィール情報を結合
+      const postsWithProfiles = postsData.map(post => ({
+        ...post,
+        user_profiles: profilesData?.find(profile => profile.id === post.user_id) || null
+      }))
+
+      return { data: postsWithProfiles as Post[], error: null }
+    }
+
+    return { data: postsData as Post[], error: null }
   } catch (error) {
     console.error('投稿取得エラー:', error)
     return { data: null, error }
@@ -95,22 +106,31 @@ export async function getFeaturedPosts() {
 // 特定の投稿を取得
 export async function getPost(id: string) {
   try {
-    const { data, error } = await supabase
+    const { data: postData, error } = await supabase
       .from('posts')
-      .select(`
-        *,
-        user_profiles:user_id (
-          name,
-          school_type,
-          grade
-        )
-      `)
+      .select('*')
       .eq('id', id)
       .single()
 
     if (error) throw error
 
-    return { data: data as Post, error: null }
+    // ユーザープロフィールを取得
+    if (postData) {
+      const { data: profileData } = await supabase
+        .from('user_profiles')
+        .select('id, name, school_type, grade')
+        .eq('id', postData.user_id)
+        .single()
+
+      const postWithProfile = {
+        ...postData,
+        user_profiles: profileData
+      }
+
+      return { data: postWithProfile as Post, error: null }
+    }
+
+    return { data: postData as Post, error: null }
   } catch (error) {
     console.error('投稿取得エラー:', error)
     return { data: null, error }
@@ -199,6 +219,111 @@ export async function getPostsCountByCategory() {
     return { data: counts, error: null }
   } catch (error) {
     console.error('カテゴリ別投稿数取得エラー:', error)
+    return { data: null, error }
+  }
+}
+
+// ユーザーの投稿一覧を取得
+export async function getUserPosts(userId: string, limit?: number) {
+  return getPosts({ user_id: userId, limit })
+}
+
+// ユーザーがいいねした投稿一覧を取得
+export async function getUserLikedPosts(userId: string, limit?: number) {
+  try {
+    const { data: likesData, error: likesError } = await supabase
+      .from('post_likes')
+      .select('post_id')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(limit || 20)
+
+    if (likesError) throw likesError
+
+    if (!likesData || likesData.length === 0) {
+      return { data: [], error: null }
+    }
+
+    const postIds = likesData.map(like => like.post_id)
+
+    const { data: postsData, error: postsError } = await supabase
+      .from('posts')
+      .select('*')
+      .in('id', postIds)
+      .order('created_at', { ascending: false })
+
+    if (postsError) throw postsError
+
+    // ユーザープロフィールを取得
+    if (postsData && postsData.length > 0) {
+      const userIds = [...new Set(postsData.map(post => post.user_id))]
+      
+      const { data: profilesData } = await supabase
+        .from('user_profiles')
+        .select('id, name, school_type, grade')
+        .in('id', userIds)
+
+      const postsWithProfiles = postsData.map(post => ({
+        ...post,
+        user_profiles: profilesData?.find(profile => profile.id === post.user_id) || null
+      }))
+
+      return { data: postsWithProfiles as Post[], error: null }
+    }
+
+    return { data: postsData as Post[], error: null }
+  } catch (error) {
+    console.error('いいねした投稿取得エラー:', error)
+    return { data: null, error }
+  }
+}
+
+// ユーザーがブックマークした投稿一覧を取得
+export async function getUserBookmarkedPosts(userId: string, limit?: number) {
+  try {
+    const { data: bookmarksData, error: bookmarksError } = await supabase
+      .from('post_bookmarks')
+      .select('post_id')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(limit || 20)
+
+    if (bookmarksError) throw bookmarksError
+
+    if (!bookmarksData || bookmarksData.length === 0) {
+      return { data: [], error: null }
+    }
+
+    const postIds = bookmarksData.map(bookmark => bookmark.post_id)
+
+    const { data: postsData, error: postsError } = await supabase
+      .from('posts')
+      .select('*')
+      .in('id', postIds)
+      .order('created_at', { ascending: false })
+
+    if (postsError) throw postsError
+
+    // ユーザープロフィールを取得
+    if (postsData && postsData.length > 0) {
+      const userIds = [...new Set(postsData.map(post => post.user_id))]
+      
+      const { data: profilesData } = await supabase
+        .from('user_profiles')
+        .select('id, name, school_type, grade')
+        .in('id', userIds)
+
+      const postsWithProfiles = postsData.map(post => ({
+        ...post,
+        user_profiles: profilesData?.find(profile => profile.id === post.user_id) || null
+      }))
+
+      return { data: postsWithProfiles as Post[], error: null }
+    }
+
+    return { data: postsData as Post[], error: null }
+  } catch (error) {
+    console.error('ブックマークした投稿取得エラー:', error)
     return { data: null, error }
   }
 }

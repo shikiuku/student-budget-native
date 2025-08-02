@@ -89,7 +89,15 @@
       "Bash(export SUPABASE_PROJECT_ID=hvxyvrquvszdwmjoycsj)",
       "Bash(npx supabase db dump:*)",
       "Bash(npx supabase:*)",
-      "Bash(del migrate.js check-db.js)"
+      "Bash(del migrate.js check-db.js)",
+      "Bash(mcp exec:*)",
+      "Bash(del:*)",
+      "mcp__supabase__list_projects",
+      "mcp__puppeteer__puppeteer_screenshot",
+      "mcp__puppeteer__puppeteer_click",
+      "mcp__puppeteer__puppeteer_evaluate",
+      "mcp__filesystem__read_text_file",
+      "mcp__filesystem__directory_tree"
     ],
     "deny": []
   }
