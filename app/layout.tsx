@@ -13,7 +13,8 @@ const mPlusRounded = M_PLUS_Rounded_1c({
   display: 'swap',
   variable: '--font-m-plus-rounded',
   preload: true,
-  adjustFontFallback: true
+  adjustFontFallback: false,
+  fallback: ['Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic UI', 'Meiryo', 'system-ui', 'sans-serif']
 })
 
 export const metadata: Metadata = {
@@ -29,6 +30,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link 
+          href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@100;300;400;500;700;800;900&display=swap" 
+          rel="stylesheet" 
+        />
+      </head>
       <body className={`${mPlusRounded.variable} font-sans`} suppressHydrationWarning>
         <AuthProvider>
           <ThemeProvider

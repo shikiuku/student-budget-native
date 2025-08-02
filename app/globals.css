@@ -2,6 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
+/* M PLUS Rounded 1c フォントの強制適用 */
+@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@100;300;400;500;700;800;900&display=swap');
+
+/* グローバルフォント設定 - iPad Safari対応 */
+* {
+  font-family: "M PLUS Rounded 1c", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic UI", "Meiryo", "-apple-system", "BlinkMacSystemFont", "system-ui", sans-serif !important;
+}
+
+/* iPad Safari特有の問題に対応 */
+@supports (-webkit-touch-callout: none) {
+  /* iOS/iPadOS Safari専用スタイル */
+  html {
+    font-family: "M PLUS Rounded 1c", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "-apple-system", "BlinkMacSystemFont", "system-ui", sans-serif !important;
+  }
+  
+  body {
+    font-family: "M PLUS Rounded 1c", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "-apple-system", "BlinkMacSystemFont", "system-ui", sans-serif !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* すべての要素に丸いフォントを強制適用 */
+  *, *::before, *::after {
+    font-family: "M PLUS Rounded 1c", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "-apple-system", "BlinkMacSystemFont", "system-ui", sans-serif !important;
+  }
+  
+  /* 入力要素も確実に丸いフォントを適用 */
+  input, textarea, select, button {
+    font-family: "M PLUS Rounded 1c", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "-apple-system", "BlinkMacSystemFont", "system-ui", sans-serif !important;
+  }
+}
+
+/* Webkit系ブラウザでのフォント調整 */
+@media screen and (-webkit-min-device-pixel-ratio: 1) {
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
 
 @layer utilities {
   .text-balance {

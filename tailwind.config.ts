@@ -11,8 +11,8 @@ const config: Config = {
   theme: {
   	extend: {
   		fontFamily: {
-  			'sans': ['var(--font-m-plus-rounded)', 'M PLUS Rounded 1c', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic UI', 'Meiryo', 'system-ui', 'sans-serif'],
-  			'rounded': ['var(--font-m-plus-rounded)', 'M PLUS Rounded 1c', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic UI', 'Meiryo', 'system-ui', 'sans-serif'],
+  			'sans': ['"M PLUS Rounded 1c"', 'var(--font-m-plus-rounded)', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic UI', 'Meiryo', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+  			'rounded': ['"M PLUS Rounded 1c"', 'var(--font-m-plus-rounded)', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic UI', 'Meiryo', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
   		},
   		colors: {
   			// 落ち着いた雰囲気のカラーパレット（低彩度・高明度）
