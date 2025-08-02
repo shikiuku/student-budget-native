@@ -32,7 +32,13 @@ import {
   Pencil,
   Trash2,
   Eye,
-  EyeOff
+  EyeOff,
+  Heart,
+  MessageCircle,
+  Share,
+  Bookmark,
+  Star,
+  Tag
 } from "lucide-react"
 
 export default function StyleGuidePage() {
@@ -1354,6 +1360,772 @@ export default function StyleGuidePage() {
                 </div>
                 <Button className="w-full bg-zaim-green-500 hover:bg-zaim-green-600 text-white">
                   設定完了
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 節約投稿コンポーネント */}
+        <section className="space-y-8">
+          <h2 className="text-2xl font-bold text-black">節約投稿コンポーネント</h2>
+          
+          {/* 投稿カード */}
+          <div>
+            <h3 className="text-lg font-semibold text-black mb-4">投稿カード</h3>
+            <div className="space-y-4">
+              {/* 基本投稿カード */}
+              <div className="max-w-2xl bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 bg-zaim-blue-100 rounded-full flex items-center justify-center">
+                    <User className="h-5 w-5 text-zaim-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium text-black">田中さん</span>
+                      <span className="text-sm text-gray-500">高校2年生</span>
+                      <span className="text-sm text-gray-400">•</span>
+                      <span className="text-sm text-gray-500">2時間前</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        <Tag className="h-3 w-3 text-orange-500" />
+                        <span className="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full">食費</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Star className="h-3 w-3 text-yellow-500" />
+                        <span className="text-xs bg-yellow-100 text-yellow-600 px-2 py-1 rounded-full">月3,000円節約</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <h4 className="font-bold text-black text-lg mb-2">お弁当作りで食費を半分に！</h4>
+                <p className="text-gray-700 text-sm mb-3 leading-relaxed">
+                  コンビニ弁当を毎日買ってたけど、お弁当を作るようになって月3,000円も節約できました！
+                  最初は面倒だったけど、慣れたら10分で作れます。冷凍食品を活用するのがコツです。
+                </p>
+                
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                  <div className="flex items-center gap-4">
+                    <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-red-500 transition-colors">
+                      <Heart className="h-4 w-4" />
+                      <span>24</span>
+                    </button>
+                    <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-500 transition-colors">
+                      <MessageCircle className="h-4 w-4" />
+                      <span>5</span>
+                    </button>
+                    <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-green-500 transition-colors">
+                      <Share className="h-4 w-4" />
+                      <span>シェア</span>
+                    </button>
+                  </div>
+                  <button className="text-gray-400 hover:text-yellow-500 transition-colors">
+                    <Bookmark className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* いいね済み投稿カード */}
+              <div className="max-w-2xl bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 bg-zaim-green-100 rounded-full flex items-center justify-center">
+                    <User className="h-5 w-5 text-zaim-green-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium text-black">佐藤さん</span>
+                      <span className="text-sm text-gray-500">大学1年生</span>
+                      <span className="text-sm text-gray-400">•</span>
+                      <span className="text-sm text-gray-500">1日前</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        <Tag className="h-3 w-3 text-blue-500" />
+                        <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">交通費</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Star className="h-3 w-3 text-yellow-500" />
+                        <span className="text-xs bg-yellow-100 text-yellow-600 px-2 py-1 rounded-full">月2,000円節約</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <h4 className="font-bold text-black text-lg mb-2">自転車通学で交通費ゼロ！</h4>
+                <p className="text-gray-700 text-sm mb-3 leading-relaxed">
+                  電車通学をやめて自転車にしました。雨の日は大変だけど、月2,000円の節約と運動不足解消で一石二鳥です！
+                </p>
+                
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                  <div className="flex items-center gap-4">
+                    <button className="flex items-center gap-1 text-sm text-red-500 transition-colors">
+                      <Heart className="h-4 w-4 fill-current" />
+                      <span>18</span>
+                    </button>
+                    <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-500 transition-colors">
+                      <MessageCircle className="h-4 w-4" />
+                      <span>3</span>
+                    </button>
+                    <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-green-500 transition-colors">
+                      <Share className="h-4 w-4" />
+                      <span>シェア</span>
+                    </button>
+                  </div>
+                  <button className="text-yellow-500">
+                    <Bookmark className="h-4 w-4 fill-current" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 投稿作成フォーム */}
+          <div>
+            <h3 className="text-lg font-semibold text-black mb-4">投稿作成フォーム</h3>
+            
+            {/* バリエーション1: 基本フォーム */}
+            <div className="mb-8">
+              <h4 className="text-md font-medium text-black mb-3">バリエーション1: 基本フォーム</h4>
+              <div className="max-w-2xl bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="w-10 h-10 bg-zaim-blue-100 rounded-full flex items-center justify-center">
+                    <User className="h-5 w-5 text-zaim-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <span className="font-medium text-black">あなたの節約アイディアを投稿</span>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-black mb-2">タイトル</label>
+                    <input
+                      type="text"
+                      placeholder="節約アイディアのタイトルを入力"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-black mb-2">内容</label>
+                    <textarea
+                      placeholder="節約方法の詳細、コツ、体験談などを教えてください"
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black resize-none"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-2">カテゴリ</label>
+                      <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black">
+                        <option>選択してください</option>
+                        <option>食費</option>
+                        <option>交通費</option>
+                        <option>娯楽</option>
+                        <option>学用品</option>
+                        <option>衣類</option>
+                        <option>その他</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-2">節約効果</label>
+                      <input
+                        type="text"
+                        placeholder="月1,000円"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2 pt-2">
+                    <Button variant="outline" className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50">
+                      下書き保存
+                    </Button>
+                    <Button className="flex-1 bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white">
+                      投稿する
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+{/* 投稿作成フォーム（採用版） */}
+            <div>
+              <h4 className="text-md font-bold text-black mb-4">投稿作成フォーム（採用版）</h4>
+                <div className="max-w-2xl bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-2">タイトル</label>
+                      <input
+                        type="text"
+                        placeholder="節約アイディアのタイトルを入力"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-2">内容</label>
+                      <textarea
+                        placeholder="節約方法の詳細、コツ、体験談などを教えてください"
+                        rows={4}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black resize-none"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-2">カテゴリを選択</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        <label className="relative">
+                          <input type="radio" name="category-form3" className="peer sr-only" />
+                          <div className="p-3 border border-gray-300 rounded-lg cursor-pointer hover:border-zaim-blue-400 hover:bg-gray-50 peer-checked:border-zaim-blue-500 peer-checked:bg-zaim-blue-50 transition-all">
+                            <div className="flex flex-col items-center gap-1 text-center">
+                              <Utensils className="h-5 w-5 text-gray-600 peer-checked:text-zaim-blue-600" />
+                              <span className="text-xs text-gray-700 peer-checked:text-zaim-blue-700">食費</span>
+                            </div>
+                          </div>
+                        </label>
+                        <label className="relative">
+                          <input type="radio" name="category-form3" className="peer sr-only" checked />
+                          <div className="p-3 border border-gray-300 rounded-lg cursor-pointer hover:border-zaim-blue-400 hover:bg-gray-50 peer-checked:border-zaim-blue-500 peer-checked:bg-zaim-blue-50 transition-all">
+                            <div className="flex flex-col items-center gap-1 text-center">
+                              <Car className="h-5 w-5 text-zaim-blue-600" />
+                              <span className="text-xs text-zaim-blue-700">交通費</span>
+                            </div>
+                          </div>
+                        </label>
+                        <label className="relative">
+                          <input type="radio" name="category-form3" className="peer sr-only" />
+                          <div className="p-3 border border-gray-300 rounded-lg cursor-pointer hover:border-zaim-blue-400 hover:bg-gray-50 peer-checked:border-zaim-blue-500 peer-checked:bg-zaim-blue-50 transition-all">
+                            <div className="flex flex-col items-center gap-1 text-center">
+                              <Gift className="h-5 w-5 text-gray-600 peer-checked:text-zaim-blue-600" />
+                              <span className="text-xs text-gray-700 peer-checked:text-zaim-blue-700">娯楽</span>
+                            </div>
+                          </div>
+                        </label>
+                        <label className="relative">
+                          <input type="radio" name="category-form3" className="peer sr-only" />
+                          <div className="p-3 border border-gray-300 rounded-lg cursor-pointer hover:border-zaim-blue-400 hover:bg-gray-50 peer-checked:border-zaim-blue-500 peer-checked:bg-zaim-blue-50 transition-all">
+                            <div className="flex flex-col items-center gap-1 text-center">
+                              <BookOpen className="h-5 w-5 text-gray-600 peer-checked:text-zaim-blue-600" />
+                              <span className="text-xs text-gray-700 peer-checked:text-zaim-blue-700">学用品</span>
+                            </div>
+                          </div>
+                        </label>
+                        <label className="relative">
+                          <input type="radio" name="category-form3" className="peer sr-only" />
+                          <div className="p-3 border border-gray-300 rounded-lg cursor-pointer hover:border-zaim-blue-400 hover:bg-gray-50 peer-checked:border-zaim-blue-500 peer-checked:bg-zaim-blue-50 transition-all">
+                            <div className="flex flex-col items-center gap-1 text-center">
+                              <Shirt className="h-5 w-5 text-gray-600 peer-checked:text-zaim-blue-600" />
+                              <span className="text-xs text-gray-700 peer-checked:text-zaim-blue-700">衣類</span>
+                            </div>
+                          </div>
+                        </label>
+                        <label className="relative">
+                          <input type="radio" name="category-form3" className="peer sr-only" />
+                          <div className="p-3 border border-gray-300 rounded-lg cursor-pointer hover:border-zaim-blue-400 hover:bg-gray-50 peer-checked:border-zaim-blue-500 peer-checked:bg-zaim-blue-50 transition-all">
+                            <div className="flex flex-col items-center gap-1 text-center">
+                              <PlusCircle className="h-5 w-5 text-gray-600 peer-checked:text-zaim-blue-600" />
+                              <span className="text-xs text-gray-700 peer-checked:text-zaim-blue-700">その他</span>
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-2">節約効果</label>
+                      <input
+                        type="text"
+                        placeholder="月1,000円"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black"
+                      />
+                    </div>
+                    
+                    <div className="flex gap-2 pt-2">
+                      <Button variant="outline" className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50">
+                        下書き保存
+                      </Button>
+                      <Button className="flex-1 bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white">
+                        投稿する
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+          </div>
+
+          {/* いいねボタンバリエーション */}
+          <div>
+            <h3 className="text-lg font-semibold text-black mb-4">いいねボタン</h3>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                <button className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-lg hover:border-red-300 hover:bg-red-50 transition-colors">
+                  <Heart className="h-4 w-4 text-gray-400" />
+                  <span className="text-sm text-gray-600">いいね</span>
+                </button>
+                
+                <button className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-300 rounded-lg text-red-600">
+                  <Heart className="h-4 w-4 fill-current" />
+                  <span className="text-sm font-medium">24</span>
+                </button>
+                
+                <button className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                  <MessageCircle className="h-4 w-4 text-gray-400" />
+                  <span className="text-sm text-gray-600">コメント</span>
+                </button>
+                
+                <button className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-lg hover:border-yellow-300 hover:bg-yellow-50 transition-colors">
+                  <Bookmark className="h-4 w-4 text-gray-400" />
+                  <span className="text-sm text-gray-600">保存</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* コメントコンポーネント */}
+          <div>
+            <h3 className="text-lg font-semibold text-black mb-4">コメント</h3>
+            <div className="max-w-2xl space-y-4">
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-zaim-green-100 rounded-full flex items-center justify-center">
+                    <User className="h-4 w-4 text-zaim-green-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium text-sm text-black">山田さん</span>
+                      <span className="text-xs text-gray-500">30分前</span>
+                    </div>
+                    <p className="text-sm text-gray-700">すごく参考になります！私も今度試してみます。</p>
+                    <button className="text-xs text-zaim-blue-600 hover:text-zaim-blue-700 mt-1">
+                      返信
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-zaim-blue-100 rounded-full flex items-center justify-center">
+                    <User className="h-4 w-4 text-zaim-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      placeholder="コメントを入力..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black text-sm"
+                    />
+                    <div className="flex justify-end mt-2">
+                      <Button size="sm" className="bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white">
+                        投稿
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* マイページコンポーネント */}
+        <section className="space-y-8">
+          <h2 className="text-2xl font-bold text-black">マイページコンポーネント</h2>
+
+          {/* プロフィールヘッダー */}
+          <div>
+            <h3 className="text-lg font-semibold text-black mb-4">プロフィールヘッダー</h3>
+            <div className="max-w-2xl bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-16 h-16 bg-zaim-blue-100 rounded-full flex items-center justify-center">
+                  <User className="h-8 w-8 text-zaim-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-black mb-1">田中太郎さん</h3>
+                  <p className="text-sm text-gray-600 mb-2">高校2年生・東京都</p>
+                  <div className="flex items-center gap-4 text-sm">
+                    <div className="flex items-center gap-1">
+                      <PlusCircle className="h-4 w-4 text-zaim-blue-500" />
+                      <span className="text-gray-700">投稿 <span className="font-bold text-black">12</span></span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Heart className="h-4 w-4 text-red-500" />
+                      <span className="text-gray-700">いいね <span className="font-bold text-black">89</span></span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Bookmark className="h-4 w-4 text-yellow-500" />
+                      <span className="text-gray-700">保存 <span className="font-bold text-black">24</span></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-100">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-zaim-green-600">¥15,200</div>
+                  <div className="text-xs text-gray-600">今月の節約額</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-zaim-blue-600">32日</div>
+                  <div className="text-xs text-gray-600">連続記録日数</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-purple-600">Lv.5</div>
+                  <div className="text-xs text-gray-600">節約レベル</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* タブナビゲーション */}
+          <div>
+            <h3 className="text-lg font-semibold text-black mb-4">タブナビゲーション</h3>
+            <div className="max-w-2xl">
+              <div className="flex border-b border-gray-200">
+                <button className="px-4 py-2 text-sm font-medium text-zaim-blue-600 border-b-2 border-zaim-blue-600 bg-zaim-blue-50">
+                  投稿した記事
+                </button>
+                <button className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-zaim-blue-600 hover:bg-zaim-blue-50">
+                  いいねした記事
+                </button>
+                <button className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-zaim-blue-600 hover:bg-zaim-blue-50">
+                  保存した記事
+                </button>
+                <button className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-zaim-blue-600 hover:bg-zaim-blue-50">
+                  フォロー中
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 投稿した記事一覧 */}
+          <div>
+            <h3 className="text-lg font-semibold text-black mb-4">投稿した記事一覧</h3>
+            <div className="max-w-2xl space-y-3">
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <Utensils className="h-6 w-6 text-orange-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-bold text-black">お弁当作りで食費を半分に！</h4>
+                      <span className="text-xs text-gray-500">2時間前</span>
+                    </div>
+                    <p className="text-sm text-gray-700 mb-3 line-clamp-2">
+                      コンビニ弁当を毎日買ってたけど、お弁当を作るようになって月3,000円も節約できました...
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 text-sm text-gray-600">
+                        <span className="flex items-center gap-1">
+                          <Heart className="h-4 w-4" />
+                          24
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MessageCircle className="h-4 w-4" />
+                          5
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Eye className="h-4 w-4" />
+                          156
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" variant="outline" className="text-xs">
+                          編集
+                        </Button>
+                        <Button size="sm" variant="outline" className="text-xs text-red-600 border-red-200 hover:bg-red-50">
+                          削除
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Car className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-bold text-black">学割定期で通学費節約術</h4>
+                      <span className="text-xs text-gray-500">1日前</span>
+                    </div>
+                    <p className="text-sm text-gray-700 mb-3 line-clamp-2">
+                      意外と知られていない学割定期の裏技を紹介します。これで月2,000円節約できます...
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 text-sm text-gray-600">
+                        <span className="flex items-center gap-1">
+                          <Heart className="h-4 w-4" />
+                          18
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MessageCircle className="h-4 w-4" />
+                          3
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Eye className="h-4 w-4" />
+                          89
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" variant="outline" className="text-xs">
+                          編集
+                        </Button>
+                        <Button size="sm" variant="outline" className="text-xs text-red-600 border-red-200 hover:bg-red-50">
+                          削除
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* いいねした記事一覧 */}
+          <div>
+            <h3 className="text-lg font-semibold text-black mb-4">いいねした記事一覧</h3>
+            <div className="max-w-2xl space-y-3">
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-zaim-green-100 rounded-full flex items-center justify-center">
+                    <User className="h-5 w-5 text-zaim-green-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-medium text-black">佐藤花子さん</span>
+                      <span className="text-sm text-gray-500">•</span>
+                      <span className="text-sm text-gray-500">大学1年生</span>
+                      <span className="text-sm text-gray-500">•</span>
+                      <span className="text-sm text-gray-500">3時間前</span>
+                    </div>
+                    <h4 className="font-bold text-black mb-2">フリマアプリで教科書代を回収</h4>
+                    <p className="text-sm text-gray-700 mb-3 line-clamp-2">
+                      使い終わった教科書をフリマアプリで売って、新しい教科書代に充てています...
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 text-sm">
+                        <span className="flex items-center gap-1 text-red-500">
+                          <Heart className="h-4 w-4 fill-current" />
+                          32
+                        </span>
+                        <span className="flex items-center gap-1 text-gray-600">
+                          <MessageCircle className="h-4 w-4" />
+                          7
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <Tag className="h-3 w-3 text-purple-500" />
+                          <span className="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full">学用品</span>
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-500">いいね済み</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-zaim-yellow-100 rounded-full flex items-center justify-center">
+                    <User className="h-5 w-5 text-zaim-yellow-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-medium text-black">山田次郎さん</span>
+                      <span className="text-sm text-gray-500">•</span>
+                      <span className="text-sm text-gray-500">高校3年生</span>
+                      <span className="text-sm text-gray-500">•</span>
+                      <span className="text-sm text-gray-500">5時間前</span>
+                    </div>
+                    <h4 className="font-bold text-black mb-2">家族割引で通信費大幅カット</h4>
+                    <p className="text-sm text-gray-700 mb-3 line-clamp-2">
+                      家族でまとめて格安SIMに変更したら、月4,000円も安くなりました...
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 text-sm">
+                        <span className="flex items-center gap-1 text-red-500">
+                          <Heart className="h-4 w-4 fill-current" />
+                          45
+                        </span>
+                        <span className="flex items-center gap-1 text-gray-600">
+                          <MessageCircle className="h-4 w-4" />
+                          12
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <Tag className="h-3 w-3 text-green-500" />
+                          <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">通信費</span>
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-500">いいね済み</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 保存した記事一覧（コンパクト表示） */}
+          <div>
+            <h3 className="text-lg font-semibold text-black mb-4">保存した記事一覧（コンパクト表示）</h3>
+            <div className="max-w-2xl space-y-2">
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-orange-100 rounded flex items-center justify-center">
+                      <Utensils className="h-4 w-4 text-orange-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-black text-sm">コンビニ活用術で節約</h4>
+                      <p className="text-xs text-gray-500">田中さん • 2日前</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs bg-yellow-100 text-yellow-600 px-2 py-1 rounded-full">保存済み</span>
+                    <button className="text-gray-400 hover:text-red-500">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                      <ShoppingBag className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-black text-sm">古着屋巡りでファッション代節約</h4>
+                      <p className="text-xs text-gray-500">鈴木さん • 1週間前</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs bg-yellow-100 text-yellow-600 px-2 py-1 rounded-full">保存済み</span>
+                    <button className="text-gray-400 hover:text-red-500">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-green-100 rounded flex items-center justify-center">
+                      <BookOpen className="h-4 w-4 text-green-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-black text-sm">図書館活用で参考書代ゼロ</h4>
+                      <p className="text-xs text-gray-500">高橋さん • 2週間前</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs bg-yellow-100 text-yellow-600 px-2 py-1 rounded-full">保存済み</span>
+                    <button className="text-gray-400 hover:text-red-500">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 統計カード */}
+          <div>
+            <h3 className="text-lg font-semibold text-black mb-4">活動統計カード</h3>
+            <div className="max-w-2xl grid grid-cols-2 gap-4">
+              <div className="bg-zaim-blue-50 border border-zaim-blue-200 rounded-lg p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-zaim-blue-500 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-black">今月の投稿</h4>
+                    <p className="text-sm text-gray-600">前月比 +2件</p>
+                  </div>
+                </div>
+                <div className="text-2xl font-bold text-zaim-blue-600">5件</div>
+                <div className="text-xs text-gray-600 mt-1">累計: 12件</div>
+              </div>
+
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
+                    <Heart className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-black">もらったいいね</h4>
+                    <p className="text-sm text-gray-600">今週 +15件</p>
+                  </div>
+                </div>
+                <div className="text-2xl font-bold text-red-600">89件</div>
+                <div className="text-xs text-gray-600 mt-1">平均: 7.4件/投稿</div>
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center">
+                    <Bookmark className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-black">保存した記事</h4>
+                    <p className="text-sm text-gray-600">今月 +8件</p>
+                  </div>
+                </div>
+                <div className="text-2xl font-bold text-yellow-600">24件</div>
+                <div className="text-xs text-gray-600 mt-1">未読: 3件</div>
+              </div>
+
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                    <Target className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-black">節約達成率</h4>
+                    <p className="text-sm text-gray-600">目標: 月20,000円</p>
+                  </div>
+                </div>
+                <div className="text-2xl font-bold text-green-600">76%</div>
+                <div className="text-xs text-gray-600 mt-1">¥15,200 / ¥20,000</div>
+              </div>
+            </div>
+          </div>
+
+          {/* 空の状態 */}
+          <div>
+            <h3 className="text-lg font-semibold text-black mb-4">空の状態（Empty State）</h3>
+            <div className="max-w-2xl space-y-4">
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-8 text-center">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <PlusCircle className="h-8 w-8 text-gray-400" />
+                </div>
+                <h4 className="font-bold text-black mb-2">まだ投稿がありません</h4>
+                <p className="text-sm text-gray-600 mb-4">
+                  あなたの節約アイディアを投稿して、他のユーザーと共有しましょう！
+                </p>
+                <Button className="bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white">
+                  最初の投稿を作成
+                </Button>
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-8 text-center">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Heart className="h-8 w-8 text-gray-400" />
+                </div>
+                <h4 className="font-bold text-black mb-2">いいねした記事がありません</h4>
+                <p className="text-sm text-gray-600 mb-4">
+                  気に入った節約術があったら、ハートボタンを押してみましょう！
+                </p>
+                <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50">
+                  投稿を探す
                 </Button>
               </div>
             </div>

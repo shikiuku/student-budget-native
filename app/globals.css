@@ -119,4 +119,44 @@
   select::-webkit-scrollbar-thumb:hover {
     background: #f5f5f5;
   }
+
+  /* テキストエリアのスクロールバーを白に */
+  textarea::-webkit-scrollbar {
+    width: 6px !important;
+  }
+  
+  textarea::-webkit-scrollbar-track {
+    background: #ffffff !important;
+    border-radius: 3px !important;
+  }
+  
+  textarea::-webkit-scrollbar-thumb {
+    background: #f8f9fa !important;
+    border: 1px solid #e9ecef !important;
+    border-radius: 3px !important;
+  }
+  
+  textarea::-webkit-scrollbar-thumb:hover {
+    background: #f1f3f4 !important;
+  }
+
+  /* より具体的なセレクタでテキストエリアのスクロールバーを強制上書き */
+  .modal-textarea::-webkit-scrollbar {
+    width: 6px !important;
+  }
+  
+  .modal-textarea::-webkit-scrollbar-track {
+    background: #ffffff !important;
+    border-radius: 3px !important;
+  }
+  
+  .modal-textarea::-webkit-scrollbar-thumb {
+    background: #f8f9fa !important;
+    border: 1px solid #e9ecef !important;
+    border-radius: 3px !important;
+  }
+  
+  .modal-textarea::-webkit-scrollbar-thumb:hover {
+    background: #f1f3f4 !important;
+  }
 }

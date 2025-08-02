@@ -9,68 +9,29 @@ import { Gift, MapPin, Calendar, ExternalLink, Search } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 
 export default function SubsidiesPage() {
-  const subsidies = [
-    {
-      id: 1,
-      title: "高校生等奨学給付金",
-      description: "高校生の教育費を支援する給付金制度",
-      amount: "年額32,300円〜138,000円",
-      deadline: "2024年7月31日",
-      region: "全国",
-      category: "教育",
-      requirements: ["高校生", "住民税非課税世帯"],
-      status: "申請可能",
-    },
-    {
-      id: 2,
-      title: "子育て世帯生活支援特別給付金",
-      description: "18歳以下の子どもがいる世帯への給付金",
-      amount: "児童1人あたり5万円",
-      deadline: "2024年3月31日",
-      region: "東京都",
-      category: "生活支援",
-      requirements: ["18歳以下", "住民税非課税世帯"],
-      status: "受付終了",
-    },
-    {
-      id: 3,
-      title: "学習塾代助成",
-      description: "中学3年生の学習塾費用を助成",
-      amount: "月額2万円まで",
-      deadline: "随時受付",
-      region: "大阪府",
-      category: "教育",
-      requirements: ["中学3年生", "世帯年収400万円以下"],
-      status: "申請可能",
-    },
-    {
-      id: 4,
-      title: "高校生通学費補助",
-      description: "公共交通機関の通学定期代を補助",
-      amount: "月額5,000円まで",
-      deadline: "2024年4月30日",
-      region: "神奈川県",
-      category: "交通",
-      requirements: ["高校生", "通学距離2km以上"],
-      status: "申請可能",
-    },
-  ]
-
-  const categoryColors = {
-    教育: "bg-zaim-blue-100 text-zaim-blue-600",
-    生活支援: "bg-zaim-green-100 text-zaim-green-600",
-    交通: "bg-purple-100 text-purple-600",
-    医療: "bg-zaim-red-100 text-zaim-red-600",
-  }
-
-  const statusColors = {
-    申請可能: "bg-zaim-green-100 text-zaim-green-600",
-    受付終了: "bg-zaim-red-100 text-zaim-red-600",
-    準備中: "bg-zaim-yellow-100 text-zaim-yellow-600",
-  }
-
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-white pb-20 relative">
+      {/* ぼかしオーバーレイ */}
+      <div className="absolute inset-0 z-10 bg-white/70 backdrop-blur-sm"></div>
+      
+      {/* 近日公開メッセージ */}
+      <div className="absolute inset-0 z-20 flex items-center justify-center pb-20 pointer-events-none">
+        <div className="text-center space-y-4 p-8 bg-white rounded-lg shadow-lg border border-gray-200">
+          <div className="w-16 h-16 mx-auto bg-zaim-green-100 rounded-full flex items-center justify-center">
+            <Gift className="h-8 w-8 text-zaim-green-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-black">学生向け補助金情報</h2>
+          <p className="text-gray-600">奨学金や各種助成金の情報を</p>
+          <p className="text-gray-600">準備中です</p>
+          <div className="mt-6">
+            <Badge className="bg-zaim-green-100 text-zaim-green-600 text-lg py-2 px-4">
+              近日公開予定
+            </Badge>
+          </div>
+        </div>
+      </div>
+
+      {/* 背景コンテンツ（ぼかし用） */}
       <div className="p-4 space-y-6 pt-6">
 
         {/* Search and Filter */}
@@ -127,69 +88,9 @@ export default function SubsidiesPage() {
         {/* Subsidies List */}
         <div className="space-y-4">
           <h2 className="text-lg font-bold text-black">利用可能な補助金</h2>
-
-          {subsidies.map((subsidy) => (
-            <Card key={subsidy.id} className="bg-white border border-gray-200 shadow-sm">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-base mb-2">{subsidy.title}</CardTitle>
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      <Badge className={categoryColors[subsidy.category as keyof typeof categoryColors]}>
-                        {subsidy.category}
-                      </Badge>
-                      <Badge className={statusColors[subsidy.status as keyof typeof statusColors]}>
-                        {subsidy.status}
-                      </Badge>
-                    </div>
-                  </div>
-                  <Gift className="h-5 w-5 text-zaim-green-600" />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-gray-700">{subsidy.description}</p>
-
-                <div className="grid grid-cols-1 gap-3">
-                  <div className="flex items-center justify-between p-3 bg-zaim-green-50 rounded-lg">
-                    <span className="text-sm font-medium text-black">支給額</span>
-                    <span className="font-bold text-zaim-green-600">{subsidy.amount}</span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Calendar className="h-4 w-4" />
-                      <span>締切: {subsidy.deadline}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="h-4 w-4" />
-                      <span>{subsidy.region}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-sm font-medium text-black mb-2">対象条件</h4>
-                  <div className="flex flex-wrap gap-1">
-                    {subsidy.requirements.map((req, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {req}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button className="flex-1 bg-zaim-green-500 hover:bg-zaim-green-600 text-white" size="sm">
-                    詳細を見る
-                  </Button>
-                  <Button variant="outline" size="sm" className="border-zaim-blue-200 text-zaim-blue-600 hover:bg-zaim-blue-50 hover:text-zaim-blue-700">
-                    <ExternalLink className="h-4 w-4 mr-1" />
-                    申請サイト
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          <div className="text-center text-gray-500 py-8">
+            データを準備中...
+          </div>
         </div>
 
         {/* Statistics */}
@@ -212,7 +113,9 @@ export default function SubsidiesPage() {
         </div>
       </div>
 
-      <BottomNav currentPage="subsidies" />
+      <div className="relative z-30">
+        <BottomNav currentPage="subsidies" />
+      </div>
     </div>
   )
 }

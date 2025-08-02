@@ -6,44 +6,29 @@ import { MapPin, Calendar, Receipt } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 
 export default function MapPage() {
-  const locations = [
-    {
-      id: 1,
-      name: "セブンイレブン 駅前店",
-      lat: 35.6762,
-      lng: 139.6503,
-      expenses: [
-        { amount: 500, category: "食費", description: "コンビニ弁当", date: "2024-01-15" },
-        { amount: 150, category: "食費", description: "ドリンク", date: "2024-01-14" },
-      ],
-    },
-    {
-      id: 2,
-      name: "JR山手線 新宿駅",
-      lat: 35.6896,
-      lng: 139.7006,
-      expenses: [{ amount: 300, category: "交通費", description: "電車代", date: "2024-01-15" }],
-    },
-    {
-      id: 3,
-      name: "TOHOシネマズ",
-      lat: 35.658,
-      lng: 139.7016,
-      expenses: [{ amount: 1200, category: "娯楽", description: "映画鑑賞", date: "2024-01-14" }],
-    },
-  ]
-
-  const categoryColors = {
-    食費: "bg-orange-100 text-orange-800 border-orange-200",
-    交通費: "bg-zaim-blue-100 text-zaim-blue-600 border-zaim-blue-200",
-    娯楽: "bg-purple-100 text-purple-800 border-purple-200",
-    学用品: "bg-zaim-green-100 text-zaim-green-600 border-zaim-green-200",
-    衣類: "bg-pink-100 text-pink-800 border-pink-200",
-    その他: "bg-gray-100 text-gray-800 border-gray-200",
-  }
-
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-white pb-20 relative">
+      {/* ぼかしオーバーレイ */}
+      <div className="absolute inset-0 z-10 bg-white/70 backdrop-blur-sm"></div>
+      
+      {/* 近日公開メッセージ */}
+      <div className="absolute inset-0 z-20 flex items-center justify-center pb-20 pointer-events-none">
+        <div className="text-center space-y-4 p-8 bg-white rounded-lg shadow-lg border border-gray-200">
+          <div className="w-16 h-16 mx-auto bg-purple-100 rounded-full flex items-center justify-center">
+            <MapPin className="h-8 w-8 text-purple-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-black">支出マップ</h2>
+          <p className="text-gray-600">支出場所を地図で確認できる</p>
+          <p className="text-gray-600">機能を準備中です</p>
+          <div className="mt-6">
+            <Badge className="bg-purple-100 text-purple-600 text-lg py-2 px-4">
+              近日公開予定
+            </Badge>
+          </div>
+        </div>
+      </div>
+
+      {/* 背景コンテンツ（ぼかし用） */}
       <div className="p-4 space-y-6 pt-6">
 
         {/* Map Placeholder */}
@@ -65,44 +50,9 @@ export default function MapPage() {
         {/* Location List */}
         <div className="space-y-4">
           <h2 className="text-lg font-bold text-black">支出場所一覧</h2>
-
-          {locations.map((location) => (
-            <div key={location.id} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
-              <div className="flex items-center gap-2 text-base font-bold text-black mb-4">
-                <MapPin className="h-4 w-4 text-zaim-blue-500" />
-                {location.name}
-              </div>
-              <div className="space-y-3">
-                {location.expenses.map((expense, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge className={categoryColors[expense.category as keyof typeof categoryColors]}>
-                          {expense.category}
-                        </Badge>
-                        <span className="font-bold text-black">¥{expense.amount.toLocaleString()}</span>
-                      </div>
-                      <p className="text-sm font-medium text-gray-700 mb-1">{expense.description}</p>
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <Calendar className="h-3 w-3" />
-                        {expense.date}
-                      </div>
-                    </div>
-                    <Receipt className="h-4 w-4 text-gray-400" />
-                  </div>
-                ))}
-
-                <div className="pt-2 border-t border-gray-200">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">この場所での合計</span>
-                    <span className="font-bold text-black">
-                      ¥{location.expenses.reduce((sum, exp) => sum + exp.amount, 0).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+          <div className="text-center text-gray-500 py-8">
+            支出場所データを準備中...
+          </div>
         </div>
 
         {/* Statistics */}
@@ -128,7 +78,9 @@ export default function MapPage() {
         </div>
       </div>
 
-      <BottomNav currentPage="map" />
+      <div className="relative z-30">
+        <BottomNav currentPage="map" />
+      </div>
     </div>
   )
 }
