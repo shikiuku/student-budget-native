@@ -102,7 +102,18 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
           }
           alert(errorMessage);
         } else {
-          alert('確認メールを送信しました。メール内のリンクをクリックして登録を完了してください。');
+          // 新規登録成功
+          console.log('Registration successful:', data.user);
+          
+          // セッションが既に確立されているかチェック
+          if (data.session) {
+            // メール確認が無効化されている場合、即座にログイン状態になる
+            alert('新規登録が完了しました。アプリをお楽しみください！');
+          } else {
+            // メール確認が必要な場合
+            alert('確認メールを送信しました。メール内のリンクをクリックして登録を完了してください。');
+          }
+          
           // メールと入力フィールドをクリア
           setEmail('');
           setPassword('');
