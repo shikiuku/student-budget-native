@@ -162,7 +162,7 @@ export default function SignupPage() {
                 id="terms"
                 checked={agreedToTerms}
                 onChange={(e) => setAgreedToTerms(e.target.checked)}
-                className="mt-1 rounded border-gray-300 text-zaim-blue-600 focus:ring-zaim-blue-400"
+                className="mt-1 rounded border-gray-300 bg-white text-zaim-blue-600 focus:ring-zaim-blue-400 focus:bg-white checked:bg-zaim-blue-600 checked:border-zaim-blue-600"
               />
               <Label htmlFor="terms" className="text-sm text-gray-700">
                 <Link href="#" className="text-zaim-blue-600 hover:text-zaim-blue-700 underline">利用規約</Link>
