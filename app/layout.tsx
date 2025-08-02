@@ -17,7 +17,7 @@ import { AuthStatus } from "@/components/auth-status"
 // })
 
 export const metadata: Metadata = {
-  title: "マネー管理 - 中高生向け家計管理アプリ",
+  title: "マネー管理 - マネー卍会",
   description: "中高生が楽しく・簡単にお金を管理し、節約の意識を持てるアプリ",
   generator: 'v0.dev'
 }
