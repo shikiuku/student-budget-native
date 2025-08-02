@@ -275,6 +275,7 @@ export default function ProfilePage() {
         toast({
           title: "保存完了",
           description: "プロフィール情報を更新しました。",
+          variant: "success",
         })
         loadUserProfile() // データを再読み込み
       } else {
