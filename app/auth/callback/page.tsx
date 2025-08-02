@@ -11,6 +11,21 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
+        // URLからコードを取得してセッションを確立
+        const url = new URL(window.location.href)
+        const code = url.searchParams.get('code')
+        
+        if (code) {
+          const { data: authData, error: authError } = await supabase.auth.exchangeCodeForSession(code)
+          
+          if (authError) {
+            console.error('Auth exchange error:', authError)
+            router.push('/login')
+            return
+          }
+        }
+        
+        // セッション確認
         const { data, error } = await supabase.auth.getSession()
         
         if (error) {

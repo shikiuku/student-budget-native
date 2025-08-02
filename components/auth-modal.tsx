@@ -21,13 +21,25 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
 
   const handleGoogleAuth = async () => {
     setLoading(true);
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          skipBrowserRedirect: false
+        }
+      });
+      
+      if (error) {
+        console.error('Google認証エラー:', error);
+        alert('Google認証に失敗しました。もう一度お試しください。');
       }
-    });
-    setLoading(false);
+    } catch (error) {
+      console.error('認証エラー:', error);
+      alert('認証処理中にエラーが発生しました。');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
