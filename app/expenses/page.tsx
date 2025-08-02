@@ -19,6 +19,9 @@ export default function ExpensesPage() {
   const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
   
+  // デバッグ用ログ
+  console.log('支出ページ - 認証状態:', { user: !!user, loading })
+  
   
   const [expenses, setExpenses] = useState<ExpenseWithCategory[]>([])
   const [categories, setCategories] = useState<ExpenseCategory[]>([])

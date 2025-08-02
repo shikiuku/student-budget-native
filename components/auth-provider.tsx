@@ -19,15 +19,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const getSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      setLoading(false);
+      console.log('認証セッション取得開始');
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log('認証セッション取得結果:', { session: !!session, error });
+        
+        if (error) {
+          console.error('認証セッション取得エラー:', error);
+        }
+        
+        setUser(session?.user ?? null);
+        setLoading(false);
+        console.log('認証loading状態をfalseに設定');
+      } catch (err) {
+        console.error('認証セッション取得で例外発生:', err);
+        setLoading(false);
+      }
     };
 
     getSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('認証状態変更:', { event, session: !!session });
         setUser(session?.user ?? null);
         setLoading(false);
       }
