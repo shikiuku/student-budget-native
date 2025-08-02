@@ -59,6 +59,15 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
 
     try {
       if (mode === 'signup') {
+        // バリデーション
+        if (!email || !password) {
+          alert('メールアドレスとパスワードを入力してください');
+          return;
+        }
+        if (password.length < 6) {
+          alert('パスワードは6文字以上で入力してください');
+          return;
+        }
         if (password !== confirmPassword) {
           alert('パスワードが一致しません');
           return;
@@ -68,31 +77,72 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
           return;
         }
         
-        const { error } = await supabase.auth.signUp({
+        // リダイレクトURLを設定
+        const redirectUrl = window.location.hostname === 'localhost' 
+          ? 'http://localhost:3000/auth/callback'
+          : `${window.location.origin}/auth/callback`;
+        
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: redirectUrl,
+          }
         });
         
         if (error) {
-          alert('新規登録に失敗しました: ' + error.message);
+          // エラーメッセージを日本語化
+          let errorMessage = '新規登録に失敗しました';
+          if (error.message.includes('already registered')) {
+            errorMessage = 'このメールアドレスは既に登録されています';
+          } else if (error.message.includes('invalid email')) {
+            errorMessage = '有効なメールアドレスを入力してください';
+          } else if (error.message.includes('password')) {
+            errorMessage = 'パスワードが無効です（6文字以上の英数字）';
+          }
+          alert(errorMessage);
         } else {
-          alert('確認メールを送信しました。メールをご確認ください。');
+          alert('確認メールを送信しました。メール内のリンクをクリックして登録を完了してください。');
+          // メールと入力フィールドをクリア
+          setEmail('');
+          setPassword('');
+          setConfirmPassword('');
+          setTermsAccepted(false);
           onClose();
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        // ログイン処理
+        if (!email || !password) {
+          alert('メールアドレスとパスワードを入力してください');
+          return;
+        }
+
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         
         if (error) {
-          alert('ログインに失敗しました: ' + error.message);
+          // エラーメッセージを日本語化
+          let errorMessage = 'ログインに失敗しました';
+          if (error.message.includes('Invalid login credentials')) {
+            errorMessage = 'メールアドレスまたはパスワードが間違っています';
+          } else if (error.message.includes('Email not confirmed')) {
+            errorMessage = 'メールアドレスが確認されていません。確認メールをご確認ください。';
+          } else if (error.message.includes('invalid email')) {
+            errorMessage = '有効なメールアドレスを入力してください';
+          }
+          alert(errorMessage);
         } else {
+          // ログイン成功
+          setEmail('');
+          setPassword('');
           onClose();
         }
       }
     } catch (error) {
       console.error('認証エラー:', error);
+      alert('認証処理中にエラーが発生しました。もう一度お試しください。');
     } finally {
       setLoading(false);
     }

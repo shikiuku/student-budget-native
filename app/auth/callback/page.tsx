@@ -11,18 +11,32 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // URLからコードを取得してセッションを確立
+        // URLからパラメータを取得
         const url = new URL(window.location.href)
         const code = url.searchParams.get('code')
+        const errorParam = url.searchParams.get('error')
+        const errorDescription = url.searchParams.get('error_description')
+        
+        // エラーパラメータがある場合の処理
+        if (errorParam) {
+          console.error('Auth error:', errorParam, errorDescription)
+          alert('認証に失敗しました。もう一度お試しください。')
+          router.push('/')
+          return
+        }
         
         if (code) {
+          console.log('Processing auth code...')
           const { data: authData, error: authError } = await supabase.auth.exchangeCodeForSession(code)
           
           if (authError) {
             console.error('Auth exchange error:', authError)
-            router.push('/login')
+            alert('認証処理に失敗しました。もう一度お試しください。')
+            router.push('/')
             return
           }
+          
+          console.log('Auth exchange successful:', authData.user?.email)
         }
         
         // セッション確認
@@ -30,29 +44,32 @@ export default function AuthCallback() {
         
         if (error) {
           console.error('Auth callback error:', error)
-          router.push('/login')
+          router.push('/')
           return
         }
 
         if (data.session) {
           const user = data.session.user
+          console.log('User authenticated:', user.email)
           
-          // Check if user profile exists
+          // ユーザープロファイルの存在確認
           const profileResult = await userProfileService.getProfile(user.id)
           
           if (profileResult.success && profileResult.data) {
-            // Profile exists, redirect to dashboard
+            console.log('Existing profile found, redirecting to dashboard')
             router.push('/')
           } else {
-            // No profile, redirect to onboarding
+            console.log('No profile found, redirecting to onboarding')
             router.push('/onboarding')
           }
         } else {
-          router.push('/login')
+          console.log('No session found, redirecting to home')
+          router.push('/')
         }
       } catch (error) {
         console.error('Auth callback error:', error)
-        router.push('/login')
+        alert('認証処理中にエラーが発生しました。')
+        router.push('/')
       }
     }
 
