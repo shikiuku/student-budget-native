@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -25,42 +25,158 @@ import {
   Tag
 } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
+import { createPost, getPosts, type Post } from '@/lib/api/posts'
+import { likePost, unlikePost, checkUserLikedPosts } from '@/lib/api/likes'
+import { bookmarkPost, unbookmarkPost, checkUserBookmarkedPosts } from '@/lib/api/bookmarks'
 
 export default function TipsPage() {
   const [selectedCategory, setSelectedCategory] = useState('')
   const [content, setContent] = useState('')
+  const [title, setTitle] = useState('')
+  const [savingsEffect, setSavingsEffect] = useState('')
+  const [posts, setPosts] = useState<Post[]>([])
+  const [loading, setLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [likedPosts, setLikedPosts] = useState<Record<string, boolean>>({})
+  const [bookmarkedPosts, setBookmarkedPosts] = useState<Record<string, boolean>>({})
 
-  // サンプル投稿データ
-  const posts = [
-    {
-      id: 1,
-      title: "お弁当作りで食費を半分に！",
-      content: "コンビニ弁当を毎日買ってたけど、お弁当を作るようになって月3,000円も節約できました！最初は面倒だったけど、慣れたら10分で作れます。冷凍食品を活用するのがコツです。",
-      category: "食費",
-      savings: "月3,000円",
-      author: "田中さん",
-      school: "高校2年生",
-      timeAgo: "2時間前",
-      likes: 24,
-      comments: 5,
-      isLiked: false,
-      isBookmarked: true,
-    },
-    {
-      id: 2,
-      title: "自転車通学で交通費ゼロ！",
-      content: "電車通学をやめて自転車にしました。雨の日は大変だけど、月2,000円の節約と運動不足解消で一石二鳥です！",
-      category: "交通費",
-      savings: "月2,000円",
-      author: "佐藤さん",
-      school: "大学1年生",
-      timeAgo: "1日前",
-      likes: 18,
-      comments: 3,
-      isLiked: true,
-      isBookmarked: false,
+  // データ取得
+  useEffect(() => {
+    loadPosts()
+  }, [])
+
+  const loadPosts = async () => {
+    setLoading(true)
+    try {
+      const { data, error } = await getPosts({ limit: 20 })
+      if (error) {
+        console.error('投稿取得エラー:', error)
+        return
+      }
+      
+      if (data) {
+        setPosts(data)
+        
+        // いいね・ブックマーク状態を取得
+        const postIds = data.map(post => post.id)
+        const [likedResult, bookmarkedResult] = await Promise.all([
+          checkUserLikedPosts(postIds),
+          checkUserBookmarkedPosts(postIds)
+        ])
+        
+        if (likedResult.data) {
+          setLikedPosts(likedResult.data)
+        }
+        
+        if (bookmarkedResult.data) {
+          setBookmarkedPosts(bookmarkedResult.data)
+        }
+      }
+    } catch (error) {
+      console.error('投稿読み込みエラー:', error)
+    } finally {
+      setLoading(false)
     }
-  ]
+  }
+
+  // 投稿作成
+  const handleSubmit = async () => {
+    if (!title.trim() || !content.trim() || !selectedCategory) {
+      alert('タイトル、内容、カテゴリを入力してください')
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const { data, error } = await createPost({
+        title: title.trim(),
+        content: content.trim(),
+        category: selectedCategory,
+        savings_effect: savingsEffect.trim() || null
+      })
+
+      if (error) {
+        console.error('投稿作成エラー:', error)
+        alert('投稿の作成に失敗しました')
+        return
+      }
+
+      // フォームをリセット
+      setTitle('')
+      setContent('')
+      setSelectedCategory('')
+      setSavingsEffect('')
+      setIsDialogOpen(false)
+
+      // 投稿一覧を再読み込み
+      loadPosts()
+      
+      alert('投稿が作成されました！')
+    } catch (error) {
+      console.error('投稿作成エラー:', error)
+      alert('投稿の作成に失敗しました')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // いいね処理
+  const handleLike = async (postId: string, isCurrentlyLiked: boolean) => {
+    try {
+      if (isCurrentlyLiked) {
+        await unlikePost(postId)
+        setLikedPosts(prev => ({ ...prev, [postId]: false }))
+        // 投稿のいいね数を更新
+        setPosts(prev => prev.map(post => 
+          post.id === postId 
+            ? { ...post, likes_count: post.likes_count - 1 }
+            : post
+        ))
+      } else {
+        await likePost(postId)
+        setLikedPosts(prev => ({ ...prev, [postId]: true }))
+        // 投稿のいいね数を更新
+        setPosts(prev => prev.map(post => 
+          post.id === postId 
+            ? { ...post, likes_count: post.likes_count + 1 }
+            : post
+        ))
+      }
+    } catch (error) {
+      console.error('いいね処理エラー:', error)
+    }
+  }
+
+  // ブックマーク処理
+  const handleBookmark = async (postId: string, isCurrentlyBookmarked: boolean) => {
+    try {
+      if (isCurrentlyBookmarked) {
+        await unbookmarkPost(postId)
+        setBookmarkedPosts(prev => ({ ...prev, [postId]: false }))
+      } else {
+        await bookmarkPost(postId)
+        setBookmarkedPosts(prev => ({ ...prev, [postId]: true }))
+      }
+    } catch (error) {
+      console.error('ブックマーク処理エラー:', error)
+    }
+  }
+
+  // 時間表示のフォーマット
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+    
+    if (diffInHours < 1) return '数分前'
+    if (diffInHours < 24) return `${diffInHours}時間前`
+    
+    const diffInDays = Math.floor(diffInHours / 24)
+    if (diffInDays < 7) return `${diffInDays}日前`
+    
+    return date.toLocaleDateString('ja-JP')
+  }
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -108,58 +224,93 @@ export default function TipsPage() {
         {/* Posts List */}
         <div className="space-y-4">
           <h2 className="text-lg font-bold text-black">みんなの節約アイディア</h2>
-          <div className="space-y-4">
-            {posts.map((post) => {
-              const CategoryIcon = getCategoryIcon(post.category);
-              return (
-                <Card key={post.id} className="bg-white border border-gray-200 shadow-sm">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <User className="h-5 w-5 text-gray-600" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-medium text-black">{post.author}</h3>
-                          <Badge variant="secondary" className="text-xs">{post.school}</Badge>
-                          <span className="text-xs text-gray-500">{post.timeAgo}</span>
+          
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="text-gray-500">読み込み中...</div>
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="text-gray-500">まだ投稿がありません</div>
+              <div className="text-sm text-gray-400 mt-1">最初の節約アイディアを投稿してみませんか？</div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {posts.map((post) => {
+                const CategoryIcon = getCategoryIcon(post.category);
+                const isLiked = likedPosts[post.id] || false;
+                const isBookmarked = bookmarkedPosts[post.id] || false;
+                
+                return (
+                  <Card key={post.id} className="bg-white border border-gray-200 shadow-sm">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                          <User className="h-5 w-5 text-gray-600" />
                         </div>
-                        <h4 className="font-bold text-black mb-2">{post.title}</h4>
-                        <p className="text-sm text-gray-700 mb-3">{post.content}</p>
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="flex items-center gap-1">
-                            <CategoryIcon className="h-4 w-4 text-gray-600" />
-                            <Badge className="bg-gray-100 text-gray-800">{post.category}</Badge>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-medium text-black">
+                              {post.user_profiles?.name || '匿名ユーザー'}
+                            </h3>
+                            {post.user_profiles?.school_type && post.user_profiles?.grade && (
+                              <Badge variant="secondary" className="text-xs">
+                                {post.user_profiles.grade}
+                              </Badge>
+                            )}
+                            <span className="text-xs text-gray-500">{formatTimeAgo(post.created_at)}</span>
                           </div>
-                          <Badge className="bg-zaim-green-100 text-zaim-green-600">{post.savings}</Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <button className={`flex items-center gap-1 text-sm ${post.isLiked ? 'text-red-500' : 'text-gray-500'} hover:text-red-500 transition-colors`}>
-                              <Heart className={`h-4 w-4 ${post.isLiked ? 'fill-current' : ''}`} />
-                              {post.likes}
-                            </button>
-                            <button className="flex items-center gap-1 text-sm text-gray-500 hover:text-blue-500 transition-colors">
-                              <MessageCircle className="h-4 w-4" />
-                              {post.comments}
+                          <h4 className="font-bold text-black mb-2">{post.title}</h4>
+                          <p className="text-sm text-gray-700 mb-3">{post.content}</p>
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="flex items-center gap-1">
+                              <CategoryIcon className="h-4 w-4 text-gray-600" />
+                              <Badge className="bg-gray-100 text-gray-800">{post.category}</Badge>
+                            </div>
+                            {post.savings_effect && (
+                              <Badge className="bg-zaim-green-100 text-zaim-green-600">
+                                {post.savings_effect}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <button 
+                                onClick={() => handleLike(post.id, isLiked)}
+                                className={`flex items-center gap-1 text-sm ${
+                                  isLiked ? 'text-red-500' : 'text-gray-500'
+                                } hover:text-red-500 transition-colors`}
+                              >
+                                <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
+                                {post.likes_count}
+                              </button>
+                              <button className="flex items-center gap-1 text-sm text-gray-500 hover:text-blue-500 transition-colors">
+                                <MessageCircle className="h-4 w-4" />
+                                {post.comments_count}
+                              </button>
+                            </div>
+                            <button 
+                              onClick={() => handleBookmark(post.id, isBookmarked)}
+                              className={`p-1 rounded ${
+                                isBookmarked ? 'text-yellow-500' : 'text-gray-400'
+                              } hover:text-yellow-500 transition-colors`}
+                            >
+                              <Bookmark className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`} />
                             </button>
                           </div>
-                          <button className={`p-1 rounded ${post.isBookmarked ? 'text-yellow-500' : 'text-gray-400'} hover:text-yellow-500 transition-colors`}>
-                            <Bookmark className={`h-4 w-4 ${post.isBookmarked ? 'fill-current' : ''}`} />
-                          </button>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Floating Create Post Button */}
-      <Dialog>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogTrigger asChild>
           <button className="fixed bottom-24 right-4 w-14 h-14 bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white rounded-full shadow-lg z-40 flex items-center justify-center transition-colors">
             <PlusCircle className="h-6 w-6" />
@@ -174,6 +325,8 @@ export default function TipsPage() {
               <label className="text-sm font-medium text-black mb-1 block">タイトル</label>
               <input 
                 type="text" 
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
                 placeholder="例：お弁当作りで食費節約"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-zaim-blue-500 bg-white text-black"
               />
@@ -233,12 +386,18 @@ export default function TipsPage() {
               <label className="text-sm font-medium text-black mb-1 block">節約効果</label>
               <input 
                 type="text" 
+                value={savingsEffect}
+                onChange={(e) => setSavingsEffect(e.target.value)}
                 placeholder="月1,000円"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-zaim-blue-500 bg-white text-black"
               />
             </div>
-            <Button className="w-full bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white">
-              投稿する
+            <Button 
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="w-full bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white disabled:opacity-50"
+            >
+              {isSubmitting ? '投稿中...' : '投稿する'}
             </Button>
           </div>
         </DialogContent>

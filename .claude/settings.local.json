@@ -85,7 +85,11 @@
       "Bash(vercel:*)",
       "mcp__github__get_file_contents",
       "WebFetch(domain:vercel.com)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(export SUPABASE_PROJECT_ID=hvxyvrquvszdwmjoycsj)",
+      "Bash(npx supabase db dump:*)",
+      "Bash(npx supabase:*)",
+      "Bash(del migrate.js check-db.js)"
     ],
     "deny": []
   }
