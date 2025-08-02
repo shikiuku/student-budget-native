@@ -28,7 +28,7 @@ export interface PostCreateData {
   title: string
   content: string
   category: string
-  savings_effect?: string
+  savings_effect?: string | null
   savings_amount?: number
 }
 

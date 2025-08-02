@@ -94,7 +94,7 @@ export default function TipsPage() {
         title: title.trim(),
         content: content.trim(),
         category: selectedCategory,
-        savings_effect: savingsEffect.trim() || null
+        savings_effect: savingsEffect.trim() || undefined
       })
 
       if (error) {
