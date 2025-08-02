@@ -524,7 +524,7 @@ export default function ProfilePage() {
                         {city}
                       </SelectItem>
                     )) : 
-                    <SelectItem value="" disabled className="bg-white text-gray-400">都道府県を選択してください</SelectItem>
+                    <SelectItem value="placeholder" disabled className="bg-white text-gray-400">都道府県を選択してください</SelectItem>
                   }
                 </SelectContent>
               </Select>
