@@ -2,10 +2,12 @@
 
 ## Supabaseダッシュボードでの設定変更
 
-1. [Supabaseダッシュボード](https://supabase.com/dashboard) にアクセス
-2. プロジェクト `student-budget-tracker` を選択
-3. **Settings → Auth** に移動
-4. **Email confirmations** を **Disabled** に設定
+1. [直接リンク](https://supabase.com/dashboard/project/hvxyvrquvszdwmjoycsj/settings/auth) にアクセス
+2. **General user signup** をクリック
+3. **Confirm email** のトグルスイッチを無効（グレー）に変更
+4. **Save changes** ボタンをクリック
+
+## ✅ 設定完了済み（2025-08-02）
 
 ## 設定変更後の効果
 
