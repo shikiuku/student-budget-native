@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/components/auth-provider"
 import { userProfileService } from "@/lib/database"
@@ -28,7 +28,7 @@ const SCHOOL_TYPES: { value: SchoolType; label: string }[] = [
   { value: 'high_school', label: '高等学校' },
 ]
 
-export default function OnboardingPage() {
+function OnboardingContent() {
   const { user } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -419,5 +419,20 @@ export default function OnboardingPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
+          <p className="text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    }>
+      <OnboardingContent />
+    </Suspense>
   )
 }

@@ -1,7 +1,7 @@
 "use client"
 
 // Student Budget Tracker - Version 2025-08-01 - Complete with Supabase Integration
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useAuth } from "@/components/auth-provider"
 import { userProfileService, expenseService, expenseCategoryService } from "@/lib/database"
 import { Progress } from "@/components/ui/progress"
@@ -10,7 +10,7 @@ import { BottomNav } from "@/components/bottom-nav"
 import type { UserProfile, ExpenseWithCategory, ExpenseCategory } from "@/lib/types"
 import { useRouter, useSearchParams } from "next/navigation"
 
-export default function HomePage() {
+function HomeContent() {
   const { user, loading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -398,5 +398,20 @@ export default function HomePage() {
 
       <BottomNav currentPage="home" />
     </div>
+  )
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center pb-20">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
+          <p className="text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   )
 }
