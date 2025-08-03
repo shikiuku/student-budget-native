@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { toast } = useToast();
 
   const handleGoogleAuth = async () => {
     setLoading(true);
@@ -44,11 +46,19 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
       
       if (error) {
         console.error('Google認証エラー:', error);
-        alert('Google認証に失敗しました。もう一度お試しください。');
+        toast({
+          title: "認証エラー",
+          description: "Google認証に失敗しました。もう一度お試しください。",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('認証エラー:', error);
-      alert('認証処理中にエラーが発生しました。');
+      toast({
+        title: "認証エラー",
+        description: "認証処理中にエラーが発生しました。",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -62,19 +72,35 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
       if (mode === 'signup') {
         // バリデーション
         if (!email || !password) {
-          alert('メールアドレスとパスワードを入力してください');
+          toast({
+            title: "入力エラー",
+            description: "メールアドレスとパスワードを入力してください",
+            variant: "destructive",
+          });
           return;
         }
         if (password.length < 6) {
-          alert('パスワードは6文字以上で入力してください');
+          toast({
+            title: "パスワードエラー",
+            description: "パスワードは6文字以上で入力してください",
+            variant: "destructive",
+          });
           return;
         }
         if (password !== confirmPassword) {
-          alert('パスワードが一致しません');
+          toast({
+            title: "パスワードエラー",
+            description: "パスワードが一致しません",
+            variant: "destructive",
+          });
           return;
         }
         if (!termsAccepted) {
-          alert('利用規約とプライバシーポリシーに同意してください');
+          toast({
+            title: "利用規約",
+            description: "利用規約とプライバシーポリシーに同意してください",
+            variant: "destructive",
+          });
           return;
         }
         
@@ -91,15 +117,23 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
         
         if (error) {
           // エラーメッセージを日本語化
+          let errorTitle = '新規登録エラー';
           let errorMessage = '新規登録に失敗しました';
           if (error.message.includes('already registered')) {
+            errorTitle = '重複エラー';
             errorMessage = 'このメールアドレスは既に登録されています';
           } else if (error.message.includes('invalid email')) {
+            errorTitle = 'メールアドレスエラー';
             errorMessage = '有効なメールアドレスを入力してください';
           } else if (error.message.includes('password')) {
+            errorTitle = 'パスワードエラー';
             errorMessage = 'パスワードが無効です（6文字以上の英数字）';
           }
-          alert(errorMessage);
+          toast({
+            title: errorTitle,
+            description: errorMessage,
+            variant: "destructive",
+          });
         } else {
           // 新規登録成功
           console.log('Registration successful:', data);
@@ -107,11 +141,19 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
           // メール確認が有効な場合
           if (data.user && !data.session) {
             // メール確認が必要
-            alert('確認メールを送信しました！メールを確認して、リンクをクリックして登録を完了してください。\n\n💡 ヒント: 迷惑メールフォルダも確認してください。');
+            toast({
+              title: "📧 確認メールを送信しました！",
+              description: "メールを確認して、リンクをクリックして登録を完了してください。迷惑メールフォルダも確認してください。",
+              variant: "default",
+            });
           } else if (data.session) {
             // メール確認が無効で、すぐにセッションが作成された場合
             console.log('Registration completed with session:', data.session);
-            alert('新規登録が完了しました！');
+            toast({
+              title: "🎉 新規登録完了！",
+              description: "アカウントが正常に作成されました。",
+              variant: "success",
+            });
           }
           
           // メールと入力フィールドをクリア
@@ -124,7 +166,11 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
       } else {
         // ログイン処理
         if (!email || !password) {
-          alert('メールアドレスとパスワードを入力してください');
+          toast({
+            title: "入力エラー",
+            description: "メールアドレスとパスワードを入力してください",
+            variant: "destructive",
+          });
           return;
         }
 
@@ -142,17 +188,26 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
           });
           
           // エラーメッセージを日本語化
+          let errorTitle = 'ログインエラー';
           let errorMessage = 'ログインに失敗しました';
           if (error.message.includes('Invalid login credentials')) {
+            errorTitle = '認証エラー';
             errorMessage = 'メールアドレスまたはパスワードが間違っています';
           } else if (error.message.includes('Email not confirmed')) {
+            errorTitle = 'メール未確認';
             errorMessage = 'メールアドレスが確認されていません。確認メールをご確認ください。';
           } else if (error.message.includes('invalid email')) {
+            errorTitle = 'メールアドレスエラー';
             errorMessage = '有効なメールアドレスを入力してください';
           } else if (error.status === 400) {
+            errorTitle = '認証エラー';
             errorMessage = `認証エラーが発生しました: ${error.message}`;
           }
-          alert(errorMessage);
+          toast({
+            title: errorTitle,
+            description: errorMessage,
+            variant: "destructive",
+          });
         } else {
           // ログイン成功
           setEmail('');
@@ -162,7 +217,11 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
       }
     } catch (error) {
       console.error('認証エラー:', error);
-      alert('認証処理中にエラーが発生しました。もう一度お試しください。');
+      toast({
+        title: "システムエラー",
+        description: "認証処理中にエラーが発生しました。もう一度お試しください。",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

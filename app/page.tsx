@@ -33,9 +33,10 @@ function HomeContent() {
   // Check for email confirmation status
   useEffect(() => {
     const confirmed = searchParams.get('confirmed')
+    const emailConfirmed = searchParams.get('email_confirmed')
     const error = searchParams.get('error')
     
-    if (confirmed === 'true') {
+    if (confirmed === 'true' || emailConfirmed === 'true') {
       setConfirmationType('success')
       setShowConfirmation(true)
       // Clear URL params

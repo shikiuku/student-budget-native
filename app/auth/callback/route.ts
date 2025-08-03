@@ -35,9 +35,25 @@ export async function GET(request: NextRequest) {
     console.log('Email verification result:', { user: !!data.user, session: !!data.session, error })
 
     if (!error && data.session) {
-      // セッションが正常に作成された場合、onboardingページへリダイレクト
-      console.log('Email verification successful, redirecting to onboarding')
-      return NextResponse.redirect(new URL(`/onboarding?email_confirmed=true`, requestUrl.origin))
+      // セッションが正常に作成された場合、ユーザープロフィールの存在をチェック
+      console.log('Email verification successful, checking user profile')
+      
+      // プロフィールの存在確認
+      const { data: profile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('id', data.user.id)
+        .single()
+      
+      if (profile && !profileError) {
+        // プロフィールが存在する場合はホームページへ
+        console.log('User profile exists, redirecting to home')
+        return NextResponse.redirect(new URL(`/?email_confirmed=true`, requestUrl.origin))
+      } else {
+        // プロフィールが存在しない場合はonboardingページへ
+        console.log('User profile not found, redirecting to onboarding')
+        return NextResponse.redirect(new URL(`/onboarding?email_confirmed=true`, requestUrl.origin))
+      }
     } else {
       // エラー時はエラーメッセージと共にリダイレクト
       console.error('Email verification failed:', error)
