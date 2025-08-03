@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     console.log('Email verification result:', { user: !!data.user, session: !!data.session, error })
 
-    if (!error && data.session) {
+    if (!error && data.session && data.user) {
       // セッションが正常に作成された場合、ユーザープロフィールの存在をチェック
       console.log('Email verification successful, checking user profile')
       
