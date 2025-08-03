@@ -370,12 +370,6 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
                 </>
               )}
             </p>
-            {mode === 'signup' && (
-              <p className="text-xs text-gray-500 mt-2">
-                💡 ヒント: Gmailをお使いの場合、yourname+test@gmail.comのような
-                エイリアスが使えます
-              </p>
-            )}
           </div>
         </div>
       </DialogContent>
