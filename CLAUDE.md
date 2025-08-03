@@ -8,6 +8,14 @@
 
 ## 最近の変更内容
 
+### 認証フローの改善 (2025-08-03)
+- メール確認機能を有効のまま使用する方針に変更
+- リフレッシュトークンエラーの対処法を実装
+- 開発用認証ガイドラインを作成（DEVELOPMENT_AUTH_GUIDE.md）
+- Gmailエイリアス機能の案内を追加
+- 確認メール送信時のユーザーフレンドリーなメッセージに改善
+- auth/callbackルートを追加してOAuth認証をサポート
+
 ### Supabaseへの完全移行 (2025-01-31)
 - Supabase MCPサーバーを使用して新プロジェクト「student-budget-tracker」を作成
 - @supabase/supabase-jsパッケージをpnpmでインストール完了

@@ -334,7 +334,7 @@ export default function ExpensesPage() {
                 placeholder="500"
                 value={newExpense.amount}
                 onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
-                className="mt-1"
+                className="mt-1 bg-white text-black border-gray-300 focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400"
               />
             </div>
 
@@ -375,7 +375,7 @@ export default function ExpensesPage() {
                 placeholder="コンビニ弁当"
                 value={newExpense.description}
                 onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
-                className="mt-1"
+                className="mt-1 bg-white text-black border-gray-300 focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400"
               />
             </div>
 
@@ -386,7 +386,7 @@ export default function ExpensesPage() {
                 type="date"
                 value={newExpense.date}
                 onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
-                className="mt-1"
+                className="mt-1 bg-white text-black border-gray-300 focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400"
               />
             </div>
 

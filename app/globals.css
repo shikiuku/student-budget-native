@@ -1,9 +1,9 @@
+/* M PLUS Rounded 1c フォントの強制適用 */
+@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@100;300;400;500;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* M PLUS Rounded 1c フォントの強制適用 */
-@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@100;300;400;500;700;800;900&display=swap');
 
 /* グローバルフォント設定 - iPad Safari対応 */
 * {
@@ -198,5 +198,22 @@
   
   .modal-textarea::-webkit-scrollbar-thumb:hover {
     background: #f1f3f4 !important;
+  }
+
+  /* オートフィル時の背景色を白に統一 */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
+    -webkit-text-fill-color: black !important;
+    background-color: white !important;
+    color: black !important;
+  }
+
+  /* Firefox用のオートフィル対応 */
+  input:-moz-autofill {
+    background-color: white !important;
+    color: black !important;
   }
 }

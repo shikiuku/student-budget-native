@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, createContext, useContext } from "react";
 import { User } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
+import { supabase, clearAuthSession } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
 interface AuthContextType {
@@ -26,6 +26,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (error) {
           console.error('認証セッション取得エラー:', error);
+          // リフレッシュトークンエラーの場合は完全なセッションクリア
+          if (error.message?.includes('Refresh Token') || error.message?.includes('Invalid Refresh Token')) {
+            console.log('無効なリフレッシュトークンを検出、セッションをクリアします');
+            await clearAuthSession();
+          }
         }
         
         setUser(session?.user ?? null);
@@ -40,8 +45,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     getSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log('認証状態変更:', { event, session: !!session });
+        
+        if (event === 'TOKEN_REFRESHED') {
+          console.log('トークンがリフレッシュされました');
+        } else if (event === 'SIGNED_IN') {
+          console.log('サインインしました');
+        } else if (event === 'SIGNED_OUT') {
+          console.log('サインアウトしました');
+        }
+        
         setUser(session?.user ?? null);
         setLoading(false);
       }

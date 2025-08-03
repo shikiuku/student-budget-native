@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface AuthModalProps {
@@ -18,6 +19,8 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
   const [confirmPassword, setConfirmPassword] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleGoogleAuth = async () => {
     setLoading(true);
@@ -103,15 +106,16 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
           alert(errorMessage);
         } else {
           // 新規登録成功
-          console.log('Registration successful:', data.user);
+          console.log('Registration successful:', data);
           
-          // セッションが既に確立されているかチェック
-          if (data.session) {
-            // メール確認が無効化されている場合、即座にログイン状態になる
-            alert('新規登録が完了しました。アプリをお楽しみください！');
-          } else {
-            // メール確認が必要な場合
-            alert('確認メールを送信しました。メール内のリンクをクリックして登録を完了してください。');
+          // メール確認が有効な場合
+          if (data.user && !data.session) {
+            // メール確認が必要
+            alert('確認メールを送信しました！メールを確認して、リンクをクリックして登録を完了してください。\n\n💡 ヒント: 迷惑メールフォルダも確認してください。');
+          } else if (data.session) {
+            // メール確認が無効で、すぐにセッションが作成された場合
+            console.log('Registration completed with session:', data.session);
+            alert('新規登録が完了しました！');
           }
           
           // メールと入力フィールドをクリア
@@ -134,6 +138,13 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
         });
         
         if (error) {
+          // エラー詳細をログ出力
+          console.error('ログインエラー詳細:', {
+            message: error.message,
+            status: error.status,
+            details: error
+          });
+          
           // エラーメッセージを日本語化
           let errorMessage = 'ログインに失敗しました';
           if (error.message.includes('Invalid login credentials')) {
@@ -142,6 +153,8 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
             errorMessage = 'メールアドレスが確認されていません。確認メールをご確認ください。';
           } else if (error.message.includes('invalid email')) {
             errorMessage = '有効なメールアドレスを入力してください';
+          } else if (error.status === 400) {
+            errorMessage = `認証エラーが発生しました: ${error.message}`;
           }
           alert(errorMessage);
         } else {
@@ -184,28 +197,46 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
             
             <div>
               <label className="block text-sm font-medium text-black mb-2">パスワード</label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black"
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             
             {mode === 'signup' && (
               <>
                 <div>
                   <label className="block text-sm font-medium text-black mb-2">パスワード確認</label>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black"
-                    required
-                  />
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
                 
                 <div className="flex items-start space-x-2">
@@ -284,6 +315,12 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
                 </>
               )}
             </p>
+            {mode === 'signup' && (
+              <p className="text-xs text-gray-500 mt-2">
+                💡 ヒント: Gmailをお使いの場合、yourname+test@gmail.comのような
+                エイリアスが使えます
+              </p>
+            )}
           </div>
         </div>
       </DialogContent>

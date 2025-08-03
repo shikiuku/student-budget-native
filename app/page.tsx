@@ -5,18 +5,21 @@ import { useState, useEffect } from "react"
 import { useAuth } from "@/components/auth-provider"
 import { userProfileService, expenseService, expenseCategoryService } from "@/lib/database"
 import { Progress } from "@/components/ui/progress"
-import { TrendingUp, TrendingDown, PlusCircle, BarChart3, Utensils, Car, ShoppingBag, Home, BookOpen, Shirt } from "lucide-react"
+import { TrendingUp, TrendingDown, PlusCircle, BarChart3, Utensils, Car, ShoppingBag, Home, BookOpen, Shirt, CheckCircle, XCircle } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import type { UserProfile, ExpenseWithCategory, ExpenseCategory } from "@/lib/types"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export default function HomePage() {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [expenses, setExpenses] = useState<ExpenseWithCategory[]>([])
   const [categories, setCategories] = useState<ExpenseCategory[]>([])
   const [dataLoading, setDataLoading] = useState(true)
+  const [showConfirmation, setShowConfirmation] = useState(false)
+  const [confirmationType, setConfirmationType] = useState<'success' | 'error'>('success')
 
   const iconMap = {
     "Utensils": Utensils,
@@ -26,6 +29,26 @@ export default function HomePage() {
     "Shirt": Home,
     "Home": Home
   }
+
+  // Check for email confirmation status
+  useEffect(() => {
+    const confirmed = searchParams.get('confirmed')
+    const error = searchParams.get('error')
+    
+    if (confirmed === 'true') {
+      setConfirmationType('success')
+      setShowConfirmation(true)
+      // Clear URL params
+      router.replace('/')
+      setTimeout(() => setShowConfirmation(false), 5000)
+    } else if (error === 'verification_failed') {
+      setConfirmationType('error')
+      setShowConfirmation(true)
+      // Clear URL params
+      router.replace('/')
+      setTimeout(() => setShowConfirmation(false), 5000)
+    }
+  }, [searchParams, router])
 
   // Load user data on component mount
   useEffect(() => {
@@ -149,6 +172,43 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white pb-20">
+      {/* Email confirmation notification */}
+      {showConfirmation && (
+        <div className={`fixed top-4 left-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
+          confirmationType === 'success' 
+            ? 'bg-green-100 border border-green-400 text-green-700' 
+            : 'bg-red-100 border border-red-400 text-red-700'
+        }`}>
+          <div className="flex items-center gap-3">
+            {confirmationType === 'success' ? (
+              <CheckCircle className="h-5 w-5" />
+            ) : (
+              <XCircle className="h-5 w-5" />
+            )}
+            <div>
+              <div className="font-medium">
+                {confirmationType === 'success' 
+                  ? 'メール認証完了！' 
+                  : 'メール認証に失敗しました'
+                }
+              </div>
+              <div className="text-sm">
+                {confirmationType === 'success' 
+                  ? 'アカウントが有効化されました。ログインできます。' 
+                  : '確認リンクが無効または期限切れです。再度お試しください。'
+                }
+              </div>
+            </div>
+            <button 
+              onClick={() => setShowConfirmation(false)}
+              className="ml-auto text-gray-400 hover:text-gray-600"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+      
       <div className="p-4 space-y-6 pt-6">
         {/* Main Budget Display - Updated style */}
         <div 

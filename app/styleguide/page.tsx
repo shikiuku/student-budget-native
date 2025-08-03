@@ -38,7 +38,10 @@ import {
   Share,
   Bookmark,
   Star,
-  Tag
+  Tag,
+  CheckCircle,
+  XCircle,
+  AlertCircle
 } from "lucide-react"
 
 export default function StyleGuidePage() {
@@ -55,7 +58,9 @@ export default function StyleGuidePage() {
     solid5: true,
     solid6: false,
     solid7: true,
-    solid8: false
+    solid8: false,
+    showPassword1: false,
+    showPassword2: false
   });
 
   const handleSwitchToggle = (key: string) => {
@@ -95,6 +100,7 @@ export default function StyleGuidePage() {
               <a href="#statistics" className="text-gray-600 hover:text-gray-700">統計カード</a>
               <a href="#auth" className="text-gray-600 hover:text-gray-700">認証UI</a>
               <a href="#onboarding" className="text-gray-600 hover:text-gray-700">オンボーディング</a>
+              <a href="#notifications" className="text-gray-600 hover:text-gray-700">通知・完了メッセージ</a>
             </div>
           </div>
         </div>
@@ -2127,6 +2133,220 @@ export default function StyleGuidePage() {
                 <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50">
                   投稿を探す
                 </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Notifications and Completion Messages */}
+        <section id="notifications">
+          <h2 className="text-2xl font-bold mb-4 text-black">通知・完了メッセージ</h2>
+          <div className="space-y-6">
+            
+            {/* Email Confirmation Messages */}
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-4">メール認証完了メッセージ</h3>
+              <div className="space-y-4">
+                
+                {/* Success Message - Email Confirmed */}
+                <div>
+                  <h4 className="font-medium text-black mb-3">認証成功（初期設定ページ用）</h4>
+                  <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="h-5 w-5" />
+                      <div>
+                        <div className="font-medium">メール認証が完了しました！</div>
+                        <div className="text-sm">アカウントの作成が正常に完了しました。初期設定を続けましょう。</div>
+                      </div>
+                      <button className="ml-auto text-green-500 hover:text-green-700">
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Success Message - Home Page Style */}
+                <div>
+                  <h4 className="font-medium text-black mb-3">認証成功（ホームページ用）</h4>
+                  <div className="bg-green-100 border border-green-400 text-green-700 p-4 rounded-lg shadow-lg">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="h-5 w-5" />
+                      <div>
+                        <div className="font-medium">メール認証完了！</div>
+                        <div className="text-sm">アカウントが有効化されました。ログインできます。</div>
+                      </div>
+                      <button className="ml-auto text-gray-400 hover:text-gray-600">
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Error Message - Verification Failed */}
+                <div>
+                  <h4 className="font-medium text-black mb-3">認証失敗</h4>
+                  <div className="bg-red-100 border border-red-400 text-red-700 p-4 rounded-lg shadow-lg">
+                    <div className="flex items-center gap-3">
+                      <XCircle className="h-5 w-5" />
+                      <div>
+                        <div className="font-medium">メール認証に失敗しました</div>
+                        <div className="text-sm">確認リンクが無効または期限切れです。再度お試しください。</div>
+                      </div>
+                      <button className="ml-auto text-gray-400 hover:text-gray-600">
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* General Notification Styles */}
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-4">一般的な通知スタイル</h3>
+              <div className="space-y-4">
+                
+                {/* Success Notification */}
+                <div>
+                  <h4 className="font-medium text-black mb-3">成功通知</h4>
+                  <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <div>
+                        <div className="font-medium">操作が完了しました</div>
+                        <div className="text-sm text-green-700">データが正常に保存されました。</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Warning Notification */}
+                <div>
+                  <h4 className="font-medium text-black mb-3">警告通知</h4>
+                  <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <AlertCircle className="h-5 w-5 text-yellow-600" />
+                      <div>
+                        <div className="font-medium">注意が必要です</div>
+                        <div className="text-sm text-yellow-700">予算の80%を使用しています。</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Error Notification */}
+                <div>
+                  <h4 className="font-medium text-black mb-3">エラー通知</h4>
+                  <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <XCircle className="h-5 w-5 text-red-600" />
+                      <div>
+                        <div className="font-medium">エラーが発生しました</div>
+                        <div className="text-sm text-red-700">ネットワーク接続を確認してください。</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Toast-style Notifications */}
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-4">トースト通知（固定位置）</h3>
+              <div className="space-y-4">
+                <div className="relative bg-gray-100 border border-gray-200 rounded-lg p-8 h-40">
+                  <div className="absolute top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg max-w-sm">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle className="h-5 w-5 mt-0.5" />
+                      <div className="flex-1">
+                        <div className="font-medium">支出を記録しました</div>
+                        <div className="text-sm">カテゴリ: 食費 / 金額: ¥500</div>
+                      </div>
+                      <button className="text-green-500 hover:text-green-700 ml-2">
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600">右上に表示されるトースト通知の例</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Inline Validation Messages */}
+            <div>
+              <h3 className="text-lg font-semibold text-black mb-4">インラインバリデーション</h3>
+              <div className="space-y-4 max-w-md">
+                
+                {/* Success Field */}
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">メールアドレス</label>
+                  <input
+                    type="email"
+                    value="user@example.com"
+                    className="w-full px-3 py-2 border border-green-300 rounded-md focus:ring-2 focus:ring-green-400 focus:border-green-400 bg-white text-black"
+                    readOnly
+                  />
+                  <div className="flex items-center gap-2 mt-1 text-green-600 text-sm">
+                    <CheckCircle className="h-4 w-4" />
+                    <span>有効なメールアドレスです</span>
+                  </div>
+                </div>
+
+                {/* Error Field */}
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">パスワード</label>
+                  <input
+                    type="password"
+                    value="123"
+                    className="w-full px-3 py-2 border border-red-300 rounded-md focus:ring-2 focus:ring-red-400 focus:border-red-400 bg-white text-black"
+                    readOnly
+                  />
+                  <div className="flex items-center gap-2 mt-1 text-red-600 text-sm">
+                    <XCircle className="h-4 w-4" />
+                    <span>パスワードは6文字以上で入力してください</span>
+                  </div>
+                </div>
+
+                {/* Password Input with Toggle */}
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">パスワード（表示切替付き）</label>
+                  <div className="relative">
+                    <input
+                      type={switchStates.showPassword1 ? "text" : "password"}
+                      value="password123"
+                      className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black"
+                      readOnly
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchToggle('showPassword1')}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {switchStates.showPassword1 ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">右端のアイコンで表示/非表示を切り替え</div>
+                </div>
+
+                {/* Password Confirmation with Toggle */}
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">パスワード確認</label>
+                  <div className="relative">
+                    <input
+                      type={switchStates.showPassword2 ? "text" : "password"}
+                      value="password123"
+                      className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black"
+                      readOnly
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchToggle('showPassword2')}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {switchStates.showPassword2 ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

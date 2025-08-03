@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/components/auth-provider"
 import { userProfileService } from "@/lib/database"
 import { Button } from "@/components/ui/button"
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast"
 import type { SchoolType, UserOnboardingForm } from "@/lib/types"
 import { CITIES_BY_PREFECTURE } from "@/lib/prefecture-data"
+import { CheckCircle } from "lucide-react"
 
 const PREFECTURES = [
   "北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
@@ -30,9 +31,11 @@ const SCHOOL_TYPES: { value: SchoolType; label: string }[] = [
 export default function OnboardingPage() {
   const { user } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { toast } = useToast()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [showEmailSuccess, setShowEmailSuccess] = useState(false)
   
   const [formData, setFormData] = useState<UserOnboardingForm>({
     name: "",
@@ -44,6 +47,21 @@ export default function OnboardingPage() {
     grade: "",
     monthly_budget: 30000,
   })
+
+  // メール確認成功の確認
+  useEffect(() => {
+    const emailConfirmed = searchParams.get('email_confirmed')
+    if (emailConfirmed === 'true') {
+      setShowEmailSuccess(true)
+      // 5秒後に成功メッセージを自動で非表示
+      setTimeout(() => setShowEmailSuccess(false), 5000)
+      
+      // URLからパラメータを削除
+      const url = new URL(window.location.href)
+      url.searchParams.delete('email_confirmed')
+      window.history.replaceState({}, '', url.toString())
+    }
+  }, [searchParams])
 
   const handleInputChange = (field: keyof UserOnboardingForm, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -327,6 +345,25 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-white p-4">
+      {/* メール確認成功メッセージ */}
+      {showEmailSuccess && (
+        <div className="fixed top-4 left-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg">
+          <div className="flex items-center gap-3">
+            <CheckCircle className="h-5 w-5" />
+            <div>
+              <div className="font-medium">メール認証が完了しました！</div>
+              <div className="text-sm">アカウントの作成が正常に完了しました。初期設定を続けましょう。</div>
+            </div>
+            <button 
+              onClick={() => setShowEmailSuccess(false)}
+              className="ml-auto text-green-500 hover:text-green-700"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+      
       <div className="max-w-2xl mx-auto space-y-6 pt-6">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-black">初期設定</h1>
