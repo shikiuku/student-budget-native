@@ -2,7 +2,25 @@
 
 import React, { useEffect, useState, createContext, useContext } from "react";
 import { User } from "@supabase/supabase-js";
-import { supabase, clearAuthSession } from "@/lib/supabase";
+import { createClient } from "@/utils/supabase/client";
+
+const clearAuthSession = async () => {
+  try {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    // ローカルストレージからSupabase関連データを削除
+    if (typeof window !== 'undefined') {
+      const keys = Object.keys(localStorage)
+      keys.forEach(key => {
+        if (key.startsWith('sb-') && key.includes('-auth-token')) {
+          localStorage.removeItem(key)
+        }
+      })
+    }
+  } catch (error) {
+    console.error('セッションクリアエラー:', error)
+  }
+}
 import { useRouter } from "next/navigation";
 
 interface AuthContextType {
@@ -18,6 +36,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
+    const supabase = createClient();
+    
     const getSession = async () => {
       console.log('認証セッション取得開始');
       try {
@@ -30,14 +50,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (error.message?.includes('Refresh Token') || error.message?.includes('Invalid Refresh Token')) {
             console.log('無効なリフレッシュトークンを検出、セッションをクリアします');
             await clearAuthSession();
+            setUser(null);
+            setLoading(false);
+            return;
           }
         }
         
-        setUser(session?.user ?? null);
+        // セッションが存在する場合のみユーザーを設定
+        if (session && session.user) {
+          setUser(session.user);
+        } else {
+          setUser(null);
+        }
         setLoading(false);
         console.log('認証loading状態をfalseに設定');
       } catch (err) {
         console.error('認証セッション取得で例外発生:', err);
+        setUser(null);
         setLoading(false);
       }
     };

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/utils/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,6 +22,7 @@ export default function LoginPage() {
 
     setLoading(true)
     try {
+      const supabase = createClient()
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -29,12 +30,21 @@ export default function LoginPage() {
 
       if (error) throw error
 
-      toast({
-        title: "ログイン成功",
-        description: "ダッシュボードに移動します。",
-      })
-
-      router.push("/")
+      if (data.session) {
+        console.log('ログイン成功、セッション:', data.session)
+        
+        // セッションの状態を確認
+        const { data: { session } } = await supabase.auth.getSession()
+        console.log('現在のセッション:', session)
+        
+        toast({
+          title: "ログイン成功",
+          description: "ダッシュボードに移動します。",
+        })
+        
+        // リダイレクト
+        window.location.href = "/"
+      }
     } catch (error) {
       toast({
         title: "ログインエラー",
@@ -49,6 +59,7 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setLoading(true)
     try {
+      const supabase = createClient()
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {

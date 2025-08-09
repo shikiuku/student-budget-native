@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { NextRequest } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/utils/supabase/server'
 import type { EmailOtpType } from '@supabase/supabase-js'
 
 export async function GET(request: NextRequest) {
@@ -12,16 +12,8 @@ export async function GET(request: NextRequest) {
 
   console.log('Auth callback called with:', { token_hash: !!token_hash, type, code: !!code })
 
-  // Supabaseクライアントを作成（Server-side）
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      auth: {
-        flowType: 'pkce'
-      }
-    }
-  )
+  // Supabaseクライアントを作成
+  const supabase = createClient()
 
   // メール確認リンクからのトークン処理
   if (token_hash && type) {
