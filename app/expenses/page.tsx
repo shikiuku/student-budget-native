@@ -274,7 +274,7 @@ export default function ExpensesPage() {
 
   return (
     <div className="min-h-screen bg-white pb-20">
-      <div className="p-4 space-y-6 pt-6">
+      <div className="px-6 py-4 space-y-6 pt-6">
         {/* Summary Card */}
         <div className="bg-zaim-blue-50 border border-zaim-blue-200 rounded-lg p-4">
           <div className="text-center">

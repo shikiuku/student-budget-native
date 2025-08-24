@@ -184,7 +184,7 @@ export default function TipsPage() {
 
   return (
     <div className="min-h-screen bg-white pb-20">
-      <div className="p-4 space-y-6 pt-6">
+      <div className="px-6 py-4 space-y-6 pt-6">
 
         {/* Header */}
         <div>

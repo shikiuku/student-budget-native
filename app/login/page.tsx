@@ -82,6 +82,11 @@ export default function LoginPage() {
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
+          <img 
+            src="/logo.png" 
+            alt="家計簿アプリロゴ" 
+            className="w-20 h-20 mx-auto mb-4"
+          />
           <h1 className="text-3xl font-bold text-black">ログイン</h1>
           <p className="text-gray-600">アカウントにログインしてください</p>
         </div>

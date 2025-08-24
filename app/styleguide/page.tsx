@@ -44,6 +44,136 @@ import {
   AlertCircle
 } from "lucide-react"
 
+// インタラクティブなカレンダーコンポーネント
+function CalendarWithExpenseComponent() {
+  const [selectedDate, setSelectedDate] = useState(15);
+  
+  // 支出データのサンプル
+  const expenseData = {
+    3: [{ name: "昼食", time: "12:00", amount: 800, icon: "🍜", color: "bg-orange-500" }],
+    8: [
+      { name: "電車代", time: "08:30", amount: 300, icon: "🚊", color: "bg-blue-500" },
+      { name: "コーヒー", time: "10:15", amount: 450, icon: "☕", color: "bg-green-500" }
+    ],
+    10: [{ name: "本", time: "15:00", amount: 1200, icon: "📚", color: "bg-purple-500" }],
+    15: [
+      { name: "ランチ", time: "12:30", amount: 1200, icon: "🍜", color: "bg-orange-500" },
+      { name: "電車代", time: "18:15", amount: 500, icon: "🚊", color: "bg-blue-500" },
+      { name: "カフェ", time: "15:45", amount: 1500, icon: "☕", color: "bg-green-500" }
+    ],
+    18: [{ name: "映画", time: "19:00", amount: 1800, icon: "🎬", color: "bg-red-500" }],
+    22: [
+      { name: "夕食", time: "19:30", amount: 2500, icon: "🍽️", color: "bg-orange-500" },
+      { name: "タクシー", time: "22:00", amount: 1200, icon: "🚖", color: "bg-yellow-500" }
+    ],
+    25: [{ name: "買い物", time: "14:00", amount: 3200, icon: "🛍️", color: "bg-pink-500" }],
+    28: [{ name: "友達とランチ", time: "12:00", amount: 2800, icon: "🍽️", color: "bg-orange-500" }]
+  };
+
+  const totalMonthExpense = Object.values(expenseData).flat().reduce((sum, item) => sum + item.amount, 0);
+  const selectedDayExpenses = expenseData[selectedDate] || [];
+  const selectedDayTotal = selectedDayExpenses.reduce((sum, item) => sum + item.amount, 0);
+
+  const handleDateClick = (date) => {
+    setSelectedDate(date);
+  };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg p-6 max-w-2xl">
+      {/* 上部: 月間支出サマリー - 写真風にシンプルなカード形式 */}
+      <div className="mb-6 grid grid-cols-3 gap-3">
+        <div className="bg-blue-50 p-4 rounded-lg text-center">
+          <div className="text-xs text-gray-600 mb-1">収入</div>
+          <div className="text-lg font-bold text-blue-600">¥300,000</div>
+        </div>
+        <div className="bg-red-50 p-4 rounded-lg text-center">
+          <div className="text-xs text-gray-600 mb-1">支出</div>
+          <div className="text-lg font-bold text-red-600">¥{totalMonthExpense.toLocaleString()}</div>
+        </div>
+        <div className="bg-green-50 p-4 rounded-lg text-center">
+          <div className="text-xs text-gray-600 mb-1">残高</div>
+          <div className="text-lg font-bold text-green-600">¥{(300000 - totalMonthExpense).toLocaleString()}</div>
+        </div>
+      </div>
+
+      {/* カレンダー部分 */}
+      <div className="grid grid-cols-7 gap-px mb-2">
+        {['日', '月', '火', '水', '木', '金', '土'].map((day, i) => (
+          <div key={day} className={`text-center text-sm font-medium py-2 ${
+            i === 0 ? 'text-red-500' : i === 6 ? 'text-blue-500' : 'text-gray-600'
+          }`}>{day}</div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-px mb-6">
+        {[...Array(35)].map((_, i) => {
+          const date = i - 2;
+          const isToday = date === 24; // 今日は24日とする
+          const hasExpense = expenseData[date];
+          const isSelected = date === selectedDate;
+          
+          return (
+            <div key={i} className="text-center py-3 h-16 flex items-center justify-center">
+              {date > 0 && date <= 31 && (
+                <button 
+                  onClick={() => handleDateClick(date)}
+                  className={`w-12 h-12 flex items-center justify-center rounded-full text-xl cursor-pointer transition-all hover:scale-105 ${
+                    isSelected ? 'bg-blue-100 border-2 border-blue-400 text-blue-700' : 
+                    isToday ? 'font-bold text-gray-800' : 
+                    hasExpense ? 'bg-blue-50 text-blue-700' :
+                    (i + 2) % 7 === 0 ? 'text-red-500 hover:bg-red-50' : 
+                    (i + 2) % 7 === 6 ? 'text-blue-500 hover:bg-blue-50' : 
+                    'text-gray-700 hover:bg-gray-100'
+                  } font-medium`}>
+                  {date}
+                  {hasExpense && (
+                    <div className="absolute mt-8 text-xs text-blue-600 font-bold">
+                      •
+                    </div>
+                  )}
+                </button>
+              )}
+              {date <= 0 && (
+                <div className="w-12 h-12 flex items-center justify-center text-xl text-gray-400 font-medium">
+                  {date + 31}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      
+      {/* 下部: 選択日の支出詳細 */}
+      <div className="border-t border-gray-200 pt-4">
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-sm font-semibold text-gray-800">8月{selectedDate}日の支出</h4>
+          <div className="text-sm font-bold text-red-600">合計: ¥{selectedDayTotal.toLocaleString()}</div>
+        </div>
+        
+        {selectedDayExpenses.length > 0 ? (
+          <div className="space-y-2">
+            {selectedDayExpenses.map((expense, index) => (
+              <div key={index} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className={`w-6 h-6 ${expense.color} rounded-full flex items-center justify-center`}>
+                    <span className="text-white text-xs">{expense.icon}</span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">{expense.name}</div>
+                    <div className="text-xs text-gray-500">{expense.time}</div>
+                  </div>
+                </div>
+                <div className="text-sm font-bold text-gray-900">¥{expense.amount.toLocaleString()}</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-sm text-gray-500 text-center py-4">この日は支出がありません</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function StyleGuidePage() {
   // スイッチの状態管理
   const [switchStates, setSwitchStates] = useState({
@@ -2345,6 +2475,313 @@ export default function StyleGuidePage() {
                     >
                       {switchStates.showPassword2 ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* カレンダーデザインバリエーション */}
+        <section className="mt-8">
+          <h2 className="text-2xl font-bold mb-6 text-gray-900">カレンダーデザインバリエーション（カード型ベース）</h2>
+          
+          <div className="space-y-8">
+            {/* バリエーション1: ベーシックカード型 */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">1. ベーシックカード型（オリジナル）</h3>
+              <div className="bg-gray-50 rounded-lg p-6 max-w-2xl">
+                <div className="grid grid-cols-7 gap-px">
+                  {['日', '月', '火', '水', '木', '金', '土'].map((day, i) => (
+                    <div key={day} className={`text-center text-sm font-bold py-2 ${
+                      i === 0 ? 'text-red-600' : i === 6 ? 'text-blue-600' : 'text-gray-700'
+                    }`}>{day}</div>
+                  ))}
+                  {[...Array(35)].map((_, i) => {
+                    const date = i - 2;
+                    const hasExpense = [3, 10, 15, 22, 28].includes(date);
+                    const isToday = date === 15;
+                    return (
+                      <div key={i} className={`
+                        ${isToday ? 'bg-blue-500 text-white' : 'bg-white'} rounded border border-gray-200 p-3 min-h-[80px] cursor-pointer
+                        ${date < 1 || date > 31 ? 'opacity-30' : ''}
+                        hover:border-gray-300 transition-colors
+                      `}>
+                        {date > 0 && date <= 31 && (
+                          <>
+                            <div className={`text-lg font-semibold ${
+                              isToday ? 'text-white' : 
+                              (i + 2) % 7 === 0 ? 'text-red-600' : 
+                              (i + 2) % 7 === 6 ? 'text-blue-600' : 
+                              'text-gray-800'
+                            }`}>{date}</div>
+                            {hasExpense && (
+                              <div className="mt-0.5">
+                                <div className={`text-[10px] font-bold ${isToday ? 'text-white' : 'text-green-600'}`}>¥{(date * 300 / 1000).toFixed(1)}k</div>
+                                <div className={`text-[10px] ${isToday ? 'text-blue-100' : 'text-gray-500'}`}>{Math.floor(date / 7) + 1}件</div>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+
+            {/* バリエーション6: 支出表示付きカレンダー */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">6. 支出表示付きカレンダー（インタラクティブ）</h3>
+              <CalendarWithExpenseComponent />
+            </div>
+
+            {/* バリエーション7: ミニマル（円形強調なし） */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">7. ミニマル（円形強調なし）</h3>
+              <div className="bg-gray-50 p-6 max-w-2xl">
+                <div className="grid grid-cols-7 gap-px mb-2">
+                  {['日', '月', '火', '水', '木', '金', '土'].map((day, i) => (
+                    <div key={day} className={`text-center text-sm font-medium py-2 ${
+                      i === 0 ? 'text-red-500' : i === 6 ? 'text-blue-500' : 'text-gray-600'
+                    }`}>{day}</div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 gap-px">
+                  {[...Array(35)].map((_, i) => {
+                    const date = i - 2;
+                    const isToday = date === 15;
+                    return (
+                      <div key={i} className="text-center py-3 h-16 flex items-center justify-center">
+                        {date > 0 && date <= 31 && (
+                          <div className={`text-xl font-medium ${
+                            isToday ? 'bg-blue-500 text-white px-2 py-1 rounded' : 
+                            (i + 2) % 7 === 0 ? 'text-red-500' : 
+                            (i + 2) % 7 === 6 ? 'text-blue-500' : 
+                            'text-gray-800'
+                          }`}>
+                            {date}
+                          </div>
+                        )}
+                        {date <= 0 && (
+                          <div className="text-xl text-gray-300 font-medium">
+                            {date + 31}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* バリエーション8: カラフル強調 */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">8. カラフル強調</h3>
+              <div className="bg-white border border-gray-200 rounded-lg p-6 max-w-2xl">
+                <div className="grid grid-cols-7 gap-px mb-2">
+                  {['日', '月', '火', '水', '木', '金', '土'].map((day, i) => (
+                    <div key={day} className={`text-center text-sm font-bold py-2 rounded-md ${
+                      i === 0 ? 'bg-red-50 text-red-600' : 
+                      i === 6 ? 'bg-blue-50 text-blue-600' : 
+                      'bg-gray-50 text-gray-700'
+                    }`}>{day}</div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 gap-px">
+                  {[...Array(35)].map((_, i) => {
+                    const date = i - 2;
+                    const isToday = date === 15;
+                    return (
+                      <div key={i} className="text-center h-16 flex items-center justify-center">
+                        {date > 0 && date <= 31 && (
+                          <div className={`w-12 h-12 flex items-center justify-center text-xl font-semibold rounded-lg transition-all hover:scale-110 ${
+                            isToday ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg' : 
+                            (i + 2) % 7 === 0 ? 'text-red-500 hover:bg-red-50' : 
+                            (i + 2) % 7 === 6 ? 'text-blue-500 hover:bg-blue-50' : 
+                            'text-gray-700 hover:bg-gray-100'
+                          }`}>
+                            {date}
+                          </div>
+                        )}
+                        {date <= 0 && (
+                          <div className="w-12 h-12 flex items-center justify-center text-xl text-gray-300">
+                            {date + 31}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* バリエーション9: 点線グリッド */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">9. 点線グリッド</h3>
+              <div className="bg-white p-6 max-w-2xl" style={{backgroundImage: 'radial-gradient(circle, #e5e5e5 1px, transparent 1px)', backgroundSize: '15px 15px'}}>
+                <div className="grid grid-cols-7 gap-px mb-2">
+                  {['日', '月', '火', '水', '木', '金', '土'].map((day, i) => (
+                    <div key={day} className={`text-center text-sm font-medium py-2 px-2 rounded-full ${
+                      i === 0 ? 'bg-red-500 text-white' : 
+                      i === 6 ? 'bg-blue-500 text-white' : 
+                      'bg-gray-100 text-gray-700'
+                    }`}>{day}</div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 gap-px">
+                  {[...Array(35)].map((_, i) => {
+                    const date = i - 2;
+                    const isToday = date === 15;
+                    return (
+                      <div key={i} className="text-center h-16 flex items-center justify-center">
+                        {date > 0 && date <= 31 && (
+                          <div className={`w-12 h-12 flex items-center justify-center text-xl font-bold rounded-full border-2 transition-all ${
+                            isToday ? 'bg-green-500 text-white border-green-500 shadow-md' : 
+                            'bg-white border-dashed border-gray-300 text-gray-700 hover:border-solid hover:border-gray-500'
+                          } ${
+                            (i + 2) % 7 === 0 ? 'text-red-500' : 
+                            (i + 2) % 7 === 6 ? 'text-blue-500' : 
+                            ''
+                          }`}>
+                            {date}
+                          </div>
+                        )}
+                        {date <= 0 && (
+                          <div className="w-12 h-12 flex items-center justify-center text-xl text-gray-300">
+                            {date + 31}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* バリエーション10: フラット & クリーン */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">10. フラット & クリーン</h3>
+              <div className="bg-white p-6 max-w-2xl">
+                <div className="grid grid-cols-7 gap-px mb-2">
+                  {['日', '月', '火', '水', '木', '金', '土'].map((day, i) => (
+                    <div key={day} className={`text-center text-sm font-bold py-2 ${
+                      i === 0 ? 'text-red-600' : i === 6 ? 'text-blue-600' : 'text-gray-500'
+                    }`}>{day}</div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 gap-px">
+                  {[...Array(35)].map((_, i) => {
+                    const date = i - 2;
+                    const isToday = date === 15;
+                    return (
+                      <div key={i} className="text-center h-16 flex items-center justify-center">
+                        {date > 0 && date <= 31 && (
+                          <div className={`w-12 h-12 flex items-center justify-center text-xl font-semibold transition-all cursor-pointer rounded ${
+                            isToday ? 'text-white bg-black' : 
+                            (i + 2) % 7 === 0 ? 'text-red-600 hover:bg-red-50' : 
+                            (i + 2) % 7 === 6 ? 'text-blue-600 hover:bg-blue-50' : 
+                            'text-gray-800 hover:bg-gray-100'
+                          } hover:scale-110`}>
+                            {date}
+                          </div>
+                        )}
+                        {date <= 0 && (
+                          <div className="text-xl text-gray-300">
+                            {date + 31}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* バリエーション11: ネオン風 */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">11. ネオン風</h3>
+              <div className="bg-gray-900 p-6 rounded-lg max-w-2xl">
+                <div className="grid grid-cols-7 gap-px mb-2">
+                  {['日', '月', '火', '水', '木', '金', '土'].map((day, i) => (
+                    <div key={day} className={`text-center text-sm font-bold py-2 ${
+                      i === 0 ? 'text-pink-400' : i === 6 ? 'text-cyan-400' : 'text-gray-300'
+                    }`}>{day}</div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 gap-px">
+                  {[...Array(35)].map((_, i) => {
+                    const date = i - 2;
+                    const isToday = date === 15;
+                    return (
+                      <div key={i} className="text-center h-16 flex items-center justify-center">
+                        {date > 0 && date <= 31 && (
+                          <div className={`w-12 h-12 flex items-center justify-center text-xl font-bold rounded-full border transition-all ${
+                            isToday ? 'text-black bg-yellow-400 border-yellow-400 shadow-yellow-400 shadow-lg' : 
+                            'text-gray-300 border-gray-600 hover:border-white hover:text-white hover:shadow-white hover:shadow-sm'
+                          } ${
+                            (i + 2) % 7 === 0 ? 'text-pink-400 border-pink-400 hover:shadow-pink-400 hover:shadow-sm' : 
+                            (i + 2) % 7 === 6 ? 'text-cyan-400 border-cyan-400 hover:shadow-cyan-400 hover:shadow-sm' : 
+                            ''
+                          }`}>
+                            {date}
+                          </div>
+                        )}
+                        {date <= 0 && (
+                          <div className="w-12 h-12 flex items-center justify-center text-xl text-gray-600">
+                            {date + 31}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* バリエーション12: 紙風 */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">12. 紙風</h3>
+              <div className="bg-yellow-50 border-2 border-yellow-200 p-6 relative max-w-2xl">
+                {/* 紙の穴 */}
+                <div className="absolute left-2 top-0 bottom-0 flex flex-col justify-around">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="w-3 h-3 rounded-full border border-yellow-300 bg-white"></div>
+                  ))}
+                </div>
+                <div className="ml-6">
+                  <div className="grid grid-cols-7 gap-px mb-2 border-b border-yellow-300 pb-1">
+                    {['日', '月', '火', '水', '木', '金', '土'].map((day, i) => (
+                      <div key={day} className={`text-center text-sm font-bold py-2 ${
+                        i === 0 ? 'text-red-700' : i === 6 ? 'text-blue-700' : 'text-gray-800'
+                      }`}>{day}</div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-7 gap-px">
+                    {[...Array(35)].map((_, i) => {
+                      const date = i - 2;
+                      const isToday = date === 15;
+                      return (
+                        <div key={i} className="text-center h-16 flex items-center justify-center relative">
+                          {date > 0 && date <= 31 && (
+                            <div className={`w-12 h-12 flex items-center justify-center text-xl font-bold cursor-pointer rounded ${
+                              isToday ? 'bg-red-600 text-white transform rotate-1' : 
+                              (i + 2) % 7 === 0 ? 'text-red-700 hover:bg-red-50' : 
+                              (i + 2) % 7 === 6 ? 'text-blue-700 hover:bg-blue-50' : 
+                              'text-gray-800 hover:bg-gray-50'
+                            } hover:transform hover:scale-110 transition-all`}>
+                              {date}
+                            </div>
+                          )}
+                          {date <= 0 && (
+                            <div className="text-xl text-gray-400 font-bold">
+                              {date + 31}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

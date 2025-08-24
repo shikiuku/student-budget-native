@@ -156,7 +156,7 @@ export default function PayPayPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white p-4">
+    <div className="min-h-screen bg-white px-6 py-4">
       <div className="max-w-4xl mx-auto space-y-6 pt-6">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-black">PayPay連携</h1>

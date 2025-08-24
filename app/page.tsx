@@ -124,6 +124,11 @@ function HomeContent() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center pb-20">
         <div className="text-center space-y-4">
+          <img 
+            src="/logo.png" 
+            alt="家計簿アプリロゴ" 
+            className="w-16 h-16 mx-auto animate-pulse"
+          />
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
           <p className="text-gray-600">認証状態を確認中...</p>
         </div>
@@ -135,6 +140,11 @@ function HomeContent() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center pb-20">
         <div className="text-center space-y-4">
+          <img 
+            src="/logo.png" 
+            alt="家計簿アプリロゴ" 
+            className="w-20 h-20 mx-auto mb-4"
+          />
           <p className="text-gray-600 mb-4">ログインが必要です</p>
           <button 
             onClick={() => router.push('/login')}
@@ -151,6 +161,11 @@ function HomeContent() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center pb-20">
         <div className="text-center space-y-4">
+          <img 
+            src="/logo.png" 
+            alt="家計簿アプリロゴ" 
+            className="w-16 h-16 mx-auto animate-pulse"
+          />
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
           <p className="text-gray-600">データを読み込み中...</p>
         </div>
@@ -164,6 +179,11 @@ function HomeContent() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center pb-20">
         <div className="text-center space-y-4">
+          <img 
+            src="/logo.png" 
+            alt="家計簿アプリロゴ" 
+            className="w-16 h-16 mx-auto animate-pulse"
+          />
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
           <p className="text-gray-600">初期設定にリダイレクト中...</p>
         </div>
@@ -210,7 +230,7 @@ function HomeContent() {
         </div>
       )}
       
-      <div className="p-4 space-y-6 pt-6">
+      <div className="px-6 py-4 space-y-6 pt-6">
         {/* Main Budget Display - Updated style */}
         <div 
           className="rounded-lg p-4"
@@ -295,6 +315,7 @@ function HomeContent() {
             </div>
           </div>
         </div>
+
 
         {/* Category Chart and List - Updated with Donut Chart */}
         <div className="space-y-6">
@@ -402,11 +423,17 @@ function HomeContent() {
   )
 }
 
+
 export default function HomePage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-white flex items-center justify-center pb-20">
         <div className="text-center space-y-4">
+          <img 
+            src="/logo.png" 
+            alt="家計簿アプリロゴ" 
+            className="w-16 h-16 mx-auto animate-pulse"
+          />
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
           <p className="text-gray-600">読み込み中...</p>
         </div>

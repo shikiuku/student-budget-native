@@ -336,6 +336,11 @@ function OnboardingContent() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center space-y-4">
+          <img 
+            src="/logo.png" 
+            alt="家計簿アプリロゴ" 
+            className="w-16 h-16 mx-auto animate-pulse"
+          />
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
           <p className="text-gray-600">認証確認中...</p>
         </div>
@@ -344,7 +349,7 @@ function OnboardingContent() {
   }
 
   return (
-    <div className="min-h-screen bg-white p-4">
+    <div className="min-h-screen bg-white px-6 py-4">
       {/* メール確認成功メッセージ */}
       {showEmailSuccess && (
         <div className="fixed top-4 left-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg">
@@ -366,6 +371,11 @@ function OnboardingContent() {
       
       <div className="max-w-2xl mx-auto space-y-6 pt-6">
         <div className="text-center space-y-2">
+          <img 
+            src="/logo.png" 
+            alt="家計簿アプリロゴ" 
+            className="w-20 h-20 mx-auto mb-4"
+          />
           <h1 className="text-3xl font-bold text-black">初期設定</h1>
           <p className="text-gray-600">アプリを使い始めるための設定を行います</p>
         </div>
@@ -427,6 +437,11 @@ export default function OnboardingPage() {
     <Suspense fallback={
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center space-y-4">
+          <img 
+            src="/logo.png" 
+            alt="家計簿アプリロゴ" 
+            className="w-16 h-16 mx-auto animate-pulse"
+          />
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
           <p className="text-gray-600">読み込み中...</p>
         </div>

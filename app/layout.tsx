@@ -18,9 +18,20 @@ const mPlusRounded = M_PLUS_Rounded_1c({
 })
 
 export const metadata: Metadata = {
-  title: "マネー管理 - マネー卍会",
+  title: "学生向け節約アプリ",
   description: "中高生が楽しく・簡単にお金を管理し、節約の意識を持てるアプリ",
-  generator: 'v0.dev'
+  generator: 'v0.dev',
+  icons: {
+    icon: [
+      {
+        url: '/logo.png',
+        sizes: '32x32',
+        type: 'image/png',
+      }
+    ],
+    shortcut: '/logo.png',
+    apple: '/logo.png',
+  }
 }
 
 export default function RootLayout({
