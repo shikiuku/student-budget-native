@@ -124,7 +124,7 @@ const CalendarPage = () => {
 
   const getDayExpense = (date: Date) => {
     const dateStr = formatDate(date);
-    return expenses[dateStr];
+    return expenses.filter(expense => expense.date === dateStr);
   };
 
   const isCurrentMonth = (date: Date) => {
