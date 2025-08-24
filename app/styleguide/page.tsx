@@ -71,10 +71,10 @@ function CalendarWithExpenseComponent() {
   };
 
   const totalMonthExpense = Object.values(expenseData).flat().reduce((sum, item) => sum + item.amount, 0);
-  const selectedDayExpenses = expenseData[selectedDate] || [];
+  const selectedDayExpenses = expenseData[selectedDate as keyof typeof expenseData] || [];
   const selectedDayTotal = selectedDayExpenses.reduce((sum, item) => sum + item.amount, 0);
 
-  const handleDateClick = (date) => {
+  const handleDateClick = (date: number) => {
     setSelectedDate(date);
   };
 
