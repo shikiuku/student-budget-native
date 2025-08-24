@@ -55,6 +55,7 @@ function HomeContent() {
   useEffect(() => {
     if (user) {
       loadUserData()
+      checkMonthEndSavings()
     }
   }, [user])
 
@@ -88,6 +89,47 @@ function HomeContent() {
     }
   }
 
+  const checkMonthEndSavings = async () => {
+    if (!user) return
+
+    try {
+      const now = new Date()
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+      
+      // 月末チェック（最終日の場合のみ実行）
+      if (now.getDate() === lastDay.getDate()) {
+        // ローカルストレージで今月の貯金追加が完了しているかチェック
+        const savingsKey = `savings_added_${now.getFullYear()}_${now.getMonth()}_${user.id}`
+        const savingsAdded = localStorage.getItem(savingsKey)
+        
+        if (!savingsAdded) {
+          // プロフィールと支出データを取得
+          const profileResult = await userProfileService.getProfile(user.id)
+          const expensesResult = await expenseService.getExpensesByMonth(user.id, now.getFullYear(), now.getMonth() + 1)
+          
+          if (profileResult.success && profileResult.data && expensesResult.success && expensesResult.data) {
+            const monthlyBudget = profileResult.data.monthly_budget || 0
+            const monthlyExpenses = expensesResult.data.reduce((sum, expense) => sum + expense.amount, 0)
+            const remaining = monthlyBudget - monthlyExpenses
+            
+            // 余剰があった場合のみ貯金に追加
+            if (remaining > 0) {
+              const result = await userProfileService.addToSavings(user.id, remaining)
+              if (result.success) {
+                // 今月の貯金追加完了をマーク
+                localStorage.setItem(savingsKey, 'true')
+                
+                console.log(`月末貯金追加: ¥${remaining}を貯金に追加しました`)
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('月末貯金チェックエラー:', error)
+    }
+  }
+
   // Calculate budget and spending data
   const monthlyBudget = userProfile?.monthly_budget || 15000
   const spent = expenses.reduce((sum, expense) => sum + expense.amount, 0)
@@ -109,6 +151,7 @@ function HomeContent() {
       percentage
     }
   }).filter(cat => cat.amount > 0) // Only show categories with expenses
+    .sort((a, b) => b.amount - a.amount) // Sort by amount descending (highest first)
   
   // Zaim style: 緑=余裕、黄=注意、赤=危険
   const getBudgetStatus = (percentage: number) => {
@@ -231,99 +274,106 @@ function HomeContent() {
       )}
       
       <div className="px-6 py-4 space-y-6 pt-6">
-        {/* Main Budget Display - Updated style */}
-        <div 
-          className="rounded-lg p-4"
-          style={{ 
-            backgroundColor: budgetStatus.bgColor === 'zaim-green-50' ? '#f0f9f0' : 
-                            budgetStatus.bgColor === 'zaim-yellow-50' ? '#fcfcf0' : '#fcf0f0',
-            borderColor: budgetStatus.borderColor === 'zaim-green-500' ? '#5a9c5a' :
-                        budgetStatus.borderColor === 'zaim-yellow-500' ? '#cccc5a' : '#cc5a5a',
-            borderWidth: '1px',
-            borderStyle: 'solid'
-          }}
-        >
-          <div className="text-center space-y-3">
-            <div className="flex justify-center items-center gap-2">
-              <div 
-                className="w-3 h-3 rounded-full"
-                style={{ 
-                  backgroundColor: budgetStatus.color === 'zaim-green-500' ? '#5a9c5a' :
-                                  budgetStatus.color === 'zaim-yellow-500' ? '#cccc5a' : '#cc5a5a'
-                }}
-              ></div>
-              <span 
-                className="text-sm font-medium"
-                style={{ 
-                  color: budgetStatus.color === 'zaim-green-500' ? '#5a9c5a' :
-                        budgetStatus.color === 'zaim-yellow-500' ? '#cccc5a' : '#cc5a5a'
-                }}
-              >{budgetStatus.status}</span>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="text-3xl font-bold text-black">¥{remaining.toLocaleString()}</div>
-              <div className="text-sm text-gray-600">今月使える金額</div>
-              {userProfile?.name && (
-                <div className="text-xs text-gray-500">{userProfile.name}さんの予算</div>
-              )}
-            </div>
-            
-            {/* Budget bar - Zaim style */}
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>予算 ¥{monthlyBudget.toLocaleString()}</span>
-                <span>使用 {spentPercentage.toFixed(0)}%</span>
+        {/* Budget and Savings Display - 動的丸角強調スタイル */}
+        <div className={`${
+          spentPercentage <= 60 ? 'bg-green-50 border-green-100' :
+          spentPercentage <= 80 ? 'bg-yellow-50 border-yellow-100' :
+          spentPercentage <= 100 ? 'bg-red-50 border-red-100' :
+          'bg-red-50 border-red-200'
+        } border rounded-2xl p-6`}>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className={`w-4 h-4 rounded-full ${
+                  spentPercentage <= 60 ? 'bg-green-300' :
+                  spentPercentage <= 80 ? 'bg-yellow-300' :
+                  spentPercentage <= 100 ? 'bg-red-300' :
+                  'bg-red-400'
+                }`}></div>
+                <span className={`text-sm font-medium px-2 py-1 rounded-full ${
+                  spentPercentage <= 60 ? 'text-green-600 bg-green-25' :
+                  spentPercentage <= 80 ? 'text-yellow-600 bg-yellow-25' :
+                  spentPercentage <= 100 ? 'text-red-600 bg-red-25' :
+                  'text-red-700 bg-red-100'
+                }`}>
+                  {spentPercentage <= 60 ? '余裕あり' :
+                   spentPercentage <= 80 ? '注意' :
+                   spentPercentage <= 100 ? '要注意' :
+                   '予算オーバー'}
+                </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="h-2 rounded-full transition-all duration-300"
-                  style={{ 
-                    width: `${Math.min(spentPercentage, 100)}%`,
-                    backgroundColor: budgetStatus.color === 'zaim-green-500' ? '#5a9c5a' :
-                                    budgetStatus.color === 'zaim-yellow-500' ? '#cccc5a' : '#cc5a5a'
-                  }}
-                ></div>
+              <div>
+                <div className={`text-2xl font-bold ${
+                  spentPercentage > 100 ? 'text-red-600' : 'text-black'
+                }`}>
+                  {spentPercentage > 100 ? '-' : ''}¥{Math.abs(remaining).toLocaleString()}
+                </div>
+                <div className="text-sm text-gray-600">今月使える金額</div>
               </div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>予算 ¥{monthlyBudget.toLocaleString()}</span>
+                  <span>使用 {spentPercentage.toFixed(0)}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div 
+                    className={`h-3 rounded-full transition-all duration-300 ${
+                      spentPercentage <= 60 ? 'bg-green-300' :
+                      spentPercentage <= 80 ? 'bg-yellow-400' :
+                      spentPercentage <= 100 ? 'bg-red-400' :
+                      'bg-red-500'
+                    }`}
+                    style={{ width: `${Math.min(spentPercentage, 100)}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+            <div className={`border-l-2 pl-6 space-y-3 ${
+              spentPercentage <= 60 ? 'border-green-100' :
+              spentPercentage <= 80 ? 'border-yellow-100' :
+              'border-red-100'
+            }`}>
+              <div className="text-sm text-gray-600">貯金残高</div>
+              <div className="text-2xl font-bold text-green-500">¥{(userProfile?.savings_balance || 0).toLocaleString()}</div>
+              <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">月末に余った予算を自動追加</div>
             </div>
           </div>
         </div>
 
-        {/* Income/Expense Summary - Zaim list style */}
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <h2 className="text-sm font-medium text-black">収支</h2>
-          </div>
-          <div className="divide-y divide-gray-100">
-            <div className="flex items-center justify-between p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#e0f2e0' }}>
-                  <TrendingUp className="h-4 w-4" style={{ color: '#5a9c5a' }} />
-                </div>
-                <span className="text-sm font-medium text-black">収入</span>
-              </div>
-              <span className="text-sm font-bold text-black">¥{monthlyBudget.toLocaleString()}</span>
+        {/* iPad Layout: Income/Expense + Chart Side by Side */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Income/Expense Summary - Zaim list style */}
+          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+              <h2 className="text-sm font-medium text-black">収支</h2>
             </div>
-            <div className="flex items-center justify-between p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#f9e0e0' }}>
-                  <TrendingDown className="h-4 w-4" style={{ color: '#cc5a5a' }} />
+            <div className="divide-y divide-gray-100">
+              <div className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#e0f2e0' }}>
+                    <TrendingUp className="h-4 w-4" style={{ color: '#5a9c5a' }} />
+                  </div>
+                  <span className="text-sm font-medium text-black">収入</span>
                 </div>
-                <span className="text-sm font-medium text-black">支出</span>
+                <span className="text-sm font-bold text-black">¥{monthlyBudget.toLocaleString()}</span>
               </div>
-              <span className="text-sm font-bold text-black">¥{spent.toLocaleString()}</span>
+              <div className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#f9e0e0' }}>
+                    <TrendingDown className="h-4 w-4" style={{ color: '#cc5a5a' }} />
+                  </div>
+                  <span className="text-sm font-medium text-black">支出</span>
+                </div>
+                <span className="text-sm font-bold text-black">¥{spent.toLocaleString()}</span>
+              </div>
             </div>
           </div>
-        </div>
 
-
-        {/* Category Chart and List - Updated with Donut Chart */}
-        <div className="space-y-6">
-          {/* ドーナツチャート（案1） */}
+          {/* Donut Chart - iPad Layout */}
           <div className="bg-white border border-gray-200 rounded-lg p-6">
             <h2 className="text-lg font-semibold text-black mb-4">支出内訳</h2>
-            <div className="flex flex-col lg:flex-row gap-6 items-center">
-              <div className="relative w-56 h-56">
+            <div className="flex flex-col items-center">
+              <div className="relative w-48 h-48 mb-4">
                 <svg viewBox="0 0 200 200" className="w-full h-full transform -rotate-90">
                   {/* ドーナツチャートの描画 */}
                   {categoryBreakdown.map((category, index) => {
@@ -345,77 +395,51 @@ function HomeContent() {
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-black">¥{spent.toLocaleString()}</div>
-                    <div className="text-sm text-gray-600">合計支出</div>
+                    <div className="text-xl font-bold text-black">¥{spent.toLocaleString()}</div>
+                    <div className="text-xs text-gray-600">合計支出</div>
                   </div>
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1 text-center">
                 {categoryBreakdown.length > 0 ? categoryBreakdown.map((category) => (
-                  <div key={category.name} className="flex items-center gap-3">
-                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: category.color }}></div>
-                    <span className="text-sm font-medium text-black w-16">{category.name}</span>
-                    <span className="text-sm text-gray-600">{category.percentage}% (¥{category.amount.toLocaleString()})</span>
+                  <div key={category.name} className="flex items-center gap-2 text-xs">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: category.color }}></div>
+                    <span className="font-medium text-black">{category.name}</span>
+                    <span className="text-gray-600">{category.percentage}%</span>
                   </div>
                 )) : (
-                  <div className="text-sm text-gray-500">まだ支出データがありません</div>
+                  <div className="text-xs text-gray-500">まだ支出データがありません</div>
                 )}
               </div>
             </div>
           </div>
-
-          {/* カテゴリリスト - Zaim style */}
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-            <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-              <h2 className="text-sm font-medium text-black">カテゴリ別支出</h2>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {categoryBreakdown.length > 0 ? categoryBreakdown.map((category) => {
-                const Icon = category.icon
-                return (
-                  <div key={category.name} className="flex items-center justify-between p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: category.color }}>
-                        <Icon className="h-4 w-4 text-white" />
-                      </div>
-                      <span className="text-sm font-medium text-black">{category.name}</span>
-                    </div>
-                    <span className="text-sm font-bold text-black">¥{category.amount.toLocaleString()}</span>
-                  </div>
-                )
-              }) : (
-                <div className="p-4 text-center text-sm text-gray-500">まだ支出データがありません</div>
-              )}
-            </div>
-          </div>
         </div>
 
-        {/* Quick Actions - Zaim style */}
+        {/* カテゴリリスト - Zaim style */}
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-            <h2 className="text-sm font-medium text-black">アクション</h2>
+            <h2 className="text-sm font-medium text-black">カテゴリ別支出</h2>
           </div>
           <div className="divide-y divide-gray-100">
-            <button 
-              onClick={() => router.push('/expenses')}
-              className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors"
-            >
-              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#e0f2e0' }}>
-                <PlusCircle className="h-4 w-4" style={{ color: '#5a9c5a' }} />
-              </div>
-              <span className="text-sm font-medium text-black">支出を記録</span>
-            </button>
-            <button 
-              onClick={() => router.push('/expenses')}
-              className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors"
-            >
-              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#f1f5f9' }}>
-                <BarChart3 className="h-4 w-4" style={{ color: '#475569' }} />
-              </div>
-              <span className="text-sm font-medium text-black">レポートを見る</span>
-            </button>
+            {categoryBreakdown.length > 0 ? categoryBreakdown.map((category) => {
+              const Icon = category.icon
+              return (
+                <div key={category.name} className="flex items-center justify-between p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: category.color }}>
+                      <Icon className="h-4 w-4 text-white" />
+                    </div>
+                    <span className="text-sm font-medium text-black">{category.name}</span>
+                  </div>
+                  <span className="text-sm font-bold text-black">¥{category.amount.toLocaleString()}</span>
+                </div>
+              )
+            }) : (
+              <div className="p-4 text-center text-sm text-gray-500">まだ支出データがありません</div>
+            )}
           </div>
         </div>
+
       </div>
 
       <BottomNav currentPage="home" />
