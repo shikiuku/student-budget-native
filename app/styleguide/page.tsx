@@ -108,7 +108,7 @@ function CalendarWithExpenseComponent() {
         {[...Array(35)].map((_, i) => {
           const date = i - 2;
           const isToday = date === 24; // 今日は24日とする
-          const hasExpense = expenseData[date];
+          const hasExpense = expenseData[date as keyof typeof expenseData];
           const isSelected = date === selectedDate;
           
           return (
