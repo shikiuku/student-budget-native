@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useAuth } from "@/components/auth-provider"
 import { expenseService, expenseCategoryService, csvImportService } from "@/lib/database"
 import { PayPayCsvParser } from "@/lib/csv-parser"
@@ -28,6 +28,9 @@ export default function ExpensesPage() {
   const [dataLoading, setDataLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
   const [csvImporting, setCsvImporting] = useState(false)
+  const [showingAllHistory, setShowingAllHistory] = useState(false)
+  const [loadingHistory, setLoadingHistory] = useState(false)
+  const [currentMonthTotal, setCurrentMonthTotal] = useState(0)
   
   const [newExpense, setNewExpense] = useState<ExpenseForm>({
     amount: "",
@@ -63,10 +66,12 @@ export default function ExpensesPage() {
         setCategories(categoriesResult.data)
       }
 
-      // Load expenses
-      const expensesResult = await expenseService.getExpenses(user.id, 50)
+      // Load current month expenses first
+      const now = new Date()
+      const expensesResult = await expenseService.getExpensesByMonth(user.id, now.getFullYear(), now.getMonth() + 1)
       if (expensesResult.success && expensesResult.data) {
         setExpenses(expensesResult.data)
+        setCurrentMonthTotal(expensesResult.data.reduce((sum, expense) => sum + expense.amount, 0))
       }
     } catch (error) {
       toast({
@@ -79,7 +84,35 @@ export default function ExpensesPage() {
     }
   }
 
-  const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0)
+  const loadAllHistory = async () => {
+    if (!user || loadingHistory) return
+
+    setLoadingHistory(true)
+    try {
+      // Load all expenses
+      const expensesResult = await expenseService.getExpenses(user.id, 1000) // Load up to 1000 expenses
+      if (expensesResult.success && expensesResult.data) {
+        setExpenses(expensesResult.data)
+        setShowingAllHistory(true)
+      }
+    } catch (error) {
+      toast({
+        title: "履歴読み込みエラー",
+        description: "支出履歴の読み込みに失敗しました。",
+        variant: "destructive",
+      })
+    } finally {
+      setLoadingHistory(false)
+    }
+  }
+
+  const backToCurrentMonth = () => {
+    setShowingAllHistory(false)
+    loadData()
+  }
+
+  // Use current month total for the summary display
+  const totalSpent = currentMonthTotal
 
   const handleAddExpense = async () => {
     if (!user || !newExpense.amount || !newExpense.category_id || !newExpense.description) {
@@ -403,87 +436,150 @@ export default function ExpensesPage() {
 
         {/* Expenses List */}
         <div className="space-y-4">
-          <h2 className="text-lg font-bold text-black">支出履歴</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-black">
+              {showingAllHistory ? "すべての支出履歴" : "今月の支出履歴"}
+            </h2>
+            {showingAllHistory && (
+              <Button 
+                onClick={backToCurrentMonth}
+                variant="outline"
+                size="sm"
+                className="border-zaim-blue-200 text-zaim-blue-600 hover:bg-zaim-blue-50"
+              >
+                今月に戻る
+              </Button>
+            )}
+          </div>
           
-          {expenses.map((expense) => {
+          {expenses.map((expense, index) => {
             const IconComponent = expense.category?.icon ? iconMap[expense.category.icon as keyof typeof iconMap] || Home : Home
+            const expenseDate = new Date(expense.date)
+            const currentExpenseMonth = `${expenseDate.getFullYear()}年${expenseDate.getMonth() + 1}月`
+            
+            // Show month header for the first expense of each month (only when showing all history)
+            const prevExpense = index > 0 ? expenses[index - 1] : null
+            const prevExpenseMonth = prevExpense ? 
+              `${new Date(prevExpense.date).getFullYear()}年${new Date(prevExpense.date).getMonth() + 1}月` : null
+            const showMonthHeader = showingAllHistory && (!prevExpense || currentExpenseMonth !== prevExpenseMonth)
+            
             return (
-              <div key={expense.id} className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div 
-                      className="w-10 h-10 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: expense.category?.color || "#6b7280" }}
-                    >
-                      <IconComponent className="h-5 w-5 text-white" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-bold text-black">¥{expense.amount.toLocaleString()}</span>
-                        <Badge className="bg-zaim-blue-100 text-zaim-blue-600">
-                          {expense.category?.name || "未分類"}
-                        </Badge>
-                        {expense.source === 'paypay_csv' && (
-                          <Badge className="bg-zaim-yellow-100 text-zaim-yellow-600">
-                            <FileText className="h-3 w-3 mr-1" />
-                            PayPay
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm font-medium text-black">{expense.description}</p>
-                      <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
-                        <Calendar className="h-3 w-3" />
-                        {expense.date}
-                      </div>
-                    </div>
+              <div key={expense.id}>
+                {showMonthHeader && (
+                  <div className="text-sm font-medium text-gray-600 mt-6 mb-2 px-2">
+                    {currentExpenseMonth}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-zaim-blue-600 hover:bg-zaim-blue-50">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      size="icon" 
-                      variant="ghost" 
-                      className="h-8 w-8 text-zaim-red-500 hover:text-zaim-red-600"
-                      onClick={() => deleteExpense(expense.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                )}
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-10 h-10 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: expense.category?.color || "#6b7280" }}
+                      >
+                        <IconComponent className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-bold text-black">¥{expense.amount.toLocaleString()}</span>
+                          <Badge className="bg-zaim-blue-100 text-zaim-blue-600">
+                            {expense.category?.name || "未分類"}
+                          </Badge>
+                          {expense.source === 'paypay_csv' && (
+                            <Badge className="bg-zaim-yellow-100 text-zaim-yellow-600">
+                              <FileText className="h-3 w-3 mr-1" />
+                              PayPay
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm font-medium text-black">{expense.description}</p>
+                        <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                          <Calendar className="h-3 w-3" />
+                          {expense.date}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-zaim-blue-600 hover:bg-zaim-blue-50">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-8 w-8 text-zaim-red-500 hover:text-zaim-red-600"
+                        onClick={() => deleteExpense(expense.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
             )
           })}
+          
         </div>
 
-        {/* Category Summary */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <h2 className="text-lg font-bold text-black mb-4">カテゴリ別集計</h2>
-          <div className="space-y-3">
-            {categories.map((category) => {
-              const categoryExpenses = expenses.filter(exp => exp.category_id === category.id)
-              const categoryTotal = categoryExpenses.reduce((sum, exp) => sum + exp.amount, 0)
-              const IconComponent = category.icon ? iconMap[category.icon as keyof typeof iconMap] || Home : Home
-              
-              if (categoryTotal === 0) return null
-              
-              return (
-                <div key={category.id} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div 
-                      className="w-8 h-8 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: category.color || "#6b7280" }}
-                    >
-                      <IconComponent className="h-4 w-4 text-white" />
+        {/* Category Summary - Current Month Only */}
+        {!showingAllHistory && (
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <h2 className="text-lg font-bold text-black mb-4">今月のカテゴリ別集計</h2>
+            <div className="space-y-3">
+              {categories.map((category) => {
+                // Filter current month expenses only for category summary
+                const currentMonth = new Date()
+                const currentMonthExpenses = expenses.filter(exp => {
+                  const expenseDate = new Date(exp.date)
+                  return exp.category_id === category.id && 
+                         expenseDate.getMonth() === currentMonth.getMonth() && 
+                         expenseDate.getFullYear() === currentMonth.getFullYear()
+                })
+                const categoryTotal = currentMonthExpenses.reduce((sum, exp) => sum + exp.amount, 0)
+                const IconComponent = category.icon ? iconMap[category.icon as keyof typeof iconMap] || Home : Home
+                
+                if (categoryTotal === 0) return null
+                
+                return (
+                  <div key={category.id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-8 h-8 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: category.color || "#6b7280" }}
+                      >
+                        <IconComponent className="h-4 w-4 text-white" />
+                      </div>
+                      <span className="text-sm font-medium text-black">{category.name}</span>
                     </div>
-                    <span className="text-sm font-medium text-black">{category.name}</span>
+                    <span className="text-sm font-bold text-black">¥{categoryTotal.toLocaleString()}</span>
                   </div>
-                  <span className="text-sm font-bold text-black">¥{categoryTotal.toLocaleString()}</span>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Show all history button - Below category summary */}
+        {!showingAllHistory && expenses.length > 0 && (
+          <div className="text-center py-6">
+            <Button 
+              onClick={loadAllHistory}
+              disabled={loadingHistory}
+              className="bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white"
+            >
+              {loadingHistory ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  読み込み中...
+                </>
+              ) : (
+                <>
+                  <Receipt className="h-4 w-4 mr-2" />
+                  これまでの支出記録を見る
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
 
       <BottomNav currentPage="expenses" />

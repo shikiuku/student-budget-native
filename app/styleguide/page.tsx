@@ -213,6 +213,7 @@ export default function StyleGuidePage() {
           <div className="bg-gray-50 p-6 rounded-lg">
             <h3 className="text-lg font-semibold text-black mb-4">目次</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
+              <a href="#budget-cards" className="text-blue-600 hover:text-blue-700 font-medium">🏠 予算カード（横並び統合）</a>
               <a href="#colors" className="text-gray-600 hover:text-gray-700">カラーパレット</a>
               <a href="#typography" className="text-gray-600 hover:text-gray-700">タイポグラフィ</a>
               <a href="#buttons" className="text-gray-600 hover:text-gray-700">ボタン</a>
@@ -234,6 +235,866 @@ export default function StyleGuidePage() {
             </div>
           </div>
         </div>
+
+        {/* Budget Cards - 予算カード */}
+        <section id="budget-cards">
+          <h2 className="text-2xl font-bold mb-4 text-black">🏠 予算カード - 横並び統合デザイン</h2>
+          <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+            <p className="text-sm text-blue-800">
+              <strong>メインホーム画面で使用中のカードデザイン</strong> - 予算状況に応じて背景色が自動的に変更されます
+            </p>
+          </div>
+          
+          <div className="space-y-6">
+            
+            {/* 緑背景の予算カード（余裕ありバージョン） */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">✅ 余裕あり（緑背景）</h3>
+              <div className="bg-green-100 border border-green-200 rounded-lg p-6 max-w-md">
+                <div className="grid grid-cols-2 gap-6">
+                  {/* 左側: 予算情報 */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      <span className="text-sm font-medium text-green-700">余裕あり</span>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-black">¥18,500</div>
+                      <div className="text-sm text-gray-600">今月使える金額</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>予算 ¥30,000</span>
+                        <span>使用 38%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="h-2 bg-green-500 rounded-full transition-all duration-300" style={{ width: '38%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* 右側: 貯金残高 */}
+                  <div className="border-l border-green-200 pl-6 space-y-3">
+                    <div className="text-sm text-gray-600">貯金残高</div>
+                    <div className="text-2xl font-bold text-green-600">¥45,200</div>
+                    <div className="text-xs text-gray-500">月末に余った予算を自動追加</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 余裕ありバージョンのスタイル1: シャドウ付き */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">✨ 余裕あり - シャドウスタイル</h3>
+              <div className="bg-green-50 border border-green-100 rounded-lg p-6 max-w-md shadow-lg">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-green-300 shadow-sm"></div>
+                      <span className="text-sm font-medium text-green-600">余裕あり</span>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-black">¥18,500</div>
+                      <div className="text-sm text-gray-600">今月使える金額</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>予算 ¥30,000</span>
+                        <span>使用 38%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="h-2 bg-green-300 rounded-full transition-all duration-300 shadow-sm" style={{ width: '38%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-l border-green-100 pl-6 space-y-3">
+                    <div className="text-sm text-gray-600">貯金残高</div>
+                    <div className="text-2xl font-bold text-green-500">¥45,200</div>
+                    <div className="text-xs text-gray-500">月末に余った予算を自動追加</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 余裕ありバージョンのスタイル2: グラデーション背景 */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">🌈 余裕あり - グラデーションスタイル</h3>
+              <div className="bg-gradient-to-br from-green-25 to-green-50 border border-green-100 rounded-lg p-6 max-w-md">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-200 to-green-300"></div>
+                      <span className="text-sm font-medium text-green-600">余裕あり</span>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-black">¥18,500</div>
+                      <div className="text-sm text-gray-600">今月使える金額</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>予算 ¥30,000</span>
+                        <span>使用 38%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="h-2 bg-gradient-to-r from-green-200 to-green-300 rounded-full transition-all duration-300" style={{ width: '38%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-l border-green-100 pl-6 space-y-3">
+                    <div className="text-sm text-gray-600">貯金残高</div>
+                    <div className="text-2xl font-bold text-green-500">¥45,200</div>
+                    <div className="text-xs text-gray-500">月末に余った予算を自動追加</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 余裕ありバージョンのスタイル3: 太いボーダー */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">🔲 余裕あり - 太いボーダースタイル</h3>
+              <div className="bg-green-25 border-4 border-green-200 rounded-lg p-6 max-w-md">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-green-300 border border-green-400"></div>
+                      <span className="text-sm font-medium text-green-600">余裕あり</span>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-black">¥18,500</div>
+                      <div className="text-sm text-gray-600">今月使える金額</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>予算 ¥30,000</span>
+                        <span>使用 38%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="h-2 bg-green-300 rounded-full transition-all duration-300" style={{ width: '38%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-l-4 border-green-200 pl-6 space-y-3">
+                    <div className="text-sm text-gray-600">貯金残高</div>
+                    <div className="text-2xl font-bold text-green-500">¥45,200</div>
+                    <div className="text-xs text-gray-500">月末に余った予算を自動追加</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 余裕ありバージョンのスタイル4: 丸角強調 */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">⭕ 余裕あり - 丸角強調スタイル</h3>
+              <div className="bg-green-50 border border-green-100 rounded-2xl p-6 max-w-md">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full bg-green-300"></div>
+                      <span className="text-sm font-medium text-green-600 bg-green-25 px-2 py-1 rounded-full">余裕あり</span>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-black">¥18,500</div>
+                      <div className="text-sm text-gray-600">今月使える金額</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>予算 ¥30,000</span>
+                        <span>使用 38%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div className="h-3 bg-green-300 rounded-full transition-all duration-300" style={{ width: '38%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-l-2 border-green-100 pl-6 space-y-3">
+                    <div className="text-sm text-gray-600">貯金残高</div>
+                    <div className="text-2xl font-bold text-green-500">¥45,200</div>
+                    <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">月末に余った予算を自動追加</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 余裕がないバージョンのスタイル: 丸角強調 - 注意 */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">⚠️ 注意 - 丸角強調スタイル</h3>
+              <div className="bg-yellow-50 border border-yellow-100 rounded-2xl p-6 max-w-md">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full bg-yellow-300"></div>
+                      <span className="text-sm font-medium text-yellow-600 bg-yellow-25 px-2 py-1 rounded-full">注意</span>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-black">¥5,500</div>
+                      <div className="text-sm text-gray-600">今月使える金額</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>予算 ¥30,000</span>
+                        <span>使用 82%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div className="h-3 bg-yellow-400 rounded-full transition-all duration-300" style={{ width: '82%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-l-2 border-yellow-100 pl-6 space-y-3">
+                    <div className="text-sm text-gray-600">貯金残高</div>
+                    <div className="text-2xl font-bold text-green-500">¥45,200</div>
+                    <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">月末に余った予算を自動追加</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 余裕がないバージョンのスタイル: 丸角強調 - 要注意 */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">🚨 要注意 - 丸角強調スタイル</h3>
+              <div className="bg-red-50 border border-red-100 rounded-2xl p-6 max-w-md">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full bg-red-300"></div>
+                      <span className="text-sm font-medium text-red-600 bg-red-25 px-2 py-1 rounded-full">要注意</span>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-black">¥1,200</div>
+                      <div className="text-sm text-gray-600">今月使える金額</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>予算 ¥30,000</span>
+                        <span>使用 96%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div className="h-3 bg-red-400 rounded-full transition-all duration-300" style={{ width: '96%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-l-2 border-red-100 pl-6 space-y-3">
+                    <div className="text-sm text-gray-600">貯金残高</div>
+                    <div className="text-2xl font-bold text-green-500">¥45,200</div>
+                    <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">月末に余った予算を自動追加</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 余裕がないバージョンのスタイル: 丸角強調 - 予算オーバー */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">❌ 予算オーバー - 丸角強調スタイル</h3>
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-6 max-w-md">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full bg-red-400"></div>
+                      <span className="text-sm font-medium text-red-700 bg-red-100 px-2 py-1 rounded-full">予算オーバー</span>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-red-600">-¥3,800</div>
+                      <div className="text-sm text-gray-600">今月使える金額</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>予算 ¥30,000</span>
+                        <span>使用 113%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div className="h-3 bg-red-500 rounded-full transition-all duration-300" style={{ width: '100%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-l-2 border-red-100 pl-6 space-y-3">
+                    <div className="text-sm text-gray-600">貯金残高</div>
+                    <div className="text-2xl font-bold text-green-500">¥45,200</div>
+                    <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">月末に余った予算を自動追加</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 余裕ありバージョンのスタイル5: ミニマルスタイル */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">▫️ 余裕あり - ミニマルスタイル</h3>
+              <div className="bg-white border-2 border-green-100 rounded-lg p-6 max-w-md">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded bg-green-300"></div>
+                      <span className="text-sm font-medium text-green-600">余裕あり</span>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-green-500">¥18,500</div>
+                      <div className="text-sm text-gray-500">今月使える金額</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-gray-400">
+                        <span>予算 ¥30,000</span>
+                        <span>使用 38%</span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded h-1">
+                        <div className="h-1 bg-green-300 rounded transition-all duration-300" style={{ width: '38%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-l border-gray-200 pl-6 space-y-3">
+                    <div className="text-sm text-gray-500">貯金残高</div>
+                    <div className="text-2xl font-bold text-green-400">¥45,200</div>
+                    <div className="text-xs text-gray-400">月末に余った予算を自動追加</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 余裕ありバージョンのスタイル6: カードスタイル */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">🎴 余裕あり - カードスタイル</h3>
+              <div className="bg-white border border-green-200 rounded-xl p-6 max-w-md shadow-md hover:shadow-lg transition-shadow duration-300">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-green-300"></div>
+                      <span className="text-sm font-semibold text-green-600 bg-green-50 px-2 py-1 rounded">余裕あり</span>
+                    </div>
+                    <div className="bg-green-25 p-3 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600">¥18,500</div>
+                      <div className="text-sm text-green-500">今月使える金額</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>予算 ¥30,000</span>
+                        <span>使用 38%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="h-2 bg-green-300 rounded-full transition-all duration-300" style={{ width: '38%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-l-2 border-green-100 pl-6 space-y-3">
+                    <div className="text-sm text-gray-600">貯金残高</div>
+                    <div className="bg-green-25 p-3 rounded-lg">
+                      <div className="text-2xl font-bold text-green-500">¥45,200</div>
+                    </div>
+                    <div className="text-xs text-gray-500">月末に余った予算を自動追加</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 余裕ありバージョンのスタイル7: アイコン強化 */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">💰 余裕あり - アイコン強化スタイル</h3>
+              <div className="bg-green-50 border border-green-100 rounded-lg p-6 max-w-md">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-green-300 rounded-full flex items-center justify-center">
+                        <CheckCircle className="w-3 h-3 text-white" />
+                      </div>
+                      <span className="text-sm font-medium text-green-600">余裕あり</span>
+                    </div>
+                    <div className="flex items-end gap-2">
+                      <Wallet className="w-5 h-5 text-green-500" />
+                      <div>
+                        <div className="text-2xl font-bold text-black">¥18,500</div>
+                        <div className="text-sm text-gray-600">今月使える金額</div>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>予算 ¥30,000</span>
+                        <span>使用 38%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="h-2 bg-green-300 rounded-full transition-all duration-300" style={{ width: '38%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-l border-green-100 pl-6 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Target className="w-4 h-4 text-gray-600" />
+                      <div className="text-sm text-gray-600">貯金残高</div>
+                    </div>
+                    <div className="text-2xl font-bold text-green-500">¥45,200</div>
+                    <div className="text-xs text-gray-500 flex items-center gap-1">
+                      <TrendingUp className="w-3 h-3" />
+                      月末に余った予算を自動追加
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 配置バリエーション - 丸角強調スタイルの色合いベース */}
+            <div className="space-y-8 mt-12">
+              <h2 className="text-2xl font-bold text-gray-800 border-b border-gray-200 pb-4">📐 配置バリエーション（丸角強調スタイルの色合い）</h2>
+              
+              {/* 配置1: 縦並び（上下配置） */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">📊 配置1: 縦並び（上下配置）</h3>
+                <div className="bg-green-50 border border-green-100 rounded-2xl p-6 max-w-md">
+                  <div className="space-y-6">
+                    {/* 上部: 予算情報 */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded-full bg-green-300"></div>
+                        <span className="text-sm font-medium text-green-600 bg-green-25 px-2 py-1 rounded-full">余裕あり</span>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-black">¥18,500</div>
+                        <div className="text-sm text-gray-600">今月使える金額</div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs text-gray-500">
+                          <span>予算 ¥30,000</span>
+                          <span>使用 38%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3">
+                          <div className="h-3 bg-green-300 rounded-full transition-all duration-300" style={{ width: '38%' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* 区切り線 */}
+                    <div className="border-t-2 border-green-100"></div>
+                    
+                    {/* 下部: 貯金残高 */}
+                    <div className="space-y-3">
+                      <div className="text-sm text-gray-600">貯金残高</div>
+                      <div className="text-2xl font-bold text-green-500">¥45,200</div>
+                      <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">月末に余った予算を自動追加</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 配置2: 逆横並び（貯金残高を左、予算を右） */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">🔄 配置2: 逆横並び（貯金残高→予算）</h3>
+                <div className="bg-green-50 border border-green-100 rounded-2xl p-6 max-w-md">
+                  <div className="grid grid-cols-2 gap-6">
+                    {/* 左: 貯金残高 */}
+                    <div className="space-y-3">
+                      <div className="text-sm text-gray-600">貯金残高</div>
+                      <div className="text-2xl font-bold text-green-500">¥45,200</div>
+                      <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">月末に余った予算を自動追加</div>
+                    </div>
+                    
+                    {/* 右: 予算情報 */}
+                    <div className="border-l-2 border-green-100 pl-6 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded-full bg-green-300"></div>
+                        <span className="text-sm font-medium text-green-600 bg-green-25 px-2 py-1 rounded-full">余裕あり</span>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-black">¥18,500</div>
+                        <div className="text-sm text-gray-600">今月使える金額</div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs text-gray-500">
+                          <span>予算 ¥30,000</span>
+                          <span>使用 38%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3">
+                          <div className="h-3 bg-green-300 rounded-full transition-all duration-300" style={{ width: '38%' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 配置3: コンパクト一行配置 */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">📏 配置3: コンパクト一行配置</h3>
+                <div className="bg-green-50 border border-green-100 rounded-2xl p-4 max-w-lg">
+                  <div className="flex items-center justify-between gap-6">
+                    {/* 左: ステータスと残額 */}
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded-full bg-green-300"></div>
+                        <span className="text-sm font-medium text-green-600 bg-green-25 px-2 py-1 rounded-full">余裕あり</span>
+                      </div>
+                      <div>
+                        <div className="text-xl font-bold text-black">¥18,500</div>
+                        <div className="text-xs text-gray-600">今月使える金額</div>
+                      </div>
+                    </div>
+                    
+                    {/* 区切り */}
+                    <div className="w-px h-12 bg-green-100"></div>
+                    
+                    {/* 右: 貯金残高 */}
+                    <div className="text-right">
+                      <div className="text-xl font-bold text-green-500">¥45,200</div>
+                      <div className="text-xs text-gray-600">貯金残高</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 配置4: 中央集約配置 */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">🎯 配置4: 中央集約配置</h3>
+                <div className="bg-green-50 border border-green-100 rounded-2xl p-6 max-w-sm mx-auto text-center">
+                  <div className="space-y-4">
+                    {/* ステータス */}
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 rounded-full bg-green-300"></div>
+                      <span className="text-sm font-medium text-green-600 bg-green-25 px-3 py-1 rounded-full">余裕あり</span>
+                    </div>
+                    
+                    {/* メイン金額 */}
+                    <div>
+                      <div className="text-3xl font-bold text-black">¥18,500</div>
+                      <div className="text-sm text-gray-600">今月使える金額</div>
+                    </div>
+                    
+                    {/* プログレスバー */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>予算 ¥30,000</span>
+                        <span>使用 38%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div className="h-3 bg-green-300 rounded-full transition-all duration-300" style={{ width: '38%' }}></div>
+                      </div>
+                    </div>
+                    
+                    {/* 貯金残高 */}
+                    <div className="border-t-2 border-green-100 pt-4">
+                      <div className="text-sm text-gray-600 mb-1">貯金残高</div>
+                      <div className="text-xl font-bold text-green-500">¥45,200</div>
+                      <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full mt-2">月末に余った予算を自動追加</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 配置5: L字配置 */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">📐 配置5: L字配置</h3>
+                <div className="bg-green-50 border border-green-100 rounded-2xl p-6 max-w-md">
+                  <div className="space-y-4">
+                    {/* 上部: 横並び（ステータス + 貯金残高） */}
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded-full bg-green-300"></div>
+                        <span className="text-sm font-medium text-green-600 bg-green-25 px-2 py-1 rounded-full">余裕あり</span>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-green-500">¥45,200</div>
+                        <div className="text-xs text-gray-600">貯金残高</div>
+                      </div>
+                    </div>
+                    
+                    {/* 下部: 予算詳細（全幅） */}
+                    <div className="space-y-3">
+                      <div>
+                        <div className="text-2xl font-bold text-black">¥18,500</div>
+                        <div className="text-sm text-gray-600">今月使える金額</div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs text-gray-500">
+                          <span>予算 ¥30,000</span>
+                          <span>使用 38%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3">
+                          <div className="h-3 bg-green-300 rounded-full transition-all duration-300" style={{ width: '38%' }}></div>
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">月末に余った予算を自動追加</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 配置6: カード内カード配置 */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">🃏 配置6: カード内カード配置</h3>
+                <div className="bg-green-50 border border-green-100 rounded-2xl p-6 max-w-md space-y-4">
+                  {/* ステータス */}
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <div className="w-4 h-4 rounded-full bg-green-300"></div>
+                    <span className="text-sm font-medium text-green-600 bg-green-25 px-3 py-1 rounded-full">余裕あり</span>
+                  </div>
+                  
+                  {/* 予算カード */}
+                  <div className="bg-white rounded-xl p-4 border border-green-100">
+                    <div className="text-center space-y-2">
+                      <div className="text-2xl font-bold text-black">¥18,500</div>
+                      <div className="text-sm text-gray-600">今月使える金額</div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs text-gray-500">
+                          <span>予算 ¥30,000</span>
+                          <span>使用 38%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3">
+                          <div className="h-3 bg-green-300 rounded-full transition-all duration-300" style={{ width: '38%' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* 貯金カード */}
+                  <div className="bg-white rounded-xl p-4 border border-green-100">
+                    <div className="text-center space-y-2">
+                      <div className="text-sm text-gray-600">貯金残高</div>
+                      <div className="text-2xl font-bold text-green-500">¥45,200</div>
+                      <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">月末に余った予算を自動追加</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 配置7: 斜め配置 */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">📐 配置7: 斜め配置</h3>
+                <div className="bg-green-50 border border-green-100 rounded-2xl p-6 max-w-md relative overflow-hidden">
+                  {/* 左上: ステータス */}
+                  <div className="flex items-center gap-2 mb-6">
+                    <div className="w-4 h-4 rounded-full bg-green-300"></div>
+                    <span className="text-sm font-medium text-green-600 bg-green-25 px-2 py-1 rounded-full">余裕あり</span>
+                  </div>
+                  
+                  {/* 中央左: 予算情報 */}
+                  <div className="space-y-3 mb-4">
+                    <div>
+                      <div className="text-2xl font-bold text-black">¥18,500</div>
+                      <div className="text-sm text-gray-600">今月使える金額</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>予算 ¥30,000</span>
+                        <span>使用 38%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div className="h-3 bg-green-300 rounded-full transition-all duration-300" style={{ width: '38%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* 右下: 貯金残高 */}
+                  <div className="absolute bottom-6 right-6 text-right bg-white bg-opacity-90 rounded-xl p-3 border border-green-100">
+                    <div className="text-sm text-gray-600">貯金残高</div>
+                    <div className="text-xl font-bold text-green-500">¥45,200</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 配置8: フレックス配置 */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">🔗 配置8: フレックス配置</h3>
+                <div className="bg-green-50 border border-green-100 rounded-2xl p-6 max-w-lg">
+                  <div className="flex flex-wrap items-start gap-6">
+                    {/* ステータス部分 */}
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full bg-green-300"></div>
+                      <span className="text-sm font-medium text-green-600 bg-green-25 px-2 py-1 rounded-full">余裕あり</span>
+                    </div>
+                    
+                    {/* 予算金額 */}
+                    <div className="flex-1 min-w-[120px]">
+                      <div className="text-2xl font-bold text-black">¥18,500</div>
+                      <div className="text-sm text-gray-600">今月使える金額</div>
+                    </div>
+                    
+                    {/* 貯金残高 */}
+                    <div className="text-right">
+                      <div className="text-xl font-bold text-green-500">¥45,200</div>
+                      <div className="text-xs text-gray-600">貯金残高</div>
+                    </div>
+                  </div>
+                  
+                  {/* プログレスバーとメモ */}
+                  <div className="mt-4 space-y-2">
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>予算 ¥30,000</span>
+                      <span>使用 38%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div className="h-3 bg-green-300 rounded-full transition-all duration-300" style={{ width: '38%' }}></div>
+                    </div>
+                    <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full text-center">月末に余った予算を自動追加</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 配置9: 重複配置 */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">📚 配置9: 重複配置</h3>
+                <div className="relative max-w-md">
+                  {/* 背景カード（貯金残高） */}
+                  <div className="bg-green-50 border border-green-100 rounded-2xl p-6 pt-8">
+                    <div className="mt-8 space-y-2 text-center">
+                      <div className="text-sm text-gray-600">貯金残高</div>
+                      <div className="text-2xl font-bold text-green-500">¥45,200</div>
+                      <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">月末に余った予算を自動追加</div>
+                    </div>
+                  </div>
+                  
+                  {/* 前景カード（予算情報） */}
+                  <div className="absolute top-0 left-4 right-4 bg-white border border-green-100 rounded-2xl p-4 shadow-sm">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-4 h-4 rounded-full bg-green-300"></div>
+                        <span className="text-sm font-medium text-green-600 bg-green-25 px-2 py-1 rounded-full">余裕あり</span>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-black">¥18,500</div>
+                        <div className="text-sm text-gray-600">今月使える金額</div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs text-gray-500">
+                          <span>予算 ¥30,000</span>
+                          <span>使用 38%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3">
+                          <div className="h-3 bg-green-300 rounded-full transition-all duration-300" style={{ width: '38%' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 配置10: 円形配置 */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">⭕ 配置10: 円形配置</h3>
+                <div className="bg-green-50 border border-green-100 rounded-full p-8 w-80 h-80 mx-auto relative">
+                  {/* 中央: メイン金額 */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-black">¥18,500</div>
+                      <div className="text-sm text-gray-600">今月使える金額</div>
+                    </div>
+                  </div>
+                  
+                  {/* 上部: ステータス */}
+                  <div className="absolute top-8 left-1/2 transform -translate-x-1/2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full bg-green-300"></div>
+                      <span className="text-sm font-medium text-green-600 bg-green-25 px-2 py-1 rounded-full">余裕あり</span>
+                    </div>
+                  </div>
+                  
+                  {/* 左下: プログレスバー */}
+                  <div className="absolute bottom-8 left-8 right-8 space-y-1">
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>予算 ¥30,000</span>
+                      <span>使用 38%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div className="h-3 bg-green-300 rounded-full transition-all duration-300" style={{ width: '38%' }}></div>
+                    </div>
+                  </div>
+                  
+                  {/* 右上: 貯金残高 */}
+                  <div className="absolute top-12 right-8 text-right bg-white bg-opacity-90 rounded-xl p-3 border border-green-100">
+                    <div className="text-xs text-gray-600">貯金残高</div>
+                    <div className="text-lg font-bold text-green-500">¥45,200</div>
+                  </div>
+                  
+                  {/* 左下角: メモ */}
+                  <div className="absolute bottom-16 left-8 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
+                    月末自動追加
+                  </div>
+                </div>
+              </div>
+
+              {/* 配置11: タブ風配置 */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">📑 配置11: タブ風配置</h3>
+                <div className="bg-green-50 border border-green-100 rounded-2xl max-w-md overflow-hidden">
+                  {/* タブヘッダー */}
+                  <div className="flex">
+                    <div className="flex-1 bg-green-25 border-b-2 border-green-300 p-3 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-green-300"></div>
+                        <span className="text-sm font-medium text-green-600">余裕あり</span>
+                      </div>
+                    </div>
+                    <div className="flex-1 bg-white border-b border-green-100 p-3 text-center">
+                      <span className="text-sm font-medium text-gray-400">貯金残高</span>
+                    </div>
+                  </div>
+                  
+                  {/* タブコンテンツ */}
+                  <div className="p-6">
+                    <div className="space-y-4">
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-black">¥18,500</div>
+                        <div className="text-sm text-gray-600">今月使える金額</div>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-xs text-gray-500">
+                          <span>予算 ¥30,000</span>
+                          <span>使用 38%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3">
+                          <div className="h-3 bg-green-300 rounded-full transition-all duration-300" style={{ width: '38%' }}></div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-green-25 rounded-xl p-3 text-center">
+                        <div className="text-lg font-bold text-green-500">¥45,200</div>
+                        <div className="text-xs text-gray-500">貯金残高 - 月末自動追加</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 配置12: グリッド4分割配置 */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">⬜ 配置12: グリッド4分割配置</h3>
+                <div className="bg-green-50 border border-green-100 rounded-2xl p-6 max-w-md">
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* 左上: ステータス */}
+                    <div className="bg-white rounded-xl p-3 border border-green-100 text-center">
+                      <div className="flex items-center justify-center gap-1 mb-2">
+                        <div className="w-3 h-3 rounded-full bg-green-300"></div>
+                        <span className="text-xs font-medium text-green-600">余裕あり</span>
+                      </div>
+                    </div>
+                    
+                    {/* 右上: 貯金残高 */}
+                    <div className="bg-white rounded-xl p-3 border border-green-100 text-center">
+                      <div className="text-sm font-bold text-green-500">¥45,200</div>
+                      <div className="text-xs text-gray-600">貯金残高</div>
+                    </div>
+                    
+                    {/* 左下: 使用可能金額 */}
+                    <div className="bg-white rounded-xl p-3 border border-green-100 text-center">
+                      <div className="text-xl font-bold text-black">¥18,500</div>
+                      <div className="text-xs text-gray-600">使える金額</div>
+                    </div>
+                    
+                    {/* 右下: 予算使用率 */}
+                    <div className="bg-white rounded-xl p-3 border border-green-100 text-center">
+                      <div className="text-xl font-bold text-gray-700">38%</div>
+                      <div className="text-xs text-gray-600">使用率</div>
+                    </div>
+                  </div>
+                  
+                  {/* 下部: プログレスバーとメモ */}
+                  <div className="mt-4 space-y-2">
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div className="h-3 bg-green-300 rounded-full transition-all duration-300" style={{ width: '38%' }}></div>
+                    </div>
+                    <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full text-center">月末に余った予算を自動追加</div>
+                  </div>
+                </div>
+              </div>
+              
+            </div>
+
+          </div>
+
+
+        </section>
 
         {/* Colors */}
         <section id="colors">
@@ -2788,6 +3649,147 @@ export default function StyleGuidePage() {
             </div>
           </div>
         </section>
+
+        {/* Budget and Savings Display Styles */}
+        <section id="budget-display" className="mb-12">
+          <h2 className="text-2xl font-bold mb-6 text-gray-900">予算・貯金表示スタイル</h2>
+          <div className="space-y-8">
+
+            {/* 余裕あり - 丸角強調スタイル */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">⭕ 余裕あり - 丸角強調スタイル</h3>
+              <div className="bg-green-50 border border-green-100 rounded-2xl p-6 max-w-md">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full bg-green-300"></div>
+                      <span className="text-sm font-medium text-green-600 bg-green-25 px-2 py-1 rounded-full">余裕あり</span>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-black">¥18,500</div>
+                      <div className="text-sm text-gray-600">今月使える金額</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>予算 ¥30,000</span>
+                        <span>使用 38%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div className="h-3 bg-green-300 rounded-full transition-all duration-300" style={{ width: '38%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-l-2 border-green-100 pl-6 space-y-3">
+                    <div className="text-sm text-gray-600">貯金残高</div>
+                    <div className="text-2xl font-bold text-green-500">¥45,200</div>
+                    <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">月末に余った予算を自動追加</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 注意 - 丸角強調スタイル */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">⚠️ 注意 - 丸角強調スタイル</h3>
+              <div className="bg-yellow-50 border border-yellow-100 rounded-2xl p-6 max-w-md">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full bg-yellow-300"></div>
+                      <span className="text-sm font-medium text-yellow-600 bg-yellow-25 px-2 py-1 rounded-full">注意</span>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-black">¥5,400</div>
+                      <div className="text-sm text-gray-600">今月使える金額</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>予算 ¥30,000</span>
+                        <span>使用 82%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div className="h-3 bg-yellow-400 rounded-full transition-all duration-300" style={{ width: '82%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-l-2 border-yellow-100 pl-6 space-y-3">
+                    <div className="text-sm text-gray-600">貯金残高</div>
+                    <div className="text-2xl font-bold text-green-500">¥45,200</div>
+                    <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">月末に余った予算を自動追加</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 要注意 - 丸角強調スタイル */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">🚨 要注意 - 丸角強調スタイル</h3>
+              <div className="bg-red-50 border border-red-100 rounded-2xl p-6 max-w-md">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full bg-red-300"></div>
+                      <span className="text-sm font-medium text-red-600 bg-red-25 px-2 py-1 rounded-full">要注意</span>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-black">¥1,200</div>
+                      <div className="text-sm text-gray-600">今月使える金額</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>予算 ¥30,000</span>
+                        <span>使用 96%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div className="h-3 bg-red-400 rounded-full transition-all duration-300" style={{ width: '96%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-l-2 border-red-100 pl-6 space-y-3">
+                    <div className="text-sm text-gray-600">貯金残高</div>
+                    <div className="text-2xl font-bold text-green-500">¥45,200</div>
+                    <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">月末に余った予算を自動追加</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 予算オーバー - 丸角強調スタイル */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">❌ 予算オーバー - 丸角強調スタイル</h3>
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-6 max-w-md">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full bg-red-400"></div>
+                      <span className="text-sm font-medium text-red-700 bg-red-100 px-2 py-1 rounded-full">予算オーバー</span>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-red-600">-¥3,800</div>
+                      <div className="text-sm text-gray-600">今月使える金額</div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>予算 ¥30,000</span>
+                        <span>使用 113%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div className="h-3 bg-red-500 rounded-full transition-all duration-300" style={{ width: '100%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-l-2 border-red-100 pl-6 space-y-3">
+                    <div className="text-sm text-gray-600">貯金残高</div>
+                    <div className="text-2xl font-bold text-green-500">¥45,200</div>
+                    <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">月末に余った予算を自動追加</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
       </div>
     </div>
   )

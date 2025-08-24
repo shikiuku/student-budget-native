@@ -58,7 +58,8 @@ export default function ProfilePage() {
     city: "",
     school_name: "",
     grade: "",
-    monthly_budget: 30000
+    monthly_budget: 30000,
+    savings_balance: 0
   })
   
   const [notifications, setNotifications] = useState({
@@ -99,7 +100,8 @@ export default function ProfilePage() {
           city: result.data.city || "",
           school_name: result.data.school_name || "",
           grade: result.data.grade || "",
-          monthly_budget: result.data.monthly_budget || 30000
+          monthly_budget: result.data.monthly_budget || 30000,
+          savings_balance: result.data.savings_balance || 0
         })
       }
     } catch (error) {
@@ -601,6 +603,22 @@ export default function ProfilePage() {
                 />
               </div>
               <p className="text-xs text-gray-500 mt-1">お小遣いやアルバイト代など、月に使える金額</p>
+            </div>
+            
+            <div>
+              <Label htmlFor="savingsBalance" className="text-black font-medium">貯金残高</Label>
+              <div className="relative mt-1">
+                <span className="absolute left-3 top-2 text-gray-500">¥</span>
+                <Input 
+                  id="savingsBalance" 
+                  type="number" 
+                  value={formData.savings_balance === 0 ? '' : formData.savings_balance}
+                  onChange={(e) => handleInputChange('savings_balance', e.target.value === '' ? 0 : parseInt(e.target.value) || 0)}
+                  placeholder="0" 
+                  className="pl-8 border-zaim-blue-200 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black" 
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">現在の貯金額。毎月の余った予算は自動でここに追加されます</p>
             </div>
           </div>
         </div>

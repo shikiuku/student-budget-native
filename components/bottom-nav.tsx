@@ -15,7 +15,7 @@ export function BottomNav({ currentPage }: BottomNavProps) {
     { href: "/calendar", icon: Calendar, label: "カレンダー", id: "calendar" },
     { href: "/subsidies", icon: Gift, label: "補助金", id: "subsidies" },
     { href: "/tips", icon: Lightbulb, label: "節約", id: "tips" },
-    { href: "/profile", icon: User, label: "設定", id: "profile" },
+    { href: "/profile", icon: User, label: "ユーザー", id: "profile" },
   ]
 
   return (

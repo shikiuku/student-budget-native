@@ -64,6 +64,36 @@ export const userProfileService = {
     } catch (error) {
       return { error: (error as Error).message, success: false };
     }
+  },
+
+  async addToSavings(userId: string, amount: number): Promise<ApiResponse<UserProfile>> {
+    try {
+      // Get current profile first
+      const { data: profile, error: getError } = await supabase
+        .from('user_profiles')
+        .select('savings_balance')
+        .eq('id', userId)
+        .single();
+
+      if (getError) throw getError;
+
+      const currentSavings = profile?.savings_balance || 0;
+      const newSavingsBalance = currentSavings + amount;
+
+      // Update savings balance
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .update({ savings_balance: newSavingsBalance })
+        .eq('id', userId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return { data, success: true };
+    } catch (error) {
+      return { error: (error as Error).message, success: false };
+    }
   }
 };
 

@@ -12,7 +12,7 @@ import type { UserProfile, ExpenseWithCategory, ExpenseCategory } from "@/lib/ty
 const CalendarPage = () => {
   const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(() => new Date());
-  const [selectedDate, setSelectedDate] = useState(() => new Date().getDate());
+  const [selectedDate, setSelectedDate] = useState<number | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [monthlyBudget, setMonthlyBudget] = useState(30000);
@@ -132,7 +132,10 @@ const CalendarPage = () => {
   };
 
   const changeMonth = (increment: number) => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + increment, 1));
+    const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + increment, 1);
+    setCurrentDate(newDate);
+    // 月が変更されたら選択日をクリア（何も選択されていない状態）
+    setSelectedDate(null);
   };
 
   const handleDateClick = (date: number) => {
@@ -180,51 +183,52 @@ const CalendarPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-3 sm:px-6 py-3 sm:py-4 pb-32 md:pb-24 max-w-6xl">
-        {/* Monthly Summary Cards */}
-        <div className="mb-4 sm:mb-6 md:mb-2 grid grid-cols-3 gap-2 sm:gap-4 md:gap-2">
-          <div className="bg-blue-50 p-3 sm:p-4 md:p-3 rounded-lg text-center">
-            <div className="text-xs sm:text-sm text-gray-600 mb-1 md:mb-0">収入</div>
-            <div className="text-sm sm:text-xl md:text-lg font-bold text-blue-600">¥{monthlyIncome.toLocaleString()}</div>
+        {/* Month Navigation - Outside Card */}
+        <div className="flex items-center justify-center gap-1 sm:gap-2 mb-3">
+          <div className="flex items-center gap-1 sm:gap-2 bg-white rounded-lg border border-gray-200 p-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => changeMonth(-1)}
+              className="h-8 w-8 sm:h-10 sm:w-10 hover:bg-gray-100"
+            >
+              <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
+            </Button>
+            <span className="text-sm sm:text-xl font-medium px-3 sm:px-6 min-w-[150px] sm:min-w-[200px] text-center text-black">
+              {formatMonth(currentDate)}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => changeMonth(1)}
+              className="h-8 w-8 sm:h-10 sm:w-10 hover:bg-gray-100"
+            >
+              <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
+            </Button>
           </div>
-          <div className="bg-red-50 p-3 sm:p-4 md:p-3 rounded-lg text-center">
-            <div className="text-xs sm:text-sm text-gray-600 mb-1 md:mb-0">支出</div>
-            <div className="text-sm sm:text-xl md:text-lg font-bold text-red-600">¥{monthlyExpenses.toLocaleString()}</div>
+        </div>
+        
+        {/* Monthly Summary - Outside Card */}
+        <div className="grid grid-cols-3 gap-2 text-center mb-3">
+          <div className="bg-blue-50 px-2 py-1 rounded">
+            <div className="text-xs text-gray-600">収入</div>
+            <div className="text-sm font-bold text-blue-600">¥{monthlyIncome.toLocaleString()}</div>
           </div>
-          <div className="bg-green-50 p-3 sm:p-4 md:p-3 rounded-lg text-center">
-            <div className="text-xs sm:text-sm text-gray-600 mb-1 md:mb-0">残高</div>
-            <div className="text-sm sm:text-xl md:text-lg font-bold text-green-600">¥{balance.toLocaleString()}</div>
+          <div className="bg-red-50 px-2 py-1 rounded">
+            <div className="text-xs text-gray-600">支出</div>
+            <div className="text-sm font-bold text-red-600">¥{monthlyExpenses.toLocaleString()}</div>
+          </div>
+          <div className="bg-green-50 px-2 py-1 rounded">
+            <div className="text-xs text-gray-600">残高</div>
+            <div className="text-sm font-bold text-green-600">¥{balance.toLocaleString()}</div>
           </div>
         </div>
 
-        {/* Calendar Section */}
+        {/* Calendar Card - Only Calendar */}
         <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-6 md:p-3">
-          {/* Calendar Header */}
-          <div className="mb-3 sm:mb-4 md:mb-2 flex items-center justify-center gap-1 sm:gap-2">
-            <div className="flex items-center gap-1 sm:gap-2 bg-white rounded-lg border border-gray-200 p-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => changeMonth(-1)}
-                className="h-8 w-8 sm:h-10 sm:w-10 hover:bg-gray-100"
-              >
-                <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
-              </Button>
-              <span className="text-sm sm:text-xl font-medium px-3 sm:px-6 min-w-[150px] sm:min-w-[200px] text-center text-black">
-                {formatMonth(currentDate)}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => changeMonth(1)}
-                className="h-8 w-8 sm:h-10 sm:w-10 hover:bg-gray-100"
-              >
-                <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
-              </Button>
-            </div>
-          </div>
 
           {/* Calendar */}
-          <div className="mb-3 sm:mb-6 md:mb-2">
+          <div className="">
             {/* Calendar Header */}
             <div className="grid grid-cols-7 gap-px mb-1 sm:mb-2">
               {['日', '月', '火', '水', '木', '金', '土'].map((day, i) => (
@@ -244,7 +248,7 @@ const CalendarPage = () => {
                                day.getFullYear() === today.getFullYear();
                 const isCurrentMonthDay = isCurrentMonth(day);
                 const hasExpenses = isCurrentMonthDay && expensesByDate[date] && expensesByDate[date].length > 0;
-                const isSelected = isCurrentMonthDay && date === selectedDate;
+                const isSelected = isCurrentMonthDay && selectedDate !== null && date === selectedDate;
                 
                 return (
                   <div key={`${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`} className="text-center py-1 sm:py-2 md:py-0 h-10 sm:h-14 md:h-9 flex items-center justify-center">
@@ -253,17 +257,15 @@ const CalendarPage = () => {
                         onClick={() => handleDateClick(date)}
                         className={`w-8 h-8 sm:w-10 sm:h-10 md:w-8 md:h-8 flex items-center justify-center rounded-full text-sm sm:text-lg md:text-sm cursor-pointer transition-all hover:scale-105 ${
                           isSelected ? 'bg-blue-100 border-2 border-blue-400 text-blue-700' : 
-                          isToday ? 'font-bold text-gray-800' : 
-                          hasExpenses ? 'bg-blue-50 text-blue-700' :
+                          isToday ? 'font-bold text-red-500' : 
+                          hasExpenses ? 'bg-red-50 text-gray-800 relative' :
                           day.getDay() === 0 ? 'text-red-500 hover:bg-red-50' : 
                           day.getDay() === 6 ? 'text-blue-500 hover:bg-blue-50' : 
-                          'text-gray-700 hover:bg-gray-100'
+                          'text-gray-800 hover:bg-gray-50'
                         } font-medium relative`}>
                         {date}
-                        {hasExpenses && (
-                          <div className="absolute -bottom-1 sm:bottom-0 text-xs text-blue-600 font-bold">
-                            •
-                          </div>
+                        {hasExpenses && !isToday && (
+                          <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-white"></div>
                         )}
                       </button>
                     ) : (
@@ -276,49 +278,55 @@ const CalendarPage = () => {
               })}
             </div>
           </div>
-          
-          {/* Selected Date Expenses */}
-          <div className="border-t border-gray-200 pt-2 sm:pt-3 md:pt-2 min-h-[200px] md:max-h-[200px]">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 sm:mb-3 md:mb-1 gap-2">
-              <h4 className="text-sm font-semibold text-gray-800">{formatMonth(currentDate)} {selectedDate}日の支出</h4>
-              {expensesByDate[selectedDate] && expensesByDate[selectedDate].length > 0 && (
-                <div className="text-sm font-bold text-red-600">
-                  合計: ¥{expensesByDate[selectedDate].reduce((sum, exp) => sum + exp.amount, 0).toLocaleString()}
-                </div>
-              )}
-            </div>
-            
-            {expensesByDate[selectedDate] && expensesByDate[selectedDate].length > 0 ? (
-              <div className="space-y-1 sm:space-y-2 max-h-48 md:max-h-40 overflow-y-auto">
-                {expensesByDate[selectedDate].map((expense) => {
-                  const category = categories.find(cat => cat.id === expense.category_id);
-                  const IconComponent = category?.icon ? iconMap[category.icon as keyof typeof iconMap] || Home : Home;
-                  const expenseTime = new Date(expense.created_at).toLocaleTimeString('ja-JP', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                  });
-                  
-                  return (
-                    <div key={expense.id} className="flex items-center justify-between bg-gray-50 px-3 py-2 md:py-1 rounded-lg">
-                      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                        <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-5 md:h-5 rounded-full flex items-center justify-center flex-shrink-0" 
-                             style={{ backgroundColor: category?.color || '#6b7280' }}>
-                          <IconComponent className="h-3 w-3 text-white" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm md:text-xs font-medium text-gray-900 truncate">{expense.description || category?.name || '支出'}</div>
-                          <div className="text-xs md:text-[10px] text-gray-500">{expenseTime}</div>
-                        </div>
-                      </div>
-                      <div className="text-sm md:text-xs font-bold text-gray-900 flex-shrink-0 ml-2">¥{expense.amount.toLocaleString()}</div>
-                    </div>
-                  );
-                })}
+        </div>
+        
+        {/* Selected Date Expenses - Outside Card */}
+        <div className="mt-4 bg-white border border-gray-200 rounded-lg p-3 sm:p-4">
+          {selectedDate !== null ? (
+            <>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 sm:mb-3 gap-2">
+                <h4 className="text-sm font-semibold text-gray-800">{formatMonth(currentDate)} {selectedDate}日の支出</h4>
+                {expensesByDate[selectedDate] && expensesByDate[selectedDate].length > 0 && (
+                  <div className="text-sm font-bold text-red-600">
+                    合計: ¥{expensesByDate[selectedDate].reduce((sum, exp) => sum + exp.amount, 0).toLocaleString()}
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="text-sm text-gray-500 text-center py-3 md:py-8">この日は支出がありません</div>
-            )}
-          </div>
+              
+              {expensesByDate[selectedDate] && expensesByDate[selectedDate].length > 0 ? (
+                <div className="space-y-1 sm:space-y-2 max-h-48 md:max-h-64 overflow-y-auto">
+                  {expensesByDate[selectedDate].map((expense) => {
+                const category = categories.find(cat => cat.id === expense.category_id);
+                const IconComponent = category?.icon ? iconMap[category.icon as keyof typeof iconMap] || Home : Home;
+                const expenseTime = new Date(expense.created_at).toLocaleTimeString('ja-JP', { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                });
+                
+                return (
+                  <div key={expense.id} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-lg">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center flex-shrink-0" 
+                           style={{ backgroundColor: category?.color || '#6b7280' }}>
+                        <IconComponent className="h-3 w-3 text-white" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-gray-900 truncate">{expense.description || category?.name || '支出'}</div>
+                        <div className="text-xs text-gray-500">{expenseTime}</div>
+                      </div>
+                    </div>
+                    <div className="text-sm font-bold text-gray-900 flex-shrink-0 ml-2">¥{expense.amount.toLocaleString()}</div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-sm text-gray-500 text-center py-8">この日は支出がありません</div>
+          )}
+            </>
+          ) : (
+            <div className="text-sm text-gray-500 text-center py-8">日付を選択してください</div>
+          )}
         </div>
 
       </div>

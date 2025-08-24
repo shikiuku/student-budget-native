@@ -116,7 +116,7 @@ function HomeContent() {
             if (remaining > 0) {
               const currentSavings = profileResult.data.savings_balance || 0
               const newSavingsBalance = currentSavings + remaining
-              const result = await userProfileService.updateProfile(user.id, { savings_balance: newSavingsBalance })
+              const result = await userProfileService.updateProfile(user.id, { savings_balance: newSavingsBalance } as any)
               if (result.success) {
                 // 今月の貯金追加完了をマーク
                 localStorage.setItem(savingsKey, 'true')

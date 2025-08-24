@@ -14,6 +14,7 @@ export interface UserProfile {
   school_name?: string;
   grade?: string;
   monthly_budget?: number;
+  savings_balance?: number;
   created_at: string;
   updated_at: string;
 }
