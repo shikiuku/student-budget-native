@@ -15,6 +15,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
+import { getCategoryIcon, getCategoryColor } from '../../utils/categoryIcons';
 
 // 元のWebアプリと同じ型定義
 interface Post {
@@ -23,10 +24,12 @@ interface Post {
   content: string;
   category: string;
   savings_effect?: string;
-  author_id: string;
-  author?: {
+  user_id: string;
+  user_profiles?: {
     id: string;
-    email: string;
+    name: string;
+    school_type?: string;
+    grade?: string;
   };
   likes_count: number;
   created_at: string;
@@ -40,24 +43,8 @@ interface PostForm {
   savings_effect: string;
 }
 
-// カテゴリマップ（元のWebアプリと同じ）
-const categoryIconMap = {
-  '食費': 'restaurant' as const,
-  '交通費': 'car' as const,
-  '娯楽': 'gift' as const,
-  '学用品': 'book' as const,
-  '衣類': 'shirt' as const,
-  'その他': 'pricetag' as const,
-};
-
-const categoryColorMap = {
-  '食費': '#FF6B35',
-  '交通費': '#4ECDC4',
-  '娯楽': '#FFD23F',
-  '学用品': '#6A994E',
-  '衣類': '#BC4749',
-  'その他': '#6B7280',
-};
+// 統一されたカテゴリ定義
+const categories = ['食費', '交通費', '娯楽', '学用品', '衣類', 'その他'] as const;
 
 export default function TipsScreen() {
   const { user } = useAuth();
@@ -91,14 +78,47 @@ export default function TipsScreen() {
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
         .select(`
-          *,
-          author:user_profiles!posts_author_id_fkey(id, email)
+          *
         `)
         .order('created_at', { ascending: false })
         .limit(20);
 
       if (postsError) throw postsError;
-      setPosts(postsData || []);
+      
+      // 投稿に関連するユーザープロフィールといいね数を取得
+      if (postsData && postsData.length > 0) {
+        const userIds = [...new Set(postsData.map(post => post.user_id))];
+        const postIds = postsData.map(post => post.id);
+        
+        const { data: profilesData } = await supabase
+          .from('user_profiles')
+          .select('id, name, school_type, grade')
+          .in('id', userIds);
+
+        // 各投稿のいいね数を取得
+        const { data: likeCounts } = await supabase
+          .from('post_likes')
+          .select('post_id')
+          .in('post_id', postIds);
+
+        // 投稿ごとのいいね数を集計
+        const likeCountMap: Record<string, number> = {};
+        postIds.forEach(postId => {
+          likeCountMap[postId] = likeCounts?.filter(like => like.post_id === postId).length || 0;
+        });
+
+        // 投稿データにプロフィール情報といいね数を結合
+        const postsWithProfiles = postsData.map(post => ({
+          ...post,
+          user_profiles: profilesData?.find(profile => profile.id === post.user_id) || null,
+          likes_count: likeCountMap[post.id] || 0
+        }));
+
+        setPosts(postsWithProfiles || []);
+      } else {
+        setPosts(postsData || []);
+      }
+
 
     } catch (error) {
       console.error('Error loading posts:', error);
@@ -112,14 +132,20 @@ export default function TipsScreen() {
     if (!user) return;
 
     try {
+      console.log('ユーザーインタラクション読み込み開始:', user.id);
+      
       // いいね状態を取得
       const { data: likesData, error: likesError } = await supabase
         .from('post_likes')
         .select('post_id')
         .eq('user_id', user.id);
 
-      if (likesError) throw likesError;
+      if (likesError) {
+        console.error('いいね取得エラー:', likesError);
+        throw likesError;
+      }
       
+      console.log('いいねデータ取得成功:', likesData);
       const likedPostIds: Record<string, boolean> = {};
       (likesData || []).forEach(like => {
         likedPostIds[like.post_id] = true;
@@ -132,8 +158,12 @@ export default function TipsScreen() {
         .select('post_id')
         .eq('user_id', user.id);
 
-      if (bookmarksError) throw bookmarksError;
+      if (bookmarksError) {
+        console.error('ブックマーク取得エラー:', bookmarksError);
+        throw bookmarksError;
+      }
       
+      console.log('ブックマークデータ取得成功:', bookmarksData);
       const bookmarkedPostIds: Record<string, boolean> = {};
       (bookmarksData || []).forEach(bookmark => {
         bookmarkedPostIds[bookmark.post_id] = true;
@@ -142,6 +172,7 @@ export default function TipsScreen() {
 
     } catch (error) {
       console.error('Error loading user interactions:', error);
+      Alert.alert('情報', `ユーザーインタラクションの読み込み中にエラーが発生しました: ${error.message || JSON.stringify(error)}`);
     }
   };
 
@@ -167,7 +198,7 @@ export default function TipsScreen() {
           content: newPost.content.trim(),
           category: newPost.category,
           savings_effect: newPost.savings_effect.trim() || null,
-          author_id: user.id
+          user_id: user.id
         })
         .select()
         .single();
@@ -197,37 +228,67 @@ export default function TipsScreen() {
   };
 
   const handleLike = async (postId: string) => {
-    if (!user) return;
+    if (!user) {
+      Alert.alert('エラー', 'ログインが必要です。');
+      return;
+    }
 
-    const isCurrentlyLiked = likedPosts[postId];
+    const isCurrentlyLiked = Boolean(likedPosts[postId]);
+    console.log('いいね処理開始:', { 
+      postId, 
+      isCurrentlyLiked, 
+      likedPostsKeys: Object.keys(likedPosts),
+      userId: user.id 
+    });
     
     try {
       if (isCurrentlyLiked) {
         // いいねを削除
-        const { error } = await supabase
+        console.log('いいね削除処理開始');
+        const { data, error } = await supabase
           .from('post_likes')
           .delete()
           .eq('post_id', postId)
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('いいね削除エラー:', error);
+          throw error;
+        }
 
-        setLikedPosts(prev => ({ ...prev, [postId]: false }));
+        console.log('いいね削除成功:', data);
+        setLikedPosts(prev => {
+          const newState = { ...prev };
+          delete newState[postId];
+          console.log('いいね削除後の新しい状態:', newState);
+          return newState;
+        });
         // 投稿のいいね数を更新
         setPosts(prev => prev.map(post => 
           post.id === postId 
-            ? { ...post, likes_count: post.likes_count - 1 }
+            ? { ...post, likes_count: Math.max(0, post.likes_count - 1) }
             : post
         ));
       } else {
         // いいねを追加
-        const { error } = await supabase
+        console.log('いいね追加処理開始');
+        const { data, error } = await supabase
           .from('post_likes')
-          .insert({ post_id: postId, user_id: user.id });
+          .insert({ post_id: postId, user_id: user.id })
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('いいね追加エラー:', error);
+          throw error;
+        }
 
-        setLikedPosts(prev => ({ ...prev, [postId]: true }));
+        console.log('いいね追加成功:', data);
+        setLikedPosts(prev => {
+          const newState = { ...prev, [postId]: true };
+          console.log('いいね追加後の新しい状態:', newState);
+          return newState;
+        });
         // 投稿のいいね数を更新
         setPosts(prev => prev.map(post => 
           post.id === postId 
@@ -237,7 +298,7 @@ export default function TipsScreen() {
       }
     } catch (error) {
       console.error('Error toggling like:', error);
-      Alert.alert('エラー', 'いいねの処理に失敗しました。');
+      Alert.alert('エラー', `いいねの処理に失敗しました。詳細: ${error.message || JSON.stringify(error)}`);
     }
   };
 
@@ -257,7 +318,11 @@ export default function TipsScreen() {
 
         if (error) throw error;
 
-        setBookmarkedPosts(prev => ({ ...prev, [postId]: false }));
+        setBookmarkedPosts(prev => {
+          const newState = { ...prev };
+          delete newState[postId];
+          return newState;
+        });
       } else {
         // ブックマークを追加
         const { error } = await supabase
@@ -335,10 +400,20 @@ export default function TipsScreen() {
           ) : (
             <View style={styles.postsList}>
               {posts.map((post) => {
-                const categoryIcon = categoryIconMap[post.category as keyof typeof categoryIconMap] || 'pricetag';
-                const categoryColor = categoryColorMap[post.category as keyof typeof categoryColorMap] || '#6B7280';
-                const isLiked = likedPosts[post.id] || false;
-                const isBookmarked = bookmarkedPosts[post.id] || false;
+                const categoryIcon = getCategoryIcon(post.category);
+                const categoryColor = getCategoryColor(post.category);
+                const isLiked = Boolean(likedPosts[post.id]);
+                const isBookmarked = Boolean(bookmarkedPosts[post.id]);
+                
+                // デバッグログ
+                if (post.id === posts[0]?.id) {
+                  console.log('レンダリング時の状態:', {
+                    postId: post.id,
+                    isLiked,
+                    likedPosts,
+                    likesCount: post.likes_count
+                  });
+                }
                 
                 return (
                   <View key={post.id} style={styles.postCard}>
@@ -348,7 +423,7 @@ export default function TipsScreen() {
                           <Ionicons name="person" size={16} color="#6B7280" />
                         </View>
                         <Text style={styles.authorEmail}>
-                          {post.author?.email || 'Unknown'}
+                          {post.user_profiles?.name || 'Unknown'}
                         </Text>
                       </View>
                       <Text style={styles.postDate}>
@@ -468,7 +543,7 @@ export default function TipsScreen() {
             <View style={styles.formGroup}>
               <Text style={styles.formLabel}>カテゴリを選択</Text>
               <View style={styles.categoryGrid}>
-                {Object.entries(categoryIconMap).map(([category, iconName]) => (
+                {categories.map((category) => (
                   <Pressable
                     key={category}
                     style={[
@@ -478,7 +553,7 @@ export default function TipsScreen() {
                     onPress={() => setNewPost({ ...newPost, category })}
                   >
                     <Ionicons 
-                      name={iconName} 
+                      name={getCategoryIcon(category)} 
                       size={20} 
                       color={newPost.category === category ? "#10B981" : "#6B7280"} 
                     />

@@ -7,14 +7,12 @@ import CalendarScreen from '../screens/main/CalendarScreen';
 import TipsScreen from '../screens/main/TipsScreen';
 import SubsidiesScreen from '../screens/main/SubsidiesScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
-import MapScreen from '../screens/main/MapScreen';
 
 export type MainTabParamList = {
   Home: undefined;
   Expenses: undefined;
   Calendar: undefined;
   Tips: undefined;
-  Map: undefined;
   Subsidies: undefined;
   Profile: undefined;
 };
@@ -36,8 +34,6 @@ export default function MainNavigator() {
             iconName = focused ? 'calendar' : 'calendar-outline';
           } else if (route.name === 'Tips') {
             iconName = focused ? 'bulb' : 'bulb-outline';
-          } else if (route.name === 'Map') {
-            iconName = focused ? 'map' : 'map-outline';
           } else if (route.name === 'Subsidies') {
             iconName = focused ? 'school' : 'school-outline';
           } else if (route.name === 'Profile') {
@@ -74,11 +70,6 @@ export default function MainNavigator() {
         name="Tips" 
         component={TipsScreen} 
         options={{ title: '節約術' }}
-      />
-      <Tab.Screen 
-        name="Map" 
-        component={MapScreen} 
-        options={{ title: 'マップ' }}
       />
       <Tab.Screen 
         name="Subsidies" 

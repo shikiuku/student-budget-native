@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
 import Svg, { Circle } from 'react-native-svg';
+import { getCategoryIcon, getCategoryColor } from '../../utils/categoryIcons';
 
 // 元のWebアプリと同じ型定義
 interface UserProfile {
@@ -52,15 +53,6 @@ interface ExpenseWithCategory {
   category: ExpenseCategory;
 }
 
-// アイコンマップ（元のWebアプリと同じ）
-const iconMap = {
-  "Utensils": "restaurant" as const,
-  "Car": "car" as const,
-  "ShoppingBag": "bag" as const,
-  "BookOpen": "book" as const,
-  "Shirt": "shirt" as const,
-  "Home": "home" as const
-};
 
 const { width } = Dimensions.get('window');
 
@@ -173,8 +165,8 @@ export default function HomeScreen() {
     return {
       name: category.name,
       amount,
-      icon: category.icon || "Home",
-      color: category.color || "#6b7280",
+      icon: category.icon || category.name,
+      color: getCategoryColor(category.name) || category.color || "#6b7280",
       percentage
     };
   }).filter(cat => cat.amount > 0)
@@ -291,51 +283,47 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* ドーナツチャート */}
+      {/* 支出内訳（棒チャート） */}
       {categoryBreakdown.length > 0 && (
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>支出内訳</Text>
           </View>
-          <View style={styles.chartContainer}>
-            <View style={styles.chartArea}>
-              {/* SVGドーナツチャート（元のWebアプリと同じ） */}
-              <View style={styles.svgContainer}>
-                <Svg width={192} height={192} viewBox="0 0 200 200">
-                  {categoryBreakdown.map((category, index) => {
-                    const prevPercentage = categoryBreakdown.slice(0, index).reduce((sum, cat) => sum + cat.percentage, 0);
-                    const circumference = 502.65; // 2 * π * 80
-                    const strokeDasharray = `${category.percentage * 5.03} ${circumference}`;
-                    const strokeDashoffset = `-${prevPercentage * 5.03}`;
-                    
-                    return (
-                      <Circle
-                        key={category.name}
-                        cx="100"
-                        cy="100"
-                        r="80"
-                        fill="none"
-                        stroke={category.color}
-                        strokeWidth="16"
-                        strokeDasharray={strokeDasharray}
-                        strokeDashoffset={strokeDashoffset}
-                        transform="rotate(-90 100 100)"
-                      />
-                    );
-                  })}
-                </Svg>
-                <View style={styles.chartCenter}>
-                  <Text style={styles.chartTotalAmount}>¥{spent.toLocaleString()}</Text>
-                  <Text style={styles.chartTotalLabel}>合計支出</Text>
-                </View>
-              </View>
+          <View style={styles.barChartContainer}>
+            <View style={styles.totalAmountSection}>
+              <Text style={styles.chartTotalAmount}>¥{spent.toLocaleString()}</Text>
+              <Text style={styles.chartTotalLabel}>合計支出</Text>
             </View>
-            <View style={styles.chartLegend}>
-              {categoryBreakdown.map((category) => (
-                <View key={category.name} style={styles.legendItem}>
-                  <View style={[styles.legendColor, { backgroundColor: category.color }]} />
-                  <Text style={styles.legendName}>{category.name}</Text>
-                  <Text style={styles.legendPercentage}>{category.percentage}%</Text>
+            <View style={styles.barChartArea}>
+              {categoryBreakdown.map((category, index) => (
+                <View key={category.name} style={styles.barChartItem}>
+                  <View style={styles.barChartRow}>
+                    <View style={styles.barLabelSection}>
+                      <View style={[styles.barCategoryIcon, { backgroundColor: category.color }]}>
+                        <Ionicons 
+                          name={getCategoryIcon(category.icon)} 
+                          size={12} 
+                          color="#FFF" 
+                        />
+                      </View>
+                      <Text style={styles.barCategoryName}>{category.name}</Text>
+                    </View>
+                    <View style={styles.barSection}>
+                      <View style={styles.barBackground}>
+                        <View 
+                          style={[
+                            styles.barFill, 
+                            { 
+                              width: `${category.percentage}%`,
+                              backgroundColor: category.color 
+                            }
+                          ]} 
+                        />
+                      </View>
+                      <Text style={styles.barPercentage}>{category.percentage}%</Text>
+                    </View>
+                    <Text style={styles.barAmount}>¥{category.amount.toLocaleString()}</Text>
+                  </View>
                 </View>
               ))}
             </View>
@@ -343,36 +331,6 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* カテゴリ別支出リスト */}
-      <View style={styles.sectionCard}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>カテゴリ別支出</Text>
-        </View>
-        <View style={styles.categoryList}>
-          {categoryBreakdown.length > 0 ? categoryBreakdown.map((category, index) => (
-            <View key={category.name}>
-              <View style={styles.categoryItem}>
-                <View style={styles.categoryLeft}>
-                  <View style={[styles.categoryIcon, { backgroundColor: category.color }]}>
-                    <Ionicons 
-                      name={iconMap[category.icon as keyof typeof iconMap] || "home"} 
-                      size={16} 
-                      color="#FFF" 
-                    />
-                  </View>
-                  <Text style={styles.categoryName}>{category.name}</Text>
-                </View>
-                <Text style={styles.categoryAmount}>¥{category.amount.toLocaleString()}</Text>
-              </View>
-              {index < categoryBreakdown.length - 1 && <View style={styles.divider} />}
-            </View>
-          )) : (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>まだ支出データがありません</Text>
-            </View>
-          )}
-        </View>
-      </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -496,6 +454,18 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   
+  // 横並びコンテナ
+  horizontalContainer: {
+    flexDirection: 'row',
+    marginHorizontal: 24,
+    marginBottom: 24,
+    gap: 12,
+  },
+  halfWidthCard: {
+    flex: 1,
+    marginHorizontal: 0,
+    marginBottom: 0,
+  },
   // セクションカード
   sectionCard: {
     backgroundColor: '#FFFFFF',
@@ -547,6 +517,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#000',
   },
+  moreItemsText: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 4,
+  },
   incomeExpenseAmount: {
     fontSize: 14,
     fontWeight: 'bold',
@@ -557,28 +534,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
   },
   
-  // チャートエリア
-  chartContainer: {
-    padding: 24,
+  // 棒チャートエリア
+  barChartContainer: {
+    padding: 16,
+  },
+  totalAmountSection: {
     alignItems: 'center',
-  },
-  chartArea: {
     marginBottom: 16,
-  },
-  svgContainer: {
-    position: 'relative',
-    width: 192,
-    height: 192,
-    marginBottom: 16,
-  },
-  chartCenter: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
   chartTotalAmount: {
     fontSize: 20,
@@ -586,66 +551,114 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   chartTotalLabel: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#6B7280',
+    marginTop: 2,
   },
-  chartLegend: {
-    alignItems: 'center',
-    gap: 4,
+  barChartArea: {
+    gap: 12,
   },
-  legendItem: {
+  barChartItem: {
+    marginBottom: 4,
+  },
+  barChartRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  legendColor: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  barLabelSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    width: 80,
   },
-  legendName: {
-    fontSize: 12,
+  barCategoryIcon: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  barCategoryName: {
+    fontSize: 11,
     fontWeight: '500',
     color: '#000',
-    minWidth: 60,
+    flex: 1,
   },
-  legendPercentage: {
-    fontSize: 12,
+  barSection: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  barBackground: {
+    flex: 1,
+    height: 16,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  barFill: {
+    height: '100%',
+    borderRadius: 8,
+    minWidth: 4,
+  },
+  barPercentage: {
+    fontSize: 10,
+    fontWeight: '500',
     color: '#6B7280',
+    width: 28,
+    textAlign: 'right',
+  },
+  barAmount: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#000',
+    width: 60,
+    textAlign: 'right',
   },
   
-  // カテゴリリスト
-  categoryList: {
+  // カテゴリ詳細リスト（統合版）
+  categoryDetailsList: {
     padding: 0,
   },
-  categoryItem: {
+  categoryDetailItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 12,
   },
   categoryLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
+  },
+  categoryRight: {
+    alignItems: 'flex-end',
   },
   categoryIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },
   categoryName: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: '#000',
   },
   categoryAmount: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
     color: '#000',
+  },
+  categoryPercentage: {
+    fontSize: 11,
+    color: '#6B7280',
+    marginTop: 2,
   },
   
   // エンプティステート

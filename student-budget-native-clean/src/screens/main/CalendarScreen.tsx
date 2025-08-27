@@ -6,10 +6,14 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Modal,
+  TextInput,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
+import { getCategoryIcon, getCategoryColor } from '../../utils/categoryIcons';
 
 interface UserProfile {
   id: string;
@@ -43,14 +47,6 @@ interface Expense {
   category?: ExpenseCategory;
 }
 
-const iconMap: { [key: string]: keyof typeof Ionicons.glyphMap } = {
-  'restaurant': 'restaurant',
-  'car': 'car',
-  'bag': 'bag',
-  'book': 'book',
-  'home': 'home',
-  'shirt': 'shirt',
-};
 
 export default function CalendarScreen() {
   const { user } = useAuth();
@@ -60,6 +56,13 @@ export default function CalendarScreen() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newExpense, setNewExpense] = useState({
+    amount: '',
+    description: '',
+    category_id: '',
+    date: new Date().toISOString().split('T')[0],
+  });
 
   const monthlyBudget = userProfile?.monthly_budget || 30000;
   const monthlyExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
@@ -196,6 +199,46 @@ export default function CalendarScreen() {
     setSelectedDate(date === selectedDate ? null : date);
   };
 
+  const handleAddExpense = async () => {
+    if (!user || !newExpense.amount || !newExpense.category_id) {
+      Alert.alert('エラー', '金額とカテゴリーを入力してください。');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('expenses')
+        .insert({
+          user_id: user.id,
+          amount: parseInt(newExpense.amount),
+          description: newExpense.description || null,
+          category_id: newExpense.category_id,
+          date: newExpense.date,
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      // データを再読み込み
+      await loadData();
+      
+      // フォームリセット
+      setNewExpense({
+        amount: '',
+        description: '',
+        category_id: '',
+        date: new Date().toISOString().split('T')[0],
+      });
+      
+      setShowAddModal(false);
+      Alert.alert('成功', '支出を記録しました。');
+    } catch (error) {
+      console.error('支出追加エラー:', error);
+      Alert.alert('エラー', '支出の記録に失敗しました。');
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -276,13 +319,13 @@ export default function CalendarScreen() {
               >
                 <View style={[
                   styles.dayContent,
-                  isSelected && styles.selectedDay,
                   isTodayDate && styles.todayDay,
+                  isSelected && styles.selectedDay,
                 ]}>
                   <Text style={[
                     styles.dayText,
                     !isCurrentMonthDay && styles.disabledDayText,
-                    isTodayDate && styles.todayText,
+                    isTodayDate && !isSelected && styles.todayText,
                     isSelected && styles.selectedDayText,
                     day.getDay() === 0 && isCurrentMonthDay && styles.sundayText,
                     day.getDay() === 6 && isCurrentMonthDay && styles.saturdayText,
@@ -291,6 +334,9 @@ export default function CalendarScreen() {
                   </Text>
                   {hasExpenses && !isTodayDate && !isSelected && (
                     <View style={styles.expenseDot} />
+                  )}
+                  {isTodayDate && !isSelected && (
+                    <View style={styles.todayDot} />
                   )}
                 </View>
               </TouchableOpacity>
@@ -318,7 +364,8 @@ export default function CalendarScreen() {
               <ScrollView style={styles.expensesList}>
                 {expensesByDate[selectedDate].map((expense) => {
                   const category = expense.category || categories.find(cat => cat.id === expense.category_id);
-                  const iconName = category?.icon ? iconMap[category.icon] || 'home' : 'home';
+                  const iconName = getCategoryIcon(category?.icon || category?.name || 'その他');
+                  const categoryColor = getCategoryColor(category?.name || 'その他') || category?.color || '#6B7280';
                   const expenseTime = new Date(expense.created_at).toLocaleTimeString('ja-JP', { 
                     hour: '2-digit', 
                     minute: '2-digit' 
@@ -329,7 +376,7 @@ export default function CalendarScreen() {
                       <View style={styles.expenseInfo}>
                         <View style={[
                           styles.categoryIcon,
-                          { backgroundColor: category?.color || '#6B7280' }
+                          { backgroundColor: categoryColor }
                         ]}>
                           <Ionicons name={iconName} size={16} color="white" />
                         </View>
@@ -355,6 +402,126 @@ export default function CalendarScreen() {
           <Text style={styles.noSelectionText}>日付を選択してください</Text>
         )}
       </View>
+
+      {/* 支出追加ボタン */}
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => {
+          const selectedDateStr = selectedDate 
+            ? `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate).padStart(2, '0')}`
+            : new Date().toISOString().split('T')[0];
+          
+          setNewExpense({
+            ...newExpense,
+            date: selectedDateStr,
+          });
+          setShowAddModal(true);
+        }}
+      >
+        <Ionicons name="add" size={24} color="white" />
+      </TouchableOpacity>
+
+      {/* 支出追加モーダル */}
+      <Modal
+        visible={showAddModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>支出を追加</Text>
+            <TouchableOpacity
+              onPress={() => setShowAddModal(false)}
+              style={styles.closeButton}
+            >
+              <Ionicons name="close" size={24} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.modalContent}>
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>金額 *</Text>
+              <TextInput
+                style={styles.textInput}
+                value={newExpense.amount}
+                onChangeText={(text) => setNewExpense({ ...newExpense, amount: text })}
+                placeholder="1000"
+                keyboardType="numeric"
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>説明</Text>
+              <TextInput
+                style={styles.textInput}
+                value={newExpense.description}
+                onChangeText={(text) => setNewExpense({ ...newExpense, description: text })}
+                placeholder="ランチ代など"
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>カテゴリー *</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryList}>
+                {categories.map((category) => {
+                  const iconName = getCategoryIcon(category.icon || category.name || 'その他');
+                  const isSelected = newExpense.category_id === category.id;
+                  
+                  return (
+                    <TouchableOpacity
+                      key={category.id}
+                      style={[
+                        styles.categoryItem,
+                        isSelected && styles.selectedCategoryItem
+                      ]}
+                      onPress={() => setNewExpense({ ...newExpense, category_id: category.id })}
+                    >
+                      <View style={[
+                        styles.categoryIconContainer,
+                        { backgroundColor: category.color },
+                        isSelected && styles.selectedCategoryIcon
+                      ]}>
+                        <Ionicons name={iconName} size={20} color="white" />
+                      </View>
+                      <Text style={[
+                        styles.categoryName,
+                        isSelected && styles.selectedCategoryName
+                      ]}>
+                        {category.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>日付</Text>
+              <TextInput
+                style={styles.textInput}
+                value={newExpense.date}
+                onChangeText={(text) => setNewExpense({ ...newExpense, date: text })}
+                placeholder="YYYY-MM-DD"
+              />
+            </View>
+          </ScrollView>
+
+          <View style={styles.modalFooter}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setShowAddModal(false)}
+            >
+              <Text style={styles.cancelButtonText}>キャンセル</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={handleAddExpense}
+            >
+              <Text style={styles.saveButtonText}>保存</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -449,7 +616,7 @@ const styles = StyleSheet.create({
   weekDay: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
   weekDayText: {
     fontSize: 14,
@@ -468,11 +635,14 @@ const styles = StyleSheet.create({
   },
   calendarDay: {
     width: '14.28%',
-    aspectRatio: 1,
-    padding: 2,
+    height: 54,
+    paddingHorizontal: 1,
+    paddingVertical: 0,
+    alignItems: 'center',
   },
   dayContent: {
-    flex: 1,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 20,
@@ -482,12 +652,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#EBF8FF',
     borderWidth: 2,
     borderColor: '#3B82F6',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
   },
   todayDay: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: 'transparent',
   },
   dayText: {
-    fontSize: 16,
+    fontSize: 24,
     fontWeight: '500',
     color: '#111827',
   },
@@ -495,7 +668,7 @@ const styles = StyleSheet.create({
     color: '#D1D5DB',
   },
   todayText: {
-    color: '#DC2626',
+    color: '#111827',
     fontWeight: 'bold',
   },
   selectedDayText: {
@@ -510,8 +683,14 @@ const styles = StyleSheet.create({
     height: 8,
     backgroundColor: '#DC2626',
     borderRadius: 4,
-    borderWidth: 1,
-    borderColor: 'white',
+  },
+  todayDot: {
+    position: 'absolute',
+    bottom: -2,
+    width: 6,
+    height: 6,
+    backgroundColor: '#10B981',
+    borderRadius: 3,
   },
   expenseDetails: {
     backgroundColor: 'white',
@@ -592,5 +771,139 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
     paddingVertical: 32,
+  },
+  addButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#3B82F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'white',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  modalContent: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+  },
+  formGroup: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    fontSize: 16,
+    backgroundColor: '#F9FAFB',
+  },
+  categoryList: {
+    flexDirection: 'row',
+    marginTop: 8,
+  },
+  categoryItem: {
+    alignItems: 'center',
+    marginRight: 16,
+    paddingVertical: 8,
+    width: 60,
+    minHeight: 80,
+  },
+  selectedCategoryItem: {
+    backgroundColor: '#EBF8FF',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+  },
+  categoryIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  selectedCategoryIcon: {
+    borderWidth: 2,
+    borderColor: '#3B82F6',
+  },
+  categoryName: {
+    fontSize: 12,
+    color: '#6B7280',
+    textAlign: 'center',
+    flexWrap: 'wrap',
+    lineHeight: 14,
+  },
+  selectedCategoryName: {
+    color: '#3B82F6',
+    fontWeight: '500',
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    color: '#6B7280',
+  },
+  saveButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: '#10B981',
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'white',
   },
 });

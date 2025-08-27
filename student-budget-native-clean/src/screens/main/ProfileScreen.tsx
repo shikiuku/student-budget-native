@@ -89,6 +89,14 @@ export default function ProfileScreen() {
     savings_balance: 0
   });
   
+  // 通知設定状態
+  const [notifications, setNotifications] = useState({
+    spending: true,
+    savings: true,
+    subsidies: false,
+    tips: true,
+  });
+  
   // モーダル状態
   const [showGradeModal, setShowGradeModal] = useState(false);
   const [showPrefectureModal, setShowPrefectureModal] = useState(false);
@@ -476,6 +484,90 @@ export default function ProfileScreen() {
             </View>
           </View>
 
+          {/* 通知設定 */}
+          <View style={styles.settingsCard}>
+            <View style={styles.settingsHeader}>
+              <Ionicons name="notifications" size={20} color="#F97316" />
+              <Text style={styles.settingsTitle}>通知設定</Text>
+            </View>
+            
+            <View style={styles.notificationItem}>
+              <View style={styles.notificationInfo}>
+                <Text style={styles.notificationTitle}>使いすぎアラート</Text>
+                <Text style={styles.notificationDescription}>予算の80%を超えた時に通知</Text>
+              </View>
+              <TouchableOpacity
+                style={[
+                  styles.switchButton,
+                  notifications.spending && styles.switchButtonActive
+                ]}
+                onPress={() => setNotifications({ ...notifications, spending: !notifications.spending })}
+              >
+                <View style={[
+                  styles.switchDot,
+                  notifications.spending && styles.switchDotActive
+                ]} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.notificationItem}>
+              <View style={styles.notificationInfo}>
+                <Text style={styles.notificationTitle}>節約目標通知</Text>
+                <Text style={styles.notificationDescription}>目標達成時や進捗の通知</Text>
+              </View>
+              <TouchableOpacity
+                style={[
+                  styles.switchButton,
+                  notifications.savings && styles.switchButtonActive
+                ]}
+                onPress={() => setNotifications({ ...notifications, savings: !notifications.savings })}
+              >
+                <View style={[
+                  styles.switchDot,
+                  notifications.savings && styles.switchDotActive
+                ]} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.notificationItem}>
+              <View style={styles.notificationInfo}>
+                <Text style={styles.notificationTitle}>補助金情報</Text>
+                <Text style={styles.notificationDescription}>新しい補助金情報の通知</Text>
+              </View>
+              <TouchableOpacity
+                style={[
+                  styles.switchButton,
+                  notifications.subsidies && styles.switchButtonActive
+                ]}
+                onPress={() => setNotifications({ ...notifications, subsidies: !notifications.subsidies })}
+              >
+                <View style={[
+                  styles.switchDot,
+                  notifications.subsidies && styles.switchDotActive
+                ]} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.notificationItem}>
+              <View style={styles.notificationInfo}>
+                <Text style={styles.notificationTitle}>節約アイディア</Text>
+                <Text style={styles.notificationDescription}>おすすめの節約術の通知</Text>
+              </View>
+              <TouchableOpacity
+                style={[
+                  styles.switchButton,
+                  notifications.tips && styles.switchButtonActive
+                ]}
+                onPress={() => setNotifications({ ...notifications, tips: !notifications.tips })}
+              >
+                <View style={[
+                  styles.switchDot,
+                  notifications.tips && styles.switchDotActive
+                ]} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
           {/* 保存ボタン */}
           <TouchableOpacity 
             style={[styles.saveButton, saving && styles.saveButtonDisabled]}
@@ -606,41 +698,357 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
-    padding: 20,
+    backgroundColor: 'white',
   },
-  profileInfo: {
-    alignItems: 'center',
-    marginVertical: 40,
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#10B981',
+  loadingContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'white',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#6B7280',
+  },
+  profileSummary: {
+    backgroundColor: '#EBF8FF',
+    borderWidth: 1,
+    borderColor: '#3B82F6',
+    borderRadius: 8,
+    padding: 24,
+    margin: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatarContainer: {
+    marginRight: 16,
+  },
+  avatar: {
+    width: 64,
+    height: 64,
+    backgroundColor: 'white',
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  profileName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  profileGrade: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 4,
+  },
+  badgeContainer: {
+    flexDirection: 'row',
+    marginTop: 8,
+    gap: 8,
+  },
+  badge: {
+    backgroundColor: '#DBEAFE',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#93C5FD',
+  },
+  badgeText: {
+    fontSize: 12,
+    color: '#2563EB',
+  },
+  badgeSecondary: {
+    backgroundColor: '#F3F4F6',
+    borderColor: '#E5E7EB',
+  },
+  badgeSecondaryText: {
+    color: '#1F2937',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F3F4F6',
+    marginHorizontal: 16,
+    borderRadius: 8,
+    padding: 4,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    borderRadius: 6,
+    gap: 4,
+  },
+  tabActive: {
+    backgroundColor: 'white',
+  },
+  tabText: {
+    fontSize: 12,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  tabTextActive: {
+    color: '#3B82F6',
+  },
+  tabContent: {
+    padding: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
     marginBottom: 16,
   },
-  avatarText: {
-    fontSize: 32,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-  email: {
-    fontSize: 16,
-    color: '#374151',
-  },
-  signOutButton: {
-    backgroundColor: '#EF4444',
-    padding: 16,
-    borderRadius: 8,
+  emptyState: {
+    paddingVertical: 32,
     alignItems: 'center',
-    marginTop: 'auto',
   },
-  signOutText: {
-    color: '#FFFFFF',
+  emptyText: {
+    color: '#6B7280',
+    fontSize: 14,
+  },
+  settingsCard: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  settingsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 8,
+  },
+  settingsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#93C5FD',
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 16,
+    backgroundColor: 'white',
+    color: '#111827',
+  },
+  selectButton: {
+    borderWidth: 1,
+    borderColor: '#93C5FD',
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: 'white',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  selectButtonText: {
+    fontSize: 16,
+    color: '#111827',
+  },
+  ageSelector: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  ageOption: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 6,
+    backgroundColor: 'white',
+  },
+  ageOptionSelected: {
+    borderColor: '#3B82F6',
+    backgroundColor: '#EBF8FF',
+  },
+  ageOptionText: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  ageOptionTextSelected: {
+    color: '#3B82F6',
+    fontWeight: '500',
+  },
+  privacyNotice: {
+    backgroundColor: '#FEF3C7',
+    padding: 12,
+    borderRadius: 8,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  privacyText: {
+    flex: 1,
+  },
+  privacyTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#92400E',
+  },
+  privacyDescription: {
+    fontSize: 12,
+    color: '#B45309',
+    marginTop: 2,
+  },
+  budgetInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#93C5FD',
+    borderRadius: 6,
+    backgroundColor: 'white',
+  },
+  budgetPrefix: {
+    paddingLeft: 12,
+    color: '#6B7280',
+    fontSize: 16,
+  },
+  budgetInput: {
+    flex: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    fontSize: 16,
+    color: '#111827',
+  },
+  inputHelpText: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 4,
+  },
+  saveButton: {
+    backgroundColor: '#10B981',
+    paddingVertical: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  saveButtonDisabled: {
+    opacity: 0.5,
+  },
+  saveButtonText: {
+    color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    width: '90%',
+    maxHeight: '70%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  modalScrollView: {
+    maxHeight: 400,
+  },
+  modalOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  modalOptionText: {
+    fontSize: 16,
+    color: '#111827',
+  },
+  signOutButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+    backgroundColor: '#FEE2E2',
+  },
+  signOutText: {
+    color: '#DC2626',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  notificationItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  notificationInfo: {
+    flex: 1,
+  },
+  notificationTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#111827',
+  },
+  notificationDescription: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  switchButton: {
+    width: 48,
+    height: 28,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 14,
+    padding: 2,
+    justifyContent: 'center',
+  },
+  switchButtonActive: {
+    backgroundColor: '#10B981',
+  },
+  switchDot: {
+    width: 24,
+    height: 24,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    transform: [{ translateX: 0 }],
+  },
+  switchDotActive: {
+    transform: [{ translateX: 20 }],
   },
 });
