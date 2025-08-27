@@ -35,6 +35,10 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "student-budget-native-clean",
+    "student-budget-native-v2",
+    "student-budget-minimal",
+    "backup-code"
   ]
 }
