@@ -8,6 +8,7 @@ type AuthContextType = {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
+  signUpDemo: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
 };
 
@@ -51,6 +52,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
+  const signUpDemo = async (email: string, password: string) => {
+    // デモアカウントの場合はメール確認なしで登録
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: undefined, // メール確認をスキップ
+      }
+    });
+    
+    if (error) {
+      return { error };
+    }
+
+    // 登録成功後、すぐにログインを試行
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    return { error: signInError };
+  };
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     return { error };
@@ -62,6 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     signIn,
     signUp,
+    signUpDemo,
     signOut,
   };
 

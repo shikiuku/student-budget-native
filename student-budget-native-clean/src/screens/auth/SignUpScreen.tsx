@@ -27,7 +27,7 @@ export default function SignUpScreen({ navigation }: Props) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { signUp } = useAuth();
+  const { signUp, signIn, signUpDemo } = useAuth();
 
   const handleSignUp = async () => {
     if (!email || !password || !confirmPassword) {
@@ -82,6 +82,39 @@ export default function SignUpScreen({ navigation }: Props) {
       Alert.alert('準備中', 'Googleサインアップ機能は準備中です');
     } catch (error) {
       Alert.alert('エラー', 'Googleサインアップに失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDemoSignUp = async () => {
+    if (!agreedToTerms) {
+      Alert.alert('エラー', '利用規約とプライバシーポリシーに同意してください');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // 事前に作成済みのデモアカウントを使用（メール確認済み）
+      const demoEmail = 'k4849.kantan+demo9091@gmail.com';
+      const demoPassword = 'Demo123456';
+
+      // デモアカウントに直接ログイン
+      const { error } = await signIn(demoEmail, demoPassword);
+      
+      if (error) {
+        // デモアカウントが存在しない場合のフォールバック
+        Alert.alert(
+          'デモアカウント準備中',
+          'デモアカウントが準備できていません。通常の新規登録をお試しください。',
+          [{ text: 'OK' }]
+        );
+      } else {
+        // デモアカウントでログイン成功
+        // AuthContextとRootNavigatorが自動的に初期設定画面またはメイン画面に遷移する
+      }
+    } catch (error) {
+      Alert.alert('エラー', 'デモアカウントへのログインに失敗しました');
     } finally {
       setLoading(false);
     }
@@ -185,6 +218,20 @@ export default function SignUpScreen({ navigation }: Props) {
             <View style={styles.googleButtonContent}>
               <Ionicons name="logo-google" size={20} color="#4285F4" />
               <Text style={styles.googleButtonText}>Googleで新規登録</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* デモアカウントボタン */}
+          <TouchableOpacity
+            style={[styles.demoButton, loading && styles.buttonDisabled]}
+            onPress={handleDemoSignUp}
+            disabled={loading}
+          >
+            <View style={styles.demoButtonContent}>
+              <Ionicons name="flash" size={20} color="#10B981" />
+              <Text style={styles.demoButtonText}>
+                {loading ? 'デモアカウント作成中...' : 'デモアカウントで始める'}
+              </Text>
             </View>
           </TouchableOpacity>
 
@@ -380,5 +427,27 @@ const styles = StyleSheet.create({
     color: '#3B82F6', // zaim-blue-600相当
     fontWeight: '600',
     textDecorationLine: 'underline',
+  },
+
+  // デモアカウントボタン
+  demoButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#10B981',
+    borderRadius: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  demoButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  demoButtonText: {
+    color: '#10B981',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
