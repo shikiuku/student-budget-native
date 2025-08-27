@@ -45,7 +45,9 @@ export async function getPosts(filters?: PostsFilters) {
   try {
     let query = supabase
       .from('posts')
-      .select('*')
+      .select(`
+        *
+      `)
       .order('created_at', { ascending: false })
 
     // フィルターを適用
@@ -73,19 +75,33 @@ export async function getPosts(filters?: PostsFilters) {
 
     if (error) throw error
 
-    // 投稿に関連するユーザープロフィールを取得
+    // 投稿に関連するユーザープロフィールといいね数を取得
     if (postsData && postsData.length > 0) {
       const userIds = [...new Set(postsData.map(post => post.user_id))]
+      const postIds = postsData.map(post => post.id)
       
       const { data: profilesData } = await supabase
         .from('user_profiles')
         .select('id, name, school_type, grade')
         .in('id', userIds)
 
-      // 投稿データにプロフィール情報を結合
+      // 各投稿のいいね数を取得
+      const { data: likeCounts } = await supabase
+        .from('post_likes')
+        .select('post_id')
+        .in('post_id', postIds)
+
+      // 投稿ごとのいいね数を集計
+      const likeCountMap: Record<string, number> = {}
+      postIds.forEach(postId => {
+        likeCountMap[postId] = likeCounts?.filter(like => like.post_id === postId).length || 0
+      })
+
+      // 投稿データにプロフィール情報といいね数を結合
       const postsWithProfiles = postsData.map(post => ({
         ...post,
-        user_profiles: profilesData?.find(profile => profile.id === post.user_id) || null
+        user_profiles: profilesData?.find(profile => profile.id === post.user_id) || null,
+        likes_count: likeCountMap[post.id] || 0
       }))
 
       return { data: postsWithProfiles as Post[], error: null }
