@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { useAuth } from "@/components/auth-provider"
 import { userProfileService } from "@/lib/database"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,7 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SwitchVariants } from "@/components/ui/switch-variants"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { User, MapPin, School, Bell, Shield, Target, Heart, Bookmark, FileText, Settings } from "lucide-react"
+import { User, MapPin, School, Bell, Shield, Target, Heart, Bookmark, FileText, Settings, Palette } from "lucide-react"
+import { CategoryIconSelector } from "@/components/category-icon-selector"
+import { getCategoryIcon } from "@/lib/category-icons"
 import { BottomNav } from "@/components/bottom-nav"
 import { useToast } from "@/hooks/use-toast"
 import type { UserProfile, SchoolType } from "@/lib/types"
@@ -30,6 +32,34 @@ const PREFECTURES = [
   "徳島県", "香川県", "愛媛県", "高知県", "福岡県", "佐賀県", "長崎県",
   "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"
 ]
+
+// カテゴリー背景色を取得する関数
+const getCategoryBgColor = (categoryName: string): string => {
+  switch (categoryName) {
+    case '食費': return '#FFF3E0'
+    case '交通費': return '#E0F8F8'
+    case '娯楽・趣味': return '#FFF9C4'
+    case '教材・書籍': return '#E8F5E8'
+    case '衣類・雑貨': return '#F8E8E8'
+    case '通信費': return '#F0EDFF'
+    case 'その他': return '#F3F4F6'
+    default: return '#F3F4F6'
+  }
+}
+
+// カテゴリーアイコン色を取得する関数
+const getCategoryIconColor = (categoryName: string): string => {
+  switch (categoryName) {
+    case '食費': return '#FF6B35'
+    case '交通費': return '#4ECDC4'
+    case '娯楽・趣味': return '#FFD23F'
+    case '教材・書籍': return '#6A994E'
+    case '衣類・雑貨': return '#BC4749'
+    case '通信費': return '#9C88FF'
+    case 'その他': return '#6B7280'
+    default: return '#6B7280'
+  }
+}
 
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth()
@@ -149,8 +179,10 @@ export default function ProfilePage() {
           break
         case 'liked':
           const likedResult = await getUserLikedPosts(user.id, 20)
+          console.log('いいねした投稿取得結果:', likedResult)
           data = likedResult.data || []
           setLikedPosts(data)
+          console.log('いいねした投稿データ:', data)
           break
         case 'bookmarked':
           const bookmarkedResult = await getUserBookmarkedPosts(user.id, 20)
@@ -264,6 +296,17 @@ export default function ProfilePage() {
   // 都道府県が変更されたときに市区町村をリセット
   const handlePrefectureChange = (prefecture: string) => {
     setFormData(prev => ({ ...prev, prefecture, city: "" }))
+  }
+
+  // アイコン変更処理
+  const handleIconChanged = (categoryName: string, newIcon: string) => {
+    // ユーザープロフィールの状態を更新
+    setUserProfile(prev => {
+      if (!prev) return prev
+      
+      const updatedCategoryIcons = { ...prev.category_icons, [categoryName]: newIcon }
+      return { ...prev, category_icons: updatedCategoryIcons }
+    })
   }
 
   // プロフィール保存
@@ -630,6 +673,51 @@ export default function ProfilePage() {
               </div>
               <p className="text-xs text-gray-500 mt-1">現在の貯金額。毎月の余った予算は自動でここに追加されます</p>
             </div>
+          </div>
+        </div>
+
+        {/* Category Icon Settings */}
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+          <h2 className="flex items-center gap-2 text-lg font-bold text-black mb-4">
+            <Palette className="h-5 w-5 text-purple-600" />
+            カテゴリーアイコン設定
+          </h2>
+          <p className="text-sm text-gray-600 mb-4">
+            各カテゴリーのアイコンをお好みに変更できます。設定したアイコンは節約ページの投稿でも表示されます。
+          </p>
+          
+          <div className="space-y-3">
+            {['食費', '交通費', '娯楽・趣味', '教材・書籍', '衣類・雑貨', '通信費', 'その他'].map((category) => {
+              const IconComponent = getCategoryIcon(category, userProfile?.category_icons || undefined)
+              
+              return (
+                <div key={category} className="flex items-center justify-between py-2">
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-10 h-10 rounded-full flex items-center justify-center"
+                      style={{ 
+                        backgroundColor: getCategoryBgColor(category),
+                      }}
+                    >
+                      {React.createElement(IconComponent, { 
+                        className: "h-5 w-5",
+                        style: { color: getCategoryIconColor(category) }
+                      })}
+                    </div>
+                    <div>
+                      <p className="font-medium text-black">{category}</p>
+                    </div>
+                  </div>
+                  
+                  <CategoryIconSelector
+                    categoryName={category}
+                    currentIcon={userProfile?.category_icons?.[category]}
+                    userCategoryIcons={userProfile?.category_icons || undefined}
+                    onIconChanged={handleIconChanged}
+                  />
+                </div>
+              )
+            })}
           </div>
         </div>
 

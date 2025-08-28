@@ -5,19 +5,36 @@ import { useState, useEffect, Suspense } from "react"
 import { useAuth } from "@/components/auth-provider"
 import { userProfileService, expenseService, expenseCategoryService } from "@/lib/database"
 import { Progress } from "@/components/ui/progress"
-import { TrendingUp, TrendingDown, PlusCircle, BarChart3, Utensils, Car, ShoppingBag, Home, BookOpen, Shirt, CheckCircle, XCircle } from "lucide-react"
+import { TrendingUp, TrendingDown, PlusCircle, BarChart3, CheckCircle, XCircle } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
+import { CategoryIconSelector } from "@/components/category-icon-selector"
+import { getCategoryIcon } from "@/lib/category-icons"
 import type { UserProfile, ExpenseWithCategory, ExpenseCategory } from "@/lib/types"
 import { useRouter, useSearchParams } from "next/navigation"
 
-// カテゴリー色を統一する関数（React Native版と統一）
+// カテゴリー色を統一する関数（スタイルガイドに合わせた薄い背景色）
 const getCategoryColor = (categoryName: string): string => {
+  switch (categoryName) {
+    case '食費': return '#FFF3E0'
+    case '交通費': return '#E0F8F8'
+    case '娯楽・趣味': return '#FFF9C4'
+    case '教材・書籍': return '#E8F5E8'
+    case '衣類・雑貨': return '#F8E8E8'
+    case '通信費': return '#F0EDFF'
+    case 'その他': return '#F3F4F6'
+    default: return '#F3F4F6'
+  }
+}
+
+// カテゴリーアイコンの色を取得する関数（スタイルガイドに合わせた濃い色）
+const getCategoryIconColor = (categoryName: string): string => {
   switch (categoryName) {
     case '食費': return '#FF6B35'
     case '交通費': return '#4ECDC4'
-    case '娯楽': return '#FFD23F'
-    case '学用品': return '#6A994E'
-    case '衣類': return '#BC4749'
+    case '娯楽・趣味': return '#FFD23F'
+    case '教材・書籍': return '#6A994E'
+    case '衣類・雑貨': return '#BC4749'
+    case '通信費': return '#9C88FF'
     case 'その他': return '#6B7280'
     default: return '#6B7280'
   }
@@ -34,13 +51,14 @@ function HomeContent() {
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [confirmationType, setConfirmationType] = useState<'success' | 'error'>('success')
 
-  const iconMap = {
-    "Utensils": Utensils,
-    "Car": Car,
-    "ShoppingBag": ShoppingBag,
-    "BookOpen": BookOpen,
-    "Shirt": Home,
-    "Home": Home
+  // カテゴリーアイコンが変更された時の処理
+  const handleCategoryIconChanged = (categoryId: string, newIcon: string) => {
+    // カテゴリー一覧を更新
+    setCategories(prev => prev.map(category => 
+      category.id === categoryId 
+        ? { ...category, icon: newIcon }
+        : category
+    ))
   }
 
   // Check for email confirmation status
@@ -156,14 +174,17 @@ function HomeContent() {
     const categoryExpenses = expenses.filter(exp => exp.category_id === category.id)
     const amount = categoryExpenses.reduce((sum, exp) => sum + exp.amount, 0)
     const percentage = spent > 0 ? Math.round((amount / spent) * 100) : 0
-    const IconComponent = category.icon ? iconMap[category.icon as keyof typeof iconMap] || Home : Home
+    const IconComponent = getCategoryIcon(category.name, category.icon)
     
     return {
+      id: category.id,
       name: category.name,
       amount,
       icon: IconComponent,
-      color: getCategoryColor(category.name),
-      percentage
+      color: getCategoryColor(category.name), // 背景色
+      iconColor: getCategoryIconColor(category.name), // アイコン色
+      percentage,
+      categoryObj: category // 元のカテゴリーオブジェクト
     }
   }).filter(cat => cat.amount > 0) // Only show categories with expenses
     .sort((a, b) => b.amount - a.amount) // Sort by amount descending (highest first)
@@ -183,9 +204,9 @@ function HomeContent() {
       <div className="min-h-screen bg-white flex items-center justify-center pb-20">
         <div className="text-center space-y-4">
           <img 
-            src="/logo.png" 
-            alt="家計簿アプリロゴ" 
-            className="w-16 h-16 mx-auto animate-pulse"
+            src="/favicon.png" 
+            alt="学生向け節約アプリ" 
+            className="w-24 h-24 mx-auto animate-pulse"
           />
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
           <p className="text-gray-600">認証状態を確認中...</p>
@@ -199,9 +220,9 @@ function HomeContent() {
       <div className="min-h-screen bg-white flex items-center justify-center pb-20">
         <div className="text-center space-y-4">
           <img 
-            src="/logo.png" 
-            alt="家計簿アプリロゴ" 
-            className="w-20 h-20 mx-auto mb-4"
+            src="/favicon.png" 
+            alt="学生向け節約アプリ" 
+            className="w-24 h-24 mx-auto mb-4"
           />
           <p className="text-gray-600 mb-4">ログインが必要です</p>
           <button 
@@ -220,9 +241,9 @@ function HomeContent() {
       <div className="min-h-screen bg-white flex items-center justify-center pb-20">
         <div className="text-center space-y-4">
           <img 
-            src="/logo.png" 
-            alt="家計簿アプリロゴ" 
-            className="w-16 h-16 mx-auto animate-pulse"
+            src="/favicon.png" 
+            alt="学生向け節約アプリ" 
+            className="w-24 h-24 mx-auto animate-pulse"
           />
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
           <p className="text-gray-600">データを読み込み中...</p>
@@ -238,9 +259,9 @@ function HomeContent() {
       <div className="min-h-screen bg-white flex items-center justify-center pb-20">
         <div className="text-center space-y-4">
           <img 
-            src="/logo.png" 
-            alt="家計簿アプリロゴ" 
-            className="w-16 h-16 mx-auto animate-pulse"
+            src="/favicon.png" 
+            alt="学生向け節約アプリ" 
+            className="w-24 h-24 mx-auto animate-pulse"
           />
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
           <p className="text-gray-600">初期設定にリダイレクト中...</p>
@@ -400,7 +421,7 @@ function HomeContent() {
                         cy="100" 
                         r="80" 
                         fill="none" 
-                        stroke={category.color} 
+                        stroke={category.iconColor} 
                         strokeWidth="16" 
                         strokeDasharray={`${category.percentage * 5.03} 502.65`} 
                         strokeDashoffset={`-${prevPercentage * 5.03}`}
@@ -418,7 +439,7 @@ function HomeContent() {
               <div className="space-y-1 text-center">
                 {categoryBreakdown.length > 0 ? categoryBreakdown.map((category) => (
                   <div key={category.name} className="flex items-center gap-2 text-xs">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: category.color }}></div>
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: category.iconColor }}></div>
                     <span className="font-medium text-black">{category.name}</span>
                     <span className="text-gray-600">{category.percentage}%</span>
                   </div>
@@ -442,11 +463,17 @@ function HomeContent() {
                 <div key={category.name} className="flex items-center justify-between p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: category.color }}>
-                      <Icon className="h-4 w-4 text-white" />
+                      <Icon className="h-4 w-4" style={{ color: category.iconColor }} />
                     </div>
                     <span className="text-sm font-medium text-black">{category.name}</span>
                   </div>
-                  <span className="text-sm font-bold text-black">¥{category.amount.toLocaleString()}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-black">¥{category.amount.toLocaleString()}</span>
+                    <CategoryIconSelector 
+                      category={category.categoryObj} 
+                      onIconChanged={handleCategoryIconChanged}
+                    />
+                  </div>
                 </div>
               )
             }) : (
@@ -469,9 +496,9 @@ export default function HomePage() {
       <div className="min-h-screen bg-white flex items-center justify-center pb-20">
         <div className="text-center space-y-4">
           <img 
-            src="/logo.png" 
-            alt="家計簿アプリロゴ" 
-            className="w-16 h-16 mx-auto animate-pulse"
+            src="/favicon.png" 
+            alt="学生向け節約アプリ" 
+            className="w-24 h-24 mx-auto animate-pulse"
           />
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
           <p className="text-gray-600">読み込み中...</p>

@@ -1,4 +1,3 @@
-// @refresh reset
 'use client';
 
 import React, { useState } from 'react';
@@ -41,7 +40,25 @@ import {
   Tag,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Gamepad2,
+  Smartphone,
+  Coffee,
+  Train,
+  CreditCard,
+  Monitor,
+  Music,
+  Plane,
+  WifiIcon as Wifi,
+  Briefcase,
+  GraduationCap,
+  HeartHandshake,
+  Users,
+  ShoppingCart,
+  Store,
+  Bus,
+  Bike,
+  CarTaxiFront
 } from "lucide-react"
 
 // インタラクティブなカレンダーコンポーネント
@@ -3788,6 +3805,249 @@ export default function StyleGuidePage() {
             </div>
 
           </div>
+        </section>
+
+        {/* カテゴリーアイコンセクション */}
+        <section className="mb-12">
+          <h2 className="text-2xl font-bold text-black mb-6">📊 カテゴリーアイコンガイド</h2>
+          
+          {/* 現在のカテゴリーアイコン */}
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">現在使用中のアイコン</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
+              {[
+                { category: '食費', icon: Utensils, color: '#FF6B35', bgColor: '#FFF3E0' },
+                { category: '交通費', icon: Car, color: '#4ECDC4', bgColor: '#E0F8F8' },
+                { category: '娯楽・趣味', icon: Gamepad2, color: '#FFD23F', bgColor: '#FFF9C4' },
+                { category: '教材・書籍', icon: BookOpen, color: '#6A994E', bgColor: '#E8F5E8' },
+                { category: '衣類・雑貨', icon: Shirt, color: '#BC4749', bgColor: '#F8E8E8' },
+                { category: '通信費', icon: Smartphone, color: '#9C88FF', bgColor: '#F0EDFF' },
+                { category: 'その他', icon: Tag, color: '#6B7280', bgColor: '#F3F4F6' }
+              ].map((item) => {
+                const IconComponent = item.icon
+                return (
+                  <div key={item.category} className="bg-white border border-gray-200 rounded-lg p-4 text-center hover:shadow-md transition-shadow">
+                    <div 
+                      className="w-12 h-12 rounded-full mx-auto mb-2 flex items-center justify-center"
+                      style={{ backgroundColor: item.bgColor }}
+                    >
+                      <IconComponent className="h-6 w-6" style={{ color: item.color }} />
+                    </div>
+                    <div className="text-sm font-medium text-gray-800">{item.category}</div>
+                    <div className="text-xs text-gray-500 mt-1">現在使用中</div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* 利用可能なアイコンオプション */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">利用可能なアイコンオプション</h3>
+            <div className="space-y-8">
+              
+              {/* 食費カテゴリーのオプション */}
+              <div>
+                <h4 className="text-md font-medium mb-3 text-gray-700 flex items-center gap-2">
+                  <span className="w-4 h-4 rounded-full bg-orange-100"></span>
+                  食費のアイコンオプション
+                </h4>
+                <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-12 gap-3">
+                  {[
+                    { icon: Utensils, name: 'Utensils (現在)', current: true },
+                    { icon: Coffee, name: 'Coffee' },
+                    { icon: ShoppingCart, name: 'ShoppingCart' },
+                    { icon: Store, name: 'Store' }
+                  ].map((item) => {
+                    const IconComponent = item.icon
+                    return (
+                      <div key={item.name} className={`border rounded-lg p-3 text-center cursor-pointer transition-all hover:shadow-sm ${item.current ? 'border-orange-300 bg-orange-50' : 'border-gray-200 hover:border-orange-200'}`}>
+                        <div className="w-8 h-8 mx-auto mb-1 flex items-center justify-center">
+                          <IconComponent className={`h-5 w-5 ${item.current ? 'text-orange-500' : 'text-gray-600'}`} />
+                        </div>
+                        <div className="text-xs text-gray-600">{item.name}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* 交通費カテゴリーのオプション */}
+              <div>
+                <h4 className="text-md font-medium mb-3 text-gray-700 flex items-center gap-2">
+                  <span className="w-4 h-4 rounded-full bg-blue-100"></span>
+                  交通費のアイコンオプション
+                </h4>
+                <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-12 gap-3">
+                  {[
+                    { icon: Car, name: 'Car (現在)', current: true },
+                    { icon: Train, name: 'Train' },
+                    { icon: Bus, name: 'Bus' },
+                    { icon: Bike, name: 'Bike' },
+                    { icon: CarTaxiFront, name: 'Taxi' },
+                    { icon: Plane, name: 'Plane' }
+                  ].map((item) => {
+                    const IconComponent = item.icon
+                    return (
+                      <div key={item.name} className={`border rounded-lg p-3 text-center cursor-pointer transition-all hover:shadow-sm ${item.current ? 'border-blue-300 bg-blue-50' : 'border-gray-200 hover:border-blue-200'}`}>
+                        <div className="w-8 h-8 mx-auto mb-1 flex items-center justify-center">
+                          <IconComponent className={`h-5 w-5 ${item.current ? 'text-blue-500' : 'text-gray-600'}`} />
+                        </div>
+                        <div className="text-xs text-gray-600">{item.name}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* 娯楽・趣味カテゴリーのオプション */}
+              <div>
+                <h4 className="text-md font-medium mb-3 text-gray-700 flex items-center gap-2">
+                  <span className="w-4 h-4 rounded-full bg-yellow-100"></span>
+                  娯楽・趣味のアイコンオプション
+                </h4>
+                <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-12 gap-3">
+                  {[
+                    { icon: Gamepad2, name: 'Gamepad2 (現在)', current: true },
+                    { icon: Music, name: 'Music' },
+                    { icon: Gift, name: 'Gift' },
+                    { icon: Star, name: 'Star' },
+                    { icon: Heart, name: 'Heart' },
+                    { icon: Users, name: 'Users' }
+                  ].map((item) => {
+                    const IconComponent = item.icon
+                    return (
+                      <div key={item.name} className={`border rounded-lg p-3 text-center cursor-pointer transition-all hover:shadow-sm ${item.current ? 'border-yellow-300 bg-yellow-50' : 'border-gray-200 hover:border-yellow-200'}`}>
+                        <div className="w-8 h-8 mx-auto mb-1 flex items-center justify-center">
+                          <IconComponent className={`h-5 w-5 ${item.current ? 'text-yellow-500' : 'text-gray-600'}`} />
+                        </div>
+                        <div className="text-xs text-gray-600">{item.name}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* 教材・書籍カテゴリーのオプション */}
+              <div>
+                <h4 className="text-md font-medium mb-3 text-gray-700 flex items-center gap-2">
+                  <span className="w-4 h-4 rounded-full bg-green-100"></span>
+                  教材・書籍のアイコンオプション
+                </h4>
+                <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-12 gap-3">
+                  {[
+                    { icon: BookOpen, name: 'BookOpen (現在)', current: true },
+                    { icon: GraduationCap, name: 'GraduationCap' },
+                    { icon: Briefcase, name: 'Briefcase' },
+                    { icon: Pencil, name: 'Pencil' }
+                  ].map((item) => {
+                    const IconComponent = item.icon
+                    return (
+                      <div key={item.name} className={`border rounded-lg p-3 text-center cursor-pointer transition-all hover:shadow-sm ${item.current ? 'border-green-300 bg-green-50' : 'border-gray-200 hover:border-green-200'}`}>
+                        <div className="w-8 h-8 mx-auto mb-1 flex items-center justify-center">
+                          <IconComponent className={`h-5 w-5 ${item.current ? 'text-green-500' : 'text-gray-600'}`} />
+                        </div>
+                        <div className="text-xs text-gray-600">{item.name}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* 衣類・雑貨カテゴリーのオプション */}
+              <div>
+                <h4 className="text-md font-medium mb-3 text-gray-700 flex items-center gap-2">
+                  <span className="w-4 h-4 rounded-full bg-pink-100"></span>
+                  衣類・雑貨のアイコンオプション
+                </h4>
+                <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-12 gap-3">
+                  {[
+                    { icon: Shirt, name: 'Shirt (現在)', current: true },
+                    { icon: ShoppingBag, name: 'ShoppingBag' },
+                    { icon: HeartHandshake, name: 'HeartHandshake' }
+                  ].map((item) => {
+                    const IconComponent = item.icon
+                    return (
+                      <div key={item.name} className={`border rounded-lg p-3 text-center cursor-pointer transition-all hover:shadow-sm ${item.current ? 'border-pink-300 bg-pink-50' : 'border-gray-200 hover:border-pink-200'}`}>
+                        <div className="w-8 h-8 mx-auto mb-1 flex items-center justify-center">
+                          <IconComponent className={`h-5 w-5 ${item.current ? 'text-pink-500' : 'text-gray-600'}`} />
+                        </div>
+                        <div className="text-xs text-gray-600">{item.name}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* 通信費カテゴリーのオプション */}
+              <div>
+                <h4 className="text-md font-medium mb-3 text-gray-700 flex items-center gap-2">
+                  <span className="w-4 h-4 rounded-full bg-purple-100"></span>
+                  通信費のアイコンオプション
+                </h4>
+                <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-12 gap-3">
+                  {[
+                    { icon: Smartphone, name: 'Smartphone (現在)', current: true },
+                    { icon: Wifi, name: 'Wifi' },
+                    { icon: Monitor, name: 'Monitor' },
+                    { icon: CreditCard, name: 'CreditCard' }
+                  ].map((item) => {
+                    const IconComponent = item.icon
+                    return (
+                      <div key={item.name} className={`border rounded-lg p-3 text-center cursor-pointer transition-all hover:shadow-sm ${item.current ? 'border-purple-300 bg-purple-50' : 'border-gray-200 hover:border-purple-200'}`}>
+                        <div className="w-8 h-8 mx-auto mb-1 flex items-center justify-center">
+                          <IconComponent className={`h-5 w-5 ${item.current ? 'text-purple-500' : 'text-gray-600'}`} />
+                        </div>
+                        <div className="text-xs text-gray-600">{item.name}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* その他カテゴリーのオプション */}
+              <div>
+                <h4 className="text-md font-medium mb-3 text-gray-700 flex items-center gap-2">
+                  <span className="w-4 h-4 rounded-full bg-gray-100"></span>
+                  その他のアイコンオプション
+                </h4>
+                <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-12 gap-3">
+                  {[
+                    { icon: Tag, name: 'Tag (現在)', current: true },
+                    { icon: Home, name: 'Home' },
+                    { icon: Wallet, name: 'Wallet' },
+                    { icon: PlusCircle, name: 'PlusCircle' }
+                  ].map((item) => {
+                    const IconComponent = item.icon
+                    return (
+                      <div key={item.name} className={`border rounded-lg p-3 text-center cursor-pointer transition-all hover:shadow-sm ${item.current ? 'border-gray-400 bg-gray-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                        <div className="w-8 h-8 mx-auto mb-1 flex items-center justify-center">
+                          <IconComponent className={`h-5 w-5 ${item.current ? 'text-gray-600' : 'text-gray-500'}`} />
+                        </div>
+                        <div className="text-xs text-gray-600">{item.name}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* 使用方法の説明 */}
+          <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="text-md font-medium mb-2 text-blue-800">カテゴリーアイコンの変更方法</h4>
+            <div className="text-sm text-blue-700 space-y-2">
+              <p>1. 気に入ったアイコンを選択して、アイコン名をコピーします</p>
+              <p>2. 各ページの getCategoryIcon 関数を更新します：</p>
+              <div className="bg-blue-100 p-3 rounded font-mono text-xs mt-2">
+                <div>case '食費': return NewIconName</div>
+                <div>// 例: case '食費': return Coffee</div>
+              </div>
+              <p>3. 必要に応じてアイコンのインポートも追加してください</p>
+            </div>
+          </div>
+          
         </section>
 
       </div>

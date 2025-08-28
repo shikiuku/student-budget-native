@@ -1,57 +1,61 @@
 import { supabase } from '@/lib/supabase'
 
-export interface PostComment {
+export interface Comment {
   id: string
-  user_id: string
   post_id: string
+  user_id: string
   content: string
-  parent_comment_id: string | null
   created_at: string
   updated_at: string
-  // リレーション
   user_profiles?: {
+    id: string
     name: string | null
     school_type: string | null
     grade: string | null
   }
-  replies?: PostComment[]
 }
 
 export interface CommentCreateData {
   content: string
-  parent_comment_id?: string | null
 }
 
 // 投稿のコメント一覧を取得
 export async function getPostComments(postId: string) {
   try {
-    const { data, error } = await supabase
+    const { data: commentsData, error } = await supabase
       .from('post_comments')
-      .select(`
-        *,
-        user_profiles:user_id (
-          name,
-          school_type,
-          grade
-        )
-      `)
+      .select('*')
       .eq('post_id', postId)
       .order('created_at', { ascending: true })
 
     if (error) throw error
 
-    // 親コメントと返信コメントを整理
-    const comments = data as PostComment[]
-    const parentComments = comments.filter(comment => !comment.parent_comment_id)
-    const replyComments = comments.filter(comment => comment.parent_comment_id)
+    // コメントに関連するユーザープロフィールを取得
+    if (commentsData && commentsData.length > 0) {
+      const userIds = [...new Set(commentsData.map(comment => comment.user_id))]
 
-    // 親コメントに返信を紐づけ
-    const commentsWithReplies = parentComments.map(parent => ({
-      ...parent,
-      replies: replyComments.filter(reply => reply.parent_comment_id === parent.id)
-    }))
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('user_profiles')
+        .select('id, name, school_type, grade')
+        .in('id', userIds)
 
-    return { data: commentsWithReplies, error: null }
+      if (profilesError) {
+        console.error('プロフィール取得エラー:', profilesError)
+      }
+
+      // コメントデータにプロフィール情報を結合
+      const commentsWithProfiles = commentsData.map(comment => {
+        const profile = profilesData?.find(profile => profile.id === comment.user_id)
+        return {
+          ...comment,
+          user_profiles: profile || null
+        }
+      })
+
+      return { data: commentsWithProfiles as Comment[], error: null }
+    }
+
+    return { data: commentsData as Comment[], error: null }
   } catch (error) {
     console.error('コメント取得エラー:', error)
     return { data: null, error }
@@ -70,52 +74,18 @@ export async function createComment(postId: string, commentData: CommentCreateDa
     const { data, error } = await supabase
       .from('post_comments')
       .insert({
-        user_id: user.id,
         post_id: postId,
-        content: commentData.content,
-        parent_comment_id: commentData.parent_comment_id || null
+        user_id: user.id,
+        content: commentData.content.trim()
       })
-      .select(`
-        *,
-        user_profiles:user_id (
-          name,
-          school_type,
-          grade
-        )
-      `)
+      .select()
       .single()
 
     if (error) throw error
 
-    return { data: data as PostComment, error: null }
+    return { data: data as Comment, error: null }
   } catch (error) {
     console.error('コメント作成エラー:', error)
-    return { data: null, error }
-  }
-}
-
-// コメントを更新
-export async function updateComment(commentId: string, content: string) {
-  try {
-    const { data, error } = await supabase
-      .from('post_comments')
-      .update({ content })
-      .eq('id', commentId)
-      .select(`
-        *,
-        user_profiles:user_id (
-          name,
-          school_type,
-          grade
-        )
-      `)
-      .single()
-
-    if (error) throw error
-
-    return { data: data as PostComment, error: null }
-  } catch (error) {
-    console.error('コメント更新エラー:', error)
     return { data: null, error }
   }
 }
@@ -137,81 +107,19 @@ export async function deleteComment(commentId: string) {
   }
 }
 
-// 投稿のコメント数を取得
-export async function getPostCommentsCount(postId: string) {
+// コメント数を取得
+export async function getCommentCount(postId: string) {
   try {
     const { count, error } = await supabase
       .from('post_comments')
       .select('*', { count: 'exact', head: true })
       .eq('post_id', postId)
-      .is('parent_comment_id', null) // 親コメントのみカウント
 
     if (error) throw error
 
-    return { data: count || 0, error: null }
+    return { count: count || 0, error: null }
   } catch (error) {
     console.error('コメント数取得エラー:', error)
-    return { data: 0, error }
-  }
-}
-
-// ユーザーのコメント一覧を取得
-export async function getUserComments(limit = 20, offset = 0) {
-  try {
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      throw new Error('ユーザーが認証されていません')
-    }
-
-    const { data, error } = await supabase
-      .from('post_comments')
-      .select(`
-        *,
-        posts:post_id (
-          id,
-          title,
-          category
-        )
-      `)
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1)
-
-    if (error) throw error
-
-    return { data: data as (PostComment & { posts: any })[], error: null }
-  } catch (error) {
-    console.error('ユーザーコメント取得エラー:', error)
-    return { data: null, error }
-  }
-}
-
-// 特定のコメントを取得
-export async function getComment(commentId: string) {
-  try {
-    const { data, error } = await supabase
-      .from('post_comments')
-      .select(`
-        *,
-        user_profiles:user_id (
-          name,
-          school_type,
-          grade
-        ),
-        posts:post_id (
-          id,
-          title
-        )
-      `)
-      .eq('id', commentId)
-      .single()
-
-    if (error) throw error
-
-    return { data: data as PostComment, error: null }
-  } catch (error) {
-    console.error('コメント取得エラー:', error)
-    return { data: null, error }
+    return { count: 0, error }
   }
 }

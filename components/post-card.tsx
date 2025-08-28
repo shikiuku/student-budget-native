@@ -3,6 +3,8 @@
 import React, { useState } from 'react'
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { 
   Heart, 
@@ -10,17 +12,13 @@ import {
   User,
   MessageCircle,
   MoreHorizontal,
-  Trash2,
-  Utensils, 
-  Car,
-  Gift,
-  BookOpen,
-  Shirt,
-  PlusCircle
+  Trash2
 } from "lucide-react"
 import { useAuth } from "@/components/auth-provider"
 import { deletePost, type Post } from '@/lib/api/posts'
+import { getPostComments, createComment, deleteComment, type Comment } from '@/lib/api/comments'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { getCategoryIcon } from '@/lib/category-icons'
 
 interface PostCardProps {
   post: Post
@@ -29,18 +27,10 @@ interface PostCardProps {
   onLike: (postId: string, isCurrentlyLiked: boolean) => void
   onBookmark: (postId: string, isCurrentlyBookmarked: boolean) => void
   onDelete?: (postId: string) => void
+  onCommentCountUpdate?: (postId: string, newCount: number) => void
 }
 
-const getCategoryIcon = (category: string) => {
-  switch (category) {
-    case '食費': return Utensils
-    case '交通費': return Car
-    case '娯楽': return Gift
-    case '学用品': return BookOpen
-    case '衣類': return Shirt
-    default: return PlusCircle
-  }
-}
+// getCategoryIcon関数を削除（lib/category-iconsから使用）
 
 const getCategoryColors = (category: string) => {
   switch (category) {
@@ -56,24 +46,31 @@ const getCategoryColors = (category: string) => {
         text: 'text-category-transport-dark', 
         icon: 'text-category-transport'
       }
-    case '娯楽':
+    case '娯楽・趣味':
       return {
         bg: 'bg-category-entertainment-light',
         text: 'text-category-entertainment-dark',
         icon: 'text-category-entertainment'
       }
-    case '学用品':
+    case '教材・書籍':
       return {
         bg: 'bg-category-supplies-light',
         text: 'text-category-supplies-dark',
         icon: 'text-category-supplies'
       }
-    case '衣類':
+    case '衣類・雑貨':
       return {
         bg: 'bg-category-clothing-light',
         text: 'text-category-clothing-dark',
         icon: 'text-category-clothing'
       }
+    case '通信費':
+      return {
+        bg: 'bg-category-other-light',
+        text: 'text-category-other-dark',
+        icon: 'text-category-other'
+      }
+    case 'その他':
     default:
       return {
         bg: 'bg-category-other-light',
@@ -97,13 +94,19 @@ const formatTimeAgo = (dateString: string) => {
   return date.toLocaleDateString('ja-JP')
 }
 
-export function PostCard({ post, isLiked, isBookmarked, onLike, onBookmark, onDelete }: PostCardProps) {
+export function PostCard({ post, isLiked, isBookmarked, onLike, onBookmark, onDelete, onCommentCountUpdate }: PostCardProps) {
   const { user } = useAuth()
   const [isDeleting, setIsDeleting] = useState(false)
+  const [comments, setComments] = useState<Comment[]>([])
+  const [newComment, setNewComment] = useState('')
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false)
+  const [isLoadingComments, setIsLoadingComments] = useState(false)
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false)
   
-  const CategoryIcon = getCategoryIcon(post.category)
+  const CategoryIcon = getCategoryIcon(post.category, post.user_profiles?.category_icons)
   const categoryColors = getCategoryColors(post.category)
   const isOwnPost = user?.id === post.user_id
+
 
   const handleDelete = async () => {
     if (!isOwnPost || !onDelete) return
@@ -125,6 +128,77 @@ export function PostCard({ post, isLiked, isBookmarked, onLike, onBookmark, onDe
       setIsDeleting(false)
     }
   }
+
+  const loadComments = async () => {
+    setIsLoadingComments(true)
+    try {
+      const { data, error } = await getPostComments(post.id)
+      
+      if (error) {
+        console.error('コメント取得エラー:', error)
+        setComments([])
+        return 0
+      }
+      
+      const commentsData = data || []
+      setComments(commentsData)
+      return commentsData.length
+    } catch (error) {
+      console.error('コメント取得エラー:', error)
+      setComments([])
+      return 0
+    } finally {
+      setIsLoadingComments(false)
+    }
+  }
+
+  const handleCommentSubmit = async () => {
+    if (!newComment.trim()) return
+    
+    setIsSubmittingComment(true)
+    try {
+      const { data, error } = await createComment(post.id, { content: newComment })
+      if (error) {
+        console.error('コメント作成エラー:', error)
+        alert('コメントの投稿に失敗しました')
+        return
+      }
+      
+      setNewComment('')
+      const newCommentCount = await loadComments()
+      
+      if (onCommentCountUpdate) {
+        onCommentCountUpdate(post.id, newCommentCount)
+      }
+    } catch (error) {
+      console.error('コメント作成エラー:', error)
+      alert('コメントの投稿に失敗しました')
+    } finally {
+      setIsSubmittingComment(false)
+    }
+  }
+
+  const handleCommentDelete = async (commentId: string) => {
+    try {
+      const { error } = await deleteComment(commentId)
+      if (error) {
+        console.error('コメント削除エラー:', error)
+        alert('コメントの削除に失敗しました')
+        return
+      }
+      
+      const newCommentCount = await loadComments()
+      
+      if (onCommentCountUpdate) {
+        onCommentCountUpdate(post.id, newCommentCount)
+      }
+    } catch (error) {
+      console.error('コメント削除エラー:', error)
+      alert('コメントの削除に失敗しました')
+    }
+  }
+
+
 
   return (
     <Card className="bg-white border border-gray-200 shadow-sm">
@@ -169,10 +243,97 @@ export function PostCard({ post, isLiked, isBookmarked, onLike, onBookmark, onDe
                   <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
                   {post.likes_count}
                 </button>
-                <button className="flex items-center gap-1 text-sm text-gray-500 hover:text-blue-500 transition-colors">
-                  <MessageCircle className="h-4 w-4" />
-                  {post.comments_count}
-                </button>
+                <Dialog open={isCommentsOpen} onOpenChange={(open) => {
+                  setIsCommentsOpen(open)
+                  if (open) {
+                    loadComments()
+                  }
+                }}>
+                  <DialogTrigger asChild>
+                    <button 
+                      className="flex items-center gap-1 text-sm text-gray-500 hover:text-blue-500 transition-colors"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      {post.comments_count}
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[500px] max-h-[600px] bg-white border-gray-200">
+                    <DialogHeader>
+                      <DialogTitle className="text-black">コメント</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      {/* コメント一覧 */}
+                      <div className="max-h-[300px] overflow-y-auto space-y-3">
+                        {isLoadingComments ? (
+                          <div className="text-center py-4 text-gray-500">読み込み中...</div>
+                        ) : comments.length === 0 ? (
+                          <div className="text-center py-4 text-gray-500">まだコメントがありません</div>
+                        ) : (
+                          comments.map((comment) => (
+                            <div key={comment.id} className="border-b border-gray-100 pb-3 last:border-b-0">
+                              <div className="flex items-start gap-2 mb-2">
+                                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                                  <User className="h-4 w-4 text-gray-600" />
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-medium text-sm text-gray-800">
+                                      {comment.user_profiles?.name || '匿名ユーザー'}
+                                    </span>
+                                    <span className="text-xs text-gray-500">
+                                      {formatTimeAgo(comment.created_at)}
+                                    </span>
+                                    {user?.id === comment.user_id && (
+                                      <button
+                                        onClick={() => handleCommentDelete(comment.id)}
+                                        className="text-xs text-red-500 hover:text-red-700"
+                                      >
+                                        削除
+                                      </button>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-gray-700">{comment.content}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      {/* コメント投稿フォーム */}
+                      {user && (
+                        <div className="border-t pt-4">
+                          <div className="flex gap-2">
+                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <User className="h-4 w-4 text-gray-600" />
+                            </div>
+                            <div className="flex-1">
+                              <textarea
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                                placeholder="コメントを入力..."
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-zaim-blue-500 bg-white text-black resize-none"
+                                rows={3}
+                                maxLength={300}
+                              />
+                              <div className="flex items-center justify-between mt-2">
+                                <span className="text-xs text-gray-500">{newComment.length}/300</span>
+                                <Button
+                                  onClick={handleCommentSubmit}
+                                  disabled={!newComment.trim() || isSubmittingComment}
+                                  className="bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white disabled:opacity-50"
+                                  size="sm"
+                                >
+                                  {isSubmittingComment ? '投稿中...' : '投稿'}
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
               <div className="flex items-center gap-2">
                 <button 

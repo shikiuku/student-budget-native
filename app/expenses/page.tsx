@@ -10,18 +10,35 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { PlusCircle, Calendar, Receipt, Utensils, Car, ShoppingBag, BookOpen, Home, Edit, Trash2, Upload, FileText } from "lucide-react"
+import { PlusCircle, Calendar, Receipt, Edit, Trash2, Upload, FileText } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
+import { CategoryIconSelector } from "@/components/category-icon-selector"
+import { getCategoryIcon } from "@/lib/category-icons"
 import type { ExpenseWithCategory, ExpenseCategory, ExpenseForm } from "@/lib/types"
 
-// カテゴリー色を統一する関数（React Native版と統一）
+// カテゴリー色を統一する関数（スタイルガイドに合わせた薄い背景色）
 const getCategoryColor = (categoryName: string): string => {
+  switch (categoryName) {
+    case '食費': return '#FFF3E0'
+    case '交通費': return '#E0F8F8'
+    case '娯楽・趣味': return '#FFF9C4'
+    case '教材・書籍': return '#E8F5E8'
+    case '衣類・雑貨': return '#F8E8E8'
+    case '通信費': return '#F0EDFF'
+    case 'その他': return '#F3F4F6'
+    default: return '#F3F4F6'
+  }
+}
+
+// カテゴリーアイコンの色を取得する関数（スタイルガイドに合わせた濃い色）
+const getCategoryIconColor = (categoryName: string): string => {
   switch (categoryName) {
     case '食費': return '#FF6B35'
     case '交通費': return '#4ECDC4'
-    case '娯楽': return '#FFD23F'
-    case '学用品': return '#6A994E'
-    case '衣類': return '#BC4749'
+    case '娯楽・趣味': return '#FFD23F'
+    case '教材・書籍': return '#6A994E'
+    case '衣類・雑貨': return '#BC4749'
+    case '通信費': return '#9C88FF'
     case 'その他': return '#6B7280'
     default: return '#6B7280'
   }
@@ -52,13 +69,14 @@ export default function ExpensesPage() {
     date: new Date().toISOString().split('T')[0]
   })
 
-  const iconMap = {
-    "Utensils": Utensils,
-    "Car": Car,
-    "ShoppingBag": ShoppingBag,
-    "BookOpen": BookOpen,
-    "Shirt": Home, // Default for shirt
-    "Home": Home
+  // カテゴリーアイコンが変更された時の処理
+  const handleCategoryIconChanged = (categoryId: string, newIcon: string) => {
+    // カテゴリー一覧を更新
+    setCategories(prev => prev.map(category => 
+      category.id === categoryId 
+        ? { ...category, icon: newIcon }
+        : category
+    ))
   }
 
   // Load data on component mount
@@ -162,7 +180,7 @@ export default function ExpensesPage() {
         })
         setShowAddForm(false)
         
-        // Reload data
+        // Reload current month data only
         loadData()
       } else {
         throw new Error(result.error)
@@ -268,8 +286,8 @@ export default function ExpensesPage() {
         variant: "success",
       })
 
-      // Reload data
-      loadData()
+      // Show all history immediately after import to show imported data
+      loadAllHistory()
     } catch (error) {
       toast({
         title: "CSVインポートエラー",
@@ -466,7 +484,7 @@ export default function ExpensesPage() {
           </div>
           
           {expenses.map((expense, index) => {
-            const IconComponent = expense.category?.icon ? iconMap[expense.category.icon as keyof typeof iconMap] || Home : Home
+            const IconComponent = getCategoryIcon(expense.category?.name || 'その他', expense.category?.icon)
             const expenseDate = new Date(expense.date)
             const currentExpenseMonth = `${expenseDate.getFullYear()}年${expenseDate.getMonth() + 1}月`
             
@@ -490,7 +508,10 @@ export default function ExpensesPage() {
                         className="w-10 h-10 rounded-full flex items-center justify-center"
                         style={{ backgroundColor: getCategoryColor(expense.category?.name || 'その他') }}
                       >
-                        <IconComponent className="h-5 w-5 text-white" />
+                        <IconComponent 
+                          className="h-5 w-5" 
+                          style={{ color: getCategoryIconColor(expense.category?.name || 'その他') }}
+                        />
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -548,7 +569,7 @@ export default function ExpensesPage() {
                          expenseDate.getFullYear() === currentMonth.getFullYear()
                 })
                 const categoryTotal = currentMonthExpenses.reduce((sum, exp) => sum + exp.amount, 0)
-                const IconComponent = category.icon ? iconMap[category.icon as keyof typeof iconMap] || Home : Home
+                const IconComponent = getCategoryIcon(category.name, category.icon)
                 
                 if (categoryTotal === 0) return null
                 
@@ -559,11 +580,20 @@ export default function ExpensesPage() {
                         className="w-8 h-8 rounded-full flex items-center justify-center"
                         style={{ backgroundColor: getCategoryColor(category.name) }}
                       >
-                        <IconComponent className="h-4 w-4 text-white" />
+                        <IconComponent 
+                          className="h-4 w-4" 
+                          style={{ color: getCategoryIconColor(category.name) }}
+                        />
                       </div>
                       <span className="text-sm font-medium text-black">{category.name}</span>
                     </div>
-                    <span className="text-sm font-bold text-black">¥{categoryTotal.toLocaleString()}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-black">¥{categoryTotal.toLocaleString()}</span>
+                      <CategoryIconSelector 
+                        category={category} 
+                        onIconChanged={handleCategoryIconChanged}
+                      />
+                    </div>
                   </div>
                 )
               })}
@@ -571,8 +601,8 @@ export default function ExpensesPage() {
           </div>
         )}
 
-        {/* Show all history button - Below category summary */}
-        {!showingAllHistory && expenses.length > 0 && (
+        {/* Show all history button - Always show when not showing all history */}
+        {!showingAllHistory && (
           <div className="text-center py-6">
             <Button 
               onClick={loadAllHistory}

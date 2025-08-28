@@ -34,7 +34,18 @@ export function AuthStatus() {
   };
 
   if (loading) {
-    return null;
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center">
+          <img 
+            src="/favicon.png" 
+            alt="学生向け節約アプリ" 
+            className="w-24 h-24 animate-pulse mb-4"
+          />
+          <p className="text-gray-600 text-lg">認証状態を確認中...</p>
+        </div>
+      </div>
+    );
   }
 
   return (

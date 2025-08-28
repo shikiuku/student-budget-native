@@ -22,7 +22,8 @@ import {
   BookOpen,
   Shirt,
   MessageCircle,
-  Tag
+  Tag,
+  Gamepad2
 } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { createPost, getPosts, type Post } from '@/lib/api/posts'
@@ -93,6 +94,7 @@ export default function TipsPage() {
     setLoading(true)
     try {
       const { data, error } = await getPosts({ limit: 20 })
+      
       if (error) {
         console.error('投稿取得エラー:', error)
         return
@@ -223,6 +225,15 @@ export default function TipsPage() {
     })
   }
 
+  // コメント数更新処理
+  const handleCommentCountUpdate = (postId: string, newCount: number) => {
+    setPosts(prev => prev.map(post => 
+      post.id === postId 
+        ? { ...post, comments_count: newCount }
+        : post
+    ))
+  }
+
 
   return (
     <div className="min-h-screen bg-white pb-20">
@@ -233,28 +244,6 @@ export default function TipsPage() {
           <h1 className="text-2xl font-bold text-black">節約アイディア</h1>
         </div>
 
-        {/* Featured Tip */}
-        <div className="bg-zaim-blue-50 border border-zaim-blue-500 rounded-lg shadow-sm p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Star className="h-5 w-5 text-zaim-yellow-500" />
-            <h2 className="text-lg font-bold text-black">今週のおすすめ</h2>
-          </div>
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
-              <Utensils className="h-6 w-6 text-gray-600" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-black mb-1">お弁当作りで月3,000円節約！</h3>
-              <p className="text-sm text-gray-700 mb-3">
-                コンビニ弁当を週3回お弁当に変えるだけで大幅節約。簡単レシピも紹介！
-              </p>
-              <div className="flex items-center gap-2">
-                <Badge className={`${getCategoryColors('食費').bg} ${getCategoryColors('食費').text} border-0`}>食費</Badge>
-                <Badge className="bg-zaim-green-100 text-zaim-green-600">月3,000円節約</Badge>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Posts List */}
         <div className="space-y-4">
@@ -284,6 +273,7 @@ export default function TipsPage() {
                     onLike={handleLike}
                     onBookmark={handleBookmark}
                     onDelete={handleDelete}
+                    onCommentCountUpdate={handleCommentCountUpdate}
                   />
                 );
               })}
@@ -338,9 +328,10 @@ export default function TipsPage() {
                 {[
                   { value: '食費', icon: Utensils, label: '食費' },
                   { value: '交通費', icon: Car, label: '交通費' },
-                  { value: '娯楽', icon: Gift, label: '娯楽' },
-                  { value: '学用品', icon: BookOpen, label: '学用品' },
-                  { value: '衣類', icon: Shirt, label: '衣類' },
+                  { value: '娯楽・趣味', icon: Gamepad2, label: '娯楽・趣味' },
+                  { value: '教材・書籍', icon: BookOpen, label: '教材・書籍' },
+                  { value: '衣類・雑貨', icon: Shirt, label: '衣類・雑貨' },
+                  { value: '通信費', icon: Smartphone, label: '通信費' },
                   { value: 'その他', icon: Tag, label: 'その他' }
                 ].map((category) => {
                   const Icon = category.icon;

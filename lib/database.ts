@@ -66,6 +66,33 @@ export const userProfileService = {
     }
   },
 
+  async updateCategoryIcon(userId: string, categoryName: string, iconName: string): Promise<ApiResponse<UserProfile>> {
+    try {
+      // まず現在のプロファイルを取得
+      const currentProfile = await this.getProfile(userId);
+      if (!currentProfile.success || !currentProfile.data) {
+        throw new Error('プロファイルが見つかりません');
+      }
+
+      // category_iconsを更新
+      const currentIcons = currentProfile.data.category_icons || {};
+      const updatedIcons = { ...currentIcons, [categoryName]: iconName };
+
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .update({ category_icons: updatedIcons })
+        .eq('id', userId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return { data, success: true };
+    } catch (error) {
+      return { error: (error as Error).message, success: false };
+    }
+  },
+
   async addToSavings(userId: string, amount: number): Promise<ApiResponse<UserProfile>> {
     try {
       // Get current profile first
@@ -109,6 +136,23 @@ export const expenseCategoryService = {
       if (error) throw error;
 
       return { data: data || [], success: true };
+    } catch (error) {
+      return { error: (error as Error).message, success: false };
+    }
+  },
+
+  async updateCategoryIcon(categoryId: string, iconName: string): Promise<ApiResponse<ExpenseCategory>> {
+    try {
+      const { data, error } = await supabase
+        .from('expense_categories')
+        .update({ icon: iconName })
+        .eq('id', categoryId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return { data, success: true };
     } catch (error) {
       return { error: (error as Error).message, success: false };
     }

@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Utensils, Car, ShoppingBag, Home, BookOpen, Shirt } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BottomNav } from '@/components/bottom-nav';
 import { useAuth } from "@/components/auth-provider";
 import { userProfileService, expenseService, expenseCategoryService } from "@/lib/database";
+import { getCategoryIcon } from "@/lib/category-icons";
 import type { UserProfile, ExpenseWithCategory, ExpenseCategory } from "@/lib/types";
 
 const CalendarPage = () => {
@@ -20,14 +21,6 @@ const CalendarPage = () => {
   const [expenses, setExpenses] = useState<ExpenseWithCategory[]>([]);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
 
-  const iconMap = {
-    "Utensils": Utensils,
-    "Car": Car,
-    "ShoppingBag": ShoppingBag,
-    "BookOpen": BookOpen,
-    "Shirt": Home,
-    "Home": Home
-  };
 
   // 月の最初の日と最後の日を取得
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
@@ -297,7 +290,7 @@ const CalendarPage = () => {
                 <div className="space-y-1 sm:space-y-2 max-h-48 md:max-h-64 overflow-y-auto">
                   {expensesByDate[selectedDate].map((expense) => {
                 const category = categories.find(cat => cat.id === expense.category_id);
-                const IconComponent = category?.icon ? iconMap[category.icon as keyof typeof iconMap] || Home : Home;
+                const IconComponent = getCategoryIcon(expense.category?.name || category?.name || 'その他', expense.category?.icon || category?.icon);
                 const expenseTime = new Date(expense.created_at).toLocaleTimeString('ja-JP', { 
                   hour: '2-digit', 
                   minute: '2-digit' 
