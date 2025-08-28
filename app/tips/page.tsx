@@ -30,6 +30,48 @@ import { likePost, unlikePost, checkUserLikedPosts } from '@/lib/api/likes'
 import { bookmarkPost, unbookmarkPost, checkUserBookmarkedPosts } from '@/lib/api/bookmarks'
 import { PostCard } from '@/components/post-card'
 
+// カテゴリー別カラーヘルパー関数（post-card.tsxと統一）
+const getCategoryColors = (category: string) => {
+  switch (category) {
+    case '食費': 
+      return {
+        bg: 'bg-category-food-light',
+        text: 'text-category-food-dark',
+        icon: 'text-category-food'
+      }
+    case '交通費':
+      return {
+        bg: 'bg-category-transport-light',
+        text: 'text-category-transport-dark', 
+        icon: 'text-category-transport'
+      }
+    case '娯楽':
+      return {
+        bg: 'bg-category-entertainment-light',
+        text: 'text-category-entertainment-dark',
+        icon: 'text-category-entertainment'
+      }
+    case '学用品':
+      return {
+        bg: 'bg-category-supplies-light',
+        text: 'text-category-supplies-dark',
+        icon: 'text-category-supplies'
+      }
+    case '衣類':
+      return {
+        bg: 'bg-category-clothing-light',
+        text: 'text-category-clothing-dark',
+        icon: 'text-category-clothing'
+      }
+    default:
+      return {
+        bg: 'bg-category-other-light',
+        text: 'text-category-other-dark',
+        icon: 'text-category-other'
+      }
+  }
+}
+
 export default function TipsPage() {
   const [selectedCategory, setSelectedCategory] = useState('')
   const [content, setContent] = useState('')
@@ -207,7 +249,7 @@ export default function TipsPage() {
                 コンビニ弁当を週3回お弁当に変えるだけで大幅節約。簡単レシピも紹介！
               </p>
               <div className="flex items-center gap-2">
-                <Badge className="bg-orange-100 text-orange-800">食費</Badge>
+                <Badge className={`${getCategoryColors('食費').bg} ${getCategoryColors('食費').text} border-0`}>食費</Badge>
                 <Badge className="bg-zaim-green-100 text-zaim-green-600">月3,000円節約</Badge>
               </div>
             </div>
@@ -312,10 +354,22 @@ export default function TipsPage() {
                         checked={selectedCategory === category.value}
                         onChange={(e) => setSelectedCategory(e.target.value)}
                       />
-                      <div className="w-full p-3 border-2 border-gray-200 rounded-lg peer-checked:border-zaim-blue-500 peer-checked:bg-zaim-blue-50 hover:border-gray-300 transition-colors">
+                      <div className={`w-full p-3 border-2 rounded-lg transition-colors ${
+                        selectedCategory === category.value 
+                          ? `${getCategoryColors(category.value).bg} border-current`
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}>
                         <div className="flex flex-col items-center space-y-1">
-                          <Icon className="h-5 w-5 text-gray-600 peer-checked:text-zaim-blue-600" />
-                          <span className="text-xs text-gray-700 peer-checked:text-zaim-blue-700">{category.label}</span>
+                          <Icon className={`h-5 w-5 ${
+                            selectedCategory === category.value 
+                              ? getCategoryColors(category.value).icon
+                              : 'text-gray-600'
+                          }`} />
+                          <span className={`text-xs ${
+                            selectedCategory === category.value 
+                              ? getCategoryColors(category.value).text
+                              : 'text-gray-700'
+                          }`}>{category.label}</span>
                         </div>
                       </div>
                     </label>

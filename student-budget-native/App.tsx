@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -11,21 +11,27 @@ import 'react-native-url-polyfill/auto';
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
+  const [isReady, setIsReady] = useState(false);
+
   useEffect(() => {
     async function prepare() {
       try {
-        // ここで必要な初期化処理を行う
-        // フォントの読み込みなど
+        // 初期化処理
         await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (e) {
         console.warn(e);
       } finally {
+        setIsReady(true);
         await SplashScreen.hideAsync();
       }
     }
 
     prepare();
   }, []);
+
+  if (!isReady) {
+    return null;
+  }
 
   return (
     <SafeAreaProvider>

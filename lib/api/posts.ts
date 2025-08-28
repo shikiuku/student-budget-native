@@ -270,7 +270,7 @@ export async function getUserLikedPosts(userId: string, limit?: number) {
 
     if (postsError) throw postsError
 
-    // ユーザープロフィールを取得
+    // ユーザープロフィールといいね数を取得
     if (postsData && postsData.length > 0) {
       const userIds = [...new Set(postsData.map(post => post.user_id))]
       
@@ -279,9 +279,22 @@ export async function getUserLikedPosts(userId: string, limit?: number) {
         .select('id, name, school_type, grade')
         .in('id', userIds)
 
+      // 各投稿のいいね数を取得
+      const { data: likeCounts } = await supabase
+        .from('post_likes')
+        .select('post_id')
+        .in('post_id', postIds)
+
+      // 投稿ごとのいいね数を集計
+      const likeCountMap: Record<string, number> = {}
+      postIds.forEach(postId => {
+        likeCountMap[postId] = likeCounts?.filter(like => like.post_id === postId).length || 0
+      })
+
       const postsWithProfiles = postsData.map(post => ({
         ...post,
-        user_profiles: profilesData?.find(profile => profile.id === post.user_id) || null
+        user_profiles: profilesData?.find(profile => profile.id === post.user_id) || null,
+        likes_count: likeCountMap[post.id] || 0
       }))
 
       return { data: postsWithProfiles as Post[], error: null }
@@ -320,7 +333,7 @@ export async function getUserBookmarkedPosts(userId: string, limit?: number) {
 
     if (postsError) throw postsError
 
-    // ユーザープロフィールを取得
+    // ユーザープロフィールといいね数を取得
     if (postsData && postsData.length > 0) {
       const userIds = [...new Set(postsData.map(post => post.user_id))]
       
@@ -329,9 +342,22 @@ export async function getUserBookmarkedPosts(userId: string, limit?: number) {
         .select('id, name, school_type, grade')
         .in('id', userIds)
 
+      // 各投稿のいいね数を取得
+      const { data: likeCounts } = await supabase
+        .from('post_likes')
+        .select('post_id')
+        .in('post_id', postIds)
+
+      // 投稿ごとのいいね数を集計
+      const likeCountMap: Record<string, number> = {}
+      postIds.forEach(postId => {
+        likeCountMap[postId] = likeCounts?.filter(like => like.post_id === postId).length || 0
+      })
+
       const postsWithProfiles = postsData.map(post => ({
         ...post,
-        user_profiles: profilesData?.find(profile => profile.id === post.user_id) || null
+        user_profiles: profilesData?.find(profile => profile.id === post.user_id) || null,
+        likes_count: likeCountMap[post.id] || 0
       }))
 
       return { data: postsWithProfiles as Post[], error: null }

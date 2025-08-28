@@ -418,7 +418,7 @@ export default function CalendarScreen() {
           setShowAddModal(true);
         }}
       >
-        <Ionicons name="add" size={24} color="white" />
+        <Ionicons name="add" size={28} color="white" style={{ fontWeight: 'bold' }} />
       </TouchableOpacity>
 
       {/* 支出追加モーダル */}
@@ -774,22 +774,14 @@ const styles = StyleSheet.create({
   },
   addButton: {
     position: 'absolute',
-    right: 20,
-    bottom: 20,
+    right: 24,
+    bottom: 24,
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#6B91C7',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
   },
   modalContainer: {
     flex: 1,

@@ -270,6 +270,15 @@ export default function ProfilePage() {
   const handleSaveProfile = async () => {
     if (!user) return
     
+    if (formData.monthly_budget < 0) {
+      toast({
+        title: "入力エラー",
+        description: "予算金額は0円以上を入力してください。",
+        variant: "destructive",
+      })
+      return
+    }
+    
     setSaving(true)
     try {
       const result = await userProfileService.updateProfile(user.id, formData)
@@ -600,6 +609,7 @@ export default function ProfilePage() {
                   onChange={(e) => handleInputChange('monthly_budget', parseInt(e.target.value) || 0)}
                   placeholder="30000" 
                   className="pl-8 border-zaim-blue-200 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black" 
+                  min="0"
                 />
               </div>
               <p className="text-xs text-gray-500 mt-1">お小遣いやアルバイト代など、月に使える金額</p>

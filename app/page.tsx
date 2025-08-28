@@ -10,6 +10,19 @@ import { BottomNav } from "@/components/bottom-nav"
 import type { UserProfile, ExpenseWithCategory, ExpenseCategory } from "@/lib/types"
 import { useRouter, useSearchParams } from "next/navigation"
 
+// カテゴリー色を統一する関数（React Native版と統一）
+const getCategoryColor = (categoryName: string): string => {
+  switch (categoryName) {
+    case '食費': return '#FF6B35'
+    case '交通費': return '#4ECDC4'
+    case '娯楽': return '#FFD23F'
+    case '学用品': return '#6A994E'
+    case '衣類': return '#BC4749'
+    case 'その他': return '#6B7280'
+    default: return '#6B7280'
+  }
+}
+
 function HomeContent() {
   const { user, loading } = useAuth()
   const router = useRouter()
@@ -133,7 +146,7 @@ function HomeContent() {
   }
 
   // Calculate budget and spending data
-  const monthlyBudget = userProfile?.monthly_budget || 15000
+  const monthlyBudget = userProfile?.monthly_budget || 0
   const spent = expenses.reduce((sum, expense) => sum + expense.amount, 0)
   const remaining = monthlyBudget - spent
   const spentPercentage = monthlyBudget > 0 ? (spent / monthlyBudget) * 100 : 0
@@ -149,7 +162,7 @@ function HomeContent() {
       name: category.name,
       amount,
       icon: IconComponent,
-      color: category.color || "#6b7280",
+      color: getCategoryColor(category.name),
       percentage
     }
   }).filter(cat => cat.amount > 0) // Only show categories with expenses

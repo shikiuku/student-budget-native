@@ -118,10 +118,10 @@ function OnboardingContent() {
       return
     }
 
-    if (!formData.monthly_budget || formData.monthly_budget <= 0) {
+    if (formData.monthly_budget < 0) {
       toast({
         title: "入力エラー",
-        description: "有効な予算金額を入力してください。",
+        description: "予算金額は0円以上を入力してください。",
         variant: "destructive",
       })
       return

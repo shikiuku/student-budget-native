@@ -13,6 +13,7 @@ import {
 import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { useAuth } from '../../contexts/AuthContext';
+import { Ionicons } from '@expo/vector-icons';
 
 type SignUpScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'SignUp'>;
 
@@ -24,8 +25,9 @@ export default function SignUpScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { signUp } = useAuth();
+  const { signUp, signIn, signUpDemo } = useAuth();
 
   const handleSignUp = async () => {
     if (!email || !password || !confirmPassword) {
@@ -40,6 +42,11 @@ export default function SignUpScreen({ navigation }: Props) {
 
     if (password.length < 6) {
       Alert.alert('エラー', 'パスワードは6文字以上で入力してください');
+      return;
+    }
+
+    if (!agreedToTerms) {
+      Alert.alert('エラー', '利用規約とプライバシーポリシーに同意してください');
       return;
     }
 
@@ -63,6 +70,56 @@ export default function SignUpScreen({ navigation }: Props) {
     }
   };
 
+  const handleGoogleSignUp = async () => {
+    if (!agreedToTerms) {
+      Alert.alert('エラー', '利用規約とプライバシーポリシーに同意してください');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Google OAuth認証の実装
+      Alert.alert('準備中', 'Googleサインアップ機能は準備中です');
+    } catch (error) {
+      Alert.alert('エラー', 'Googleサインアップに失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDemoSignUp = async () => {
+    if (!agreedToTerms) {
+      Alert.alert('エラー', '利用規約とプライバシーポリシーに同意してください');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // 事前に作成済みのデモアカウントを使用（メール確認済み）
+      const demoEmail = 'k4849.kantan+demo9091@gmail.com';
+      const demoPassword = 'Demo123456';
+
+      // デモアカウントに直接ログイン
+      const { error } = await signIn(demoEmail, demoPassword);
+      
+      if (error) {
+        // デモアカウントが存在しない場合のフォールバック
+        Alert.alert(
+          'デモアカウント準備中',
+          'デモアカウントが準備できていません。通常の新規登録をお試しください。',
+          [{ text: 'OK' }]
+        );
+      } else {
+        // デモアカウントでログイン成功
+        // AuthContextとRootNavigatorが自動的に初期設定画面またはメイン画面に遷移する
+      }
+    } catch (error) {
+      Alert.alert('エラー', 'デモアカウントへのログインに失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -72,53 +129,114 @@ export default function SignUpScreen({ navigation }: Props) {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.formContainer}>
-          <Text style={styles.title}>新規アカウント作成</Text>
-          <Text style={styles.subtitle}>学生向け節約アプリを始めましょう</Text>
+        <View style={styles.logoContainer}>
+          <View style={styles.logoPlaceholder}>
+            <Text style={styles.logoText}>💰</Text>
+          </View>
+          <Text style={styles.title}>新規登録</Text>
+          <Text style={styles.subtitle}>アカウントを作成して始めましょう</Text>
+        </View>
 
-          <Text style={styles.label}>メールアドレス</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="example@student.ac.jp"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            editable={!loading}
-          />
+        <View style={styles.formCard}>
+          <View style={styles.formContainer}>
 
-          <Text style={styles.label}>パスワード</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="6文字以上"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            editable={!loading}
-          />
+            <Text style={styles.label}>メールアドレス</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="example@student.ac.jp"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              editable={!loading}
+              placeholderTextColor="#9CA3AF"
+            />
 
-          <Text style={styles.label}>パスワード（確認）</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="パスワードを再入力"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-            editable={!loading}
-          />
+            <Text style={styles.label}>パスワード</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="••••••••"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              editable={!loading}
+              placeholderTextColor="#9CA3AF"
+            />
+
+            <Text style={styles.label}>パスワード確認</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="••••••••"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+              editable={!loading}
+              placeholderTextColor="#9CA3AF"
+            />
+
+            <View style={styles.checkboxContainer}>
+              <TouchableOpacity
+                style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}
+                onPress={() => setAgreedToTerms(!agreedToTerms)}
+                disabled={loading}
+              >
+                {agreedToTerms && (
+                  <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                )}
+              </TouchableOpacity>
+              <Text style={styles.checkboxText}>
+                <Text style={styles.linkInline}>利用規約</Text>
+                と
+                <Text style={styles.linkInline}>プライバシーポリシー</Text>
+                に同意します
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.button, loading && styles.buttonDisabled]}
+              onPress={handleSignUp}
+              disabled={loading}
+            >
+              <Text style={styles.buttonText}>
+                {loading ? '新規登録中...' : '新規登録'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.dividerContainer}>
+            <View style={styles.dividerLine} />
+            <View style={styles.dividerTextContainer}>
+              <Text style={styles.dividerText}>または</Text>
+            </View>
+          </View>
 
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleSignUp}
+            style={[styles.googleButton, loading && styles.buttonDisabled]}
+            onPress={handleGoogleSignUp}
             disabled={loading}
           >
-            <Text style={styles.buttonText}>
-              {loading ? '登録中...' : '新規登録'}
-            </Text>
+            <View style={styles.googleButtonContent}>
+              <Ionicons name="logo-google" size={20} color="#4285F4" />
+              <Text style={styles.googleButtonText}>Googleで新規登録</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* デモアカウントボタン */}
+          <TouchableOpacity
+            style={[styles.demoButton, loading && styles.buttonDisabled]}
+            onPress={handleDemoSignUp}
+            disabled={loading}
+          >
+            <View style={styles.demoButtonContent}>
+              <Ionicons name="flash" size={20} color="#10B981" />
+              <Text style={styles.demoButtonText}>
+                {loading ? 'デモアカウント作成中...' : 'デモアカウントで始める'}
+              </Text>
+            </View>
           </TouchableOpacity>
 
           <View style={styles.linkContainer}>
-            <Text style={styles.linkText}>既にアカウントをお持ちの場合は </Text>
+            <Text style={styles.linkText}>すでにアカウントをお持ちの場合は </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
               <Text style={styles.link}>ログイン</Text>
             </TouchableOpacity>
@@ -137,30 +255,54 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 20,
+    padding: 16,
   },
-  formContainer: {
-    width: '100%',
-    maxWidth: 400,
-    alignSelf: 'center',
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  logoPlaceholder: {
+    width: 80,
+    height: 80,
+    backgroundColor: '#3B82F6', // zaim-blue-500相当
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  logoText: {
+    fontSize: 40,
   },
   title: {
-    fontSize: 24,
+    fontSize: 48,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: '#000000',
     marginBottom: 8,
-    textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
     color: '#6B7280',
-    marginBottom: 32,
-    textAlign: 'center',
+  },
+  
+  // 元のWebアプリと同じカードデザイン
+  formCard: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    padding: 24,
+    width: '100%',
+    maxWidth: 448,
+    alignSelf: 'center',
+  },
+  
+  formContainer: {
+    width: '100%',
   },
   label: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#374151',
+    color: '#000000',
     marginBottom: 8,
   },
   input: {
@@ -171,11 +313,48 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 16,
     backgroundColor: '#FFFFFF',
+    color: '#000000',
   },
+  
+  // チェックボックス
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginBottom: 16,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 4,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  checkboxChecked: {
+    backgroundColor: '#3B82F6',
+    borderColor: '#3B82F6',
+  },
+  checkboxText: {
+    fontSize: 14,
+    color: '#374151',
+    flex: 1,
+    lineHeight: 20,
+  },
+  linkInline: {
+    color: '#3B82F6',
+    textDecorationLine: 'underline',
+  },
+  
+  // zaim-blue色を使用した丸いボタン
   button: {
-    backgroundColor: '#10B981',
-    borderRadius: 24,
-    padding: 16,
+    backgroundColor: '#3B82F6', // zaim-blue-500相当
+    borderRadius: 24, // rounded-full相当
+    paddingHorizontal: 24,
+    paddingVertical: 16,
     alignItems: 'center',
     marginTop: 8,
   },
@@ -187,10 +366,57 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  
+  // 「または」の区切り線
+  dividerContainer: {
+    position: 'relative',
+    marginVertical: 16,
+  },
+  dividerLine: {
+    position: 'absolute',
+    top: '50%',
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: '#D1D5DB',
+  },
+  dividerTextContainer: {
+    backgroundColor: '#FFFFFF',
+    alignSelf: 'center',
+    paddingHorizontal: 8,
+  },
+  dividerText: {
+    fontSize: 12,
+    color: '#6B7280',
+    textTransform: 'uppercase',
+  },
+  
+  // Googleサインアップボタン
+  googleButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  googleButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  googleButtonText: {
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  
   linkContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 24,
+    marginTop: 16,
   },
   linkText: {
     fontSize: 14,
@@ -198,7 +424,30 @@ const styles = StyleSheet.create({
   },
   link: {
     fontSize: 14,
+    color: '#3B82F6', // zaim-blue-600相当
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+
+  // デモアカウントボタン
+  demoButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#10B981',
+    borderRadius: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  demoButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  demoButtonText: {
     color: '#10B981',
+    fontSize: 16,
     fontWeight: '600',
   },
 });

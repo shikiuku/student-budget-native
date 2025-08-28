@@ -42,6 +42,47 @@ const getCategoryIcon = (category: string) => {
   }
 }
 
+const getCategoryColors = (category: string) => {
+  switch (category) {
+    case '食費': 
+      return {
+        bg: 'bg-category-food-light',
+        text: 'text-category-food-dark',
+        icon: 'text-category-food'
+      }
+    case '交通費':
+      return {
+        bg: 'bg-category-transport-light',
+        text: 'text-category-transport-dark', 
+        icon: 'text-category-transport'
+      }
+    case '娯楽':
+      return {
+        bg: 'bg-category-entertainment-light',
+        text: 'text-category-entertainment-dark',
+        icon: 'text-category-entertainment'
+      }
+    case '学用品':
+      return {
+        bg: 'bg-category-supplies-light',
+        text: 'text-category-supplies-dark',
+        icon: 'text-category-supplies'
+      }
+    case '衣類':
+      return {
+        bg: 'bg-category-clothing-light',
+        text: 'text-category-clothing-dark',
+        icon: 'text-category-clothing'
+      }
+    default:
+      return {
+        bg: 'bg-category-other-light',
+        text: 'text-category-other-dark',
+        icon: 'text-category-other'
+      }
+  }
+}
+
 const formatTimeAgo = (dateString: string) => {
   const date = new Date(dateString)
   const now = new Date()
@@ -61,6 +102,7 @@ export function PostCard({ post, isLiked, isBookmarked, onLike, onBookmark, onDe
   const [isDeleting, setIsDeleting] = useState(false)
   
   const CategoryIcon = getCategoryIcon(post.category)
+  const categoryColors = getCategoryColors(post.category)
   const isOwnPost = user?.id === post.user_id
 
   const handleDelete = async () => {
@@ -107,8 +149,8 @@ export function PostCard({ post, isLiked, isBookmarked, onLike, onBookmark, onDe
             <p className="text-sm text-gray-700 mb-3">{post.content}</p>
             <div className="flex items-center gap-2 mb-3">
               <div className="flex items-center gap-1">
-                <CategoryIcon className="h-4 w-4 text-gray-600" />
-                <Badge className="bg-gray-100 text-gray-800">{post.category}</Badge>
+                <CategoryIcon className={`h-4 w-4 ${categoryColors.icon}`} />
+                <Badge className={`${categoryColors.bg} ${categoryColors.text} border-0`}>{post.category}</Badge>
               </div>
               {post.savings_effect && (
                 <Badge className="bg-zaim-green-100 text-zaim-green-600">

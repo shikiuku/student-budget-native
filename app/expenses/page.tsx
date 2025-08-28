@@ -14,6 +14,19 @@ import { PlusCircle, Calendar, Receipt, Utensils, Car, ShoppingBag, BookOpen, Ho
 import { BottomNav } from "@/components/bottom-nav"
 import type { ExpenseWithCategory, ExpenseCategory, ExpenseForm } from "@/lib/types"
 
+// カテゴリー色を統一する関数（React Native版と統一）
+const getCategoryColor = (categoryName: string): string => {
+  switch (categoryName) {
+    case '食費': return '#FF6B35'
+    case '交通費': return '#4ECDC4'
+    case '娯楽': return '#FFD23F'
+    case '学用品': return '#6A994E'
+    case '衣類': return '#BC4749'
+    case 'その他': return '#6B7280'
+    default: return '#6B7280'
+  }
+}
+
 export default function ExpensesPage() {
   const { user, loading } = useAuth()
   const { toast } = useToast()
@@ -475,7 +488,7 @@ export default function ExpensesPage() {
                     <div className="flex items-center gap-3">
                       <div 
                         className="w-10 h-10 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: expense.category?.color || "#6b7280" }}
+                        style={{ backgroundColor: getCategoryColor(expense.category?.name || 'その他') }}
                       >
                         <IconComponent className="h-5 w-5 text-white" />
                       </div>
@@ -544,7 +557,7 @@ export default function ExpensesPage() {
                     <div className="flex items-center gap-3">
                       <div 
                         className="w-8 h-8 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: category.color || "#6b7280" }}
+                        style={{ backgroundColor: getCategoryColor(category.name) }}
                       >
                         <IconComponent className="h-4 w-4 text-white" />
                       </div>

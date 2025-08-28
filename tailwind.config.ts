@@ -66,6 +66,39 @@ const config: Config = {
   					900: '#6b1f1f',
   				},
   			},
+  			// カテゴリー別カラーパレット（React Native版と統一）
+  			category: {
+  				food: {
+  					DEFAULT: '#FF6B35',
+  					light: '#FFE5DC',
+  					dark: '#CC5429',
+  				},
+  				transport: {
+  					DEFAULT: '#4ECDC4',
+  					light: '#E0F9F7',
+  					dark: '#3BA49D',
+  				},
+  				entertainment: {
+  					DEFAULT: '#FFD23F',
+  					light: '#FFF8DC',
+  					dark: '#CCA832',
+  				},
+  				supplies: {
+  					DEFAULT: '#6A994E',
+  					light: '#E8F1E4',
+  					dark: '#55773E',
+  				},
+  				clothing: {
+  					DEFAULT: '#BC4749',
+  					light: '#F2DEDE',
+  					dark: '#96393A',
+  				},
+  				other: {
+  					DEFAULT: '#6B7280',
+  					light: '#E5E7EB',
+  					dark: '#4B5563',
+  				},
+  			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
