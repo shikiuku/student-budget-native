@@ -470,8 +470,9 @@ function HomeContent() {
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-black">¥{category.amount.toLocaleString()}</span>
                     <CategoryIconSelector 
-                      category={category.categoryObj} 
-                      onIconChanged={handleCategoryIconChanged}
+                      categoryName={category.name}
+                      currentIcon={category.categoryObj.icon}
+                      onIconChanged={(categoryName, newIcon) => handleCategoryIconChanged(category.id, newIcon)}
                     />
                   </div>
                 </div>

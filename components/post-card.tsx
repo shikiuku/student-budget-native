@@ -103,7 +103,7 @@ export function PostCard({ post, isLiked, isBookmarked, onLike, onBookmark, onDe
   const [isLoadingComments, setIsLoadingComments] = useState(false)
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
   
-  const CategoryIcon = getCategoryIcon(post.category, post.user_profiles?.category_icons)
+  const CategoryIcon = getCategoryIcon(post.category, post.user_profiles?.category_icons || undefined)
   const categoryColors = getCategoryColors(post.category)
   const isOwnPost = user?.id === post.user_id
 
