@@ -484,7 +484,7 @@ export default function ExpensesPage() {
           </div>
           
           {expenses.map((expense, index) => {
-            const IconComponent = getCategoryIcon(expense.category?.name || 'その他', expense.category?.icon)
+            const IconComponent = getCategoryIcon(expense.category?.name || 'その他', undefined, expense.category?.icon)
             const expenseDate = new Date(expense.date)
             const currentExpenseMonth = `${expenseDate.getFullYear()}年${expenseDate.getMonth() + 1}月`
             
@@ -569,7 +569,7 @@ export default function ExpensesPage() {
                          expenseDate.getFullYear() === currentMonth.getFullYear()
                 })
                 const categoryTotal = currentMonthExpenses.reduce((sum, exp) => sum + exp.amount, 0)
-                const IconComponent = getCategoryIcon(category.name, category.icon)
+                const IconComponent = getCategoryIcon(category.name, undefined, category.icon)
                 
                 if (categoryTotal === 0) return null
                 

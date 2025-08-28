@@ -290,7 +290,7 @@ const CalendarPage = () => {
                 <div className="space-y-1 sm:space-y-2 max-h-48 md:max-h-64 overflow-y-auto">
                   {expensesByDate[selectedDate].map((expense) => {
                 const category = categories.find(cat => cat.id === expense.category_id);
-                const IconComponent = getCategoryIcon(expense.category?.name || category?.name || 'その他', expense.category?.icon || category?.icon);
+                const IconComponent = getCategoryIcon(expense.category?.name || category?.name || 'その他', undefined, expense.category?.icon || category?.icon);
                 const expenseTime = new Date(expense.created_at).toLocaleTimeString('ja-JP', { 
                   hour: '2-digit', 
                   minute: '2-digit' 
