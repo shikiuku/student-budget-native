@@ -16,6 +16,7 @@ export interface UserProfile {
   monthly_budget?: number;
   savings_balance?: number;
   category_icons?: Record<string, string>; // カテゴリー名 -> アイコン名のマッピング
+  avatar_url?: string;
   created_at: string;
   updated_at: string;
 }

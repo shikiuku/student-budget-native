@@ -12,6 +12,7 @@ export interface Comment {
     name: string | null
     school_type: string | null
     grade: string | null
+    avatar_url: string | null
   }
 }
 
@@ -24,36 +25,20 @@ export async function getPostComments(postId: string) {
   try {
     const { data: commentsData, error } = await supabase
       .from('post_comments')
-      .select('*')
+      .select(`
+        *,
+        user_profiles (
+          id,
+          name,
+          school_type,
+          grade,
+          avatar_url
+        )
+      `)
       .eq('post_id', postId)
       .order('created_at', { ascending: true })
 
     if (error) throw error
-
-    // コメントに関連するユーザープロフィールを取得
-    if (commentsData && commentsData.length > 0) {
-      const userIds = [...new Set(commentsData.map(comment => comment.user_id))]
-
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('user_profiles')
-        .select('id, name, school_type, grade')
-        .in('id', userIds)
-
-      if (profilesError) {
-        console.error('プロフィール取得エラー:', profilesError)
-      }
-
-      // コメントデータにプロフィール情報を結合
-      const commentsWithProfiles = commentsData.map(comment => {
-        const profile = profilesData?.find(profile => profile.id === comment.user_id)
-        return {
-          ...comment,
-          user_profiles: profile || null
-        }
-      })
-
-      return { data: commentsWithProfiles as Comment[], error: null }
-    }
 
     return { data: commentsData as Comment[], error: null }
   } catch (error) {

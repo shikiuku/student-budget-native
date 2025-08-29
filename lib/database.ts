@@ -15,6 +15,11 @@ import type {
   ApiResponse
 } from './types';
 
+// Helper function to get public URL for storage
+const getStoragePublicUrl = (path: string): string => {
+  return supabase.storage.from('profile-images').getPublicUrl(path).data.publicUrl;
+}
+
 // User Profile operations
 export const userProfileService = {
   async getProfile(userId: string): Promise<ApiResponse<UserProfile>> {
@@ -118,6 +123,84 @@ export const userProfileService = {
       if (error) throw error;
 
       return { data, success: true };
+    } catch (error) {
+      return { error: (error as Error).message, success: false };
+    }
+  },
+
+  async uploadAvatar(userId: string, file: File): Promise<ApiResponse<string>> {
+    try {
+      // ファイル名を生成（ユーザーIDと現在のタイムスタンプ）
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}/${Date.now()}.${fileExt}`;
+
+      // 既存のアバターを削除
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('avatar_url')
+        .eq('id', userId)
+        .single();
+
+      if (profile?.avatar_url) {
+        const oldPath = profile.avatar_url.split('/').slice(-2).join('/');
+        await supabase.storage.from('profile-images').remove([oldPath]);
+      }
+
+      // 新しいアバターをアップロード
+      const { data, error: uploadError } = await supabase.storage
+        .from('profile-images')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      // 公開URLを取得
+      const publicUrl = getStoragePublicUrl(data.path);
+
+      // プロフィールを更新
+      const { error: updateError } = await supabase
+        .from('user_profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', userId);
+
+      if (updateError) throw updateError;
+
+      return { data: publicUrl, success: true };
+    } catch (error) {
+      return { error: (error as Error).message, success: false };
+    }
+  },
+
+  async deleteAvatar(userId: string): Promise<ApiResponse<null>> {
+    try {
+      // 現在のアバターURLを取得
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('avatar_url')
+        .eq('id', userId)
+        .single();
+
+      if (profile?.avatar_url) {
+        // ストレージから削除
+        const path = profile.avatar_url.split('/').slice(-2).join('/');
+        const { error: deleteError } = await supabase.storage
+          .from('profile-images')
+          .remove([path]);
+
+        if (deleteError) throw deleteError;
+      }
+
+      // プロフィールからURLを削除
+      const { error: updateError } = await supabase
+        .from('user_profiles')
+        .update({ avatar_url: null })
+        .eq('id', userId);
+
+      if (updateError) throw updateError;
+
+      return { data: null, success: true };
     } catch (error) {
       return { error: (error as Error).message, success: false };
     }

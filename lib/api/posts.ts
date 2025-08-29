@@ -21,6 +21,7 @@ export interface Post {
     school_type: string | null
     grade: string | null
     category_icons?: Record<string, string> | null
+    avatar_url?: string | null
   }
   is_liked?: boolean
   is_bookmarked?: boolean
@@ -71,65 +72,87 @@ export async function getPosts(filters?: PostsFilters) {
       query = query.range(filters.offset, (filters.offset || 0) + (filters.limit || 10) - 1)
     }
 
+    console.log('投稿取得クエリを実行中...')
     const { data: postsData, error } = await query
+    console.log('投稿取得結果:', { postsData, error })
 
-    if (error) throw error
+    if (error) {
+      console.error('投稿取得クエリエラー:', error)
+      throw error
+    }
 
     // 投稿に関連するユーザープロフィールといいね数を取得
     if (postsData && postsData.length > 0) {
+      console.log('投稿データ存在、プロフィール取得開始')
       const userIds = [...new Set(postsData.map(post => post.user_id))]
       const postIds = postsData.map(post => post.id)
 
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('user_profiles')
-        .select('id, name, school_type, grade, category_icons')
-        .in('id', userIds)
+      try {
+        console.log('プロフィール取得対象ユーザーID:', userIds)
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('user_profiles')
+          .select('id, name, school_type, grade, avatar_url')
+          .in('id', userIds)
 
-      if (profilesError) {
-        console.error('プロフィール取得エラー:', profilesError)
-      }
+        console.log('プロフィール取得結果:', { profilesData, profilesError })
 
-      // 各投稿のいいね数とコメント数を取得
-      const [likeCountsResult, commentCountsResult] = await Promise.all([
-        supabase
-          .from('post_likes')
-          .select('post_id')
-          .in('post_id', postIds),
-        supabase
-          .from('post_comments')
-          .select('post_id')
-          .in('post_id', postIds)
-      ])
-
-      // 投稿ごとのいいね数を集計
-      const likeCountMap: Record<string, number> = {}
-      postIds.forEach(postId => {
-        likeCountMap[postId] = likeCountsResult.data?.filter(like => like.post_id === postId).length || 0
-      })
-
-      // 投稿ごとのコメント数を集計
-      const commentCountMap: Record<string, number> = {}
-      postIds.forEach(postId => {
-        commentCountMap[postId] = commentCountsResult.data?.filter(comment => comment.post_id === postId).length || 0
-      })
-
-      // 投稿データにプロフィール情報といいね数、コメント数を結合
-      const postsWithProfiles = postsData.map(post => {
-        const profile = profilesData?.find(profile => profile.id === post.user_id)
-        return {
-          ...post,
-          user_profiles: profile || null,
-          likes_count: likeCountMap[post.id] || 0,
-          comments_count: commentCountMap[post.id] || 0
+        if (profilesError) {
+          console.error('プロフィール取得エラー:', profilesError)
         }
-      })
 
-      return { data: postsWithProfiles as Post[], error: null }
+        // 各投稿のいいね数とコメント数を取得
+        const [likeCountsResult, commentCountsResult] = await Promise.all([
+          supabase
+            .from('post_likes')
+            .select('post_id')
+            .in('post_id', postIds),
+          supabase
+            .from('post_comments')
+            .select('post_id')
+            .in('post_id', postIds)
+        ])
+
+        // 投稿ごとのいいね数を集計
+        const likeCountMap: Record<string, number> = {}
+        postIds.forEach(postId => {
+          likeCountMap[postId] = likeCountsResult.data?.filter(like => like.post_id === postId).length || 0
+        })
+
+        // 投稿ごとのコメント数を集計
+        const commentCountMap: Record<string, number> = {}
+        postIds.forEach(postId => {
+          commentCountMap[postId] = commentCountsResult.data?.filter(comment => comment.post_id === postId).length || 0
+        })
+
+        // 投稿データにプロフィール情報といいね数、コメント数を結合
+        const postsWithProfiles = postsData.map(post => {
+          const profile = profilesData?.find(profile => profile.id === post.user_id)
+          return {
+            ...post,
+            user_profiles: profile || null,
+            likes_count: likeCountMap[post.id] || 0,
+            comments_count: commentCountMap[post.id] || 0
+          }
+        })
+
+        console.log('最終的な投稿データ:', postsWithProfiles)
+        return { data: postsWithProfiles as Post[], error: null }
+      } catch (profileError) {
+        console.error('プロフィール関連処理エラー:', profileError)
+        // プロフィール取得に失敗してもpostsDataは返す
+        return { data: postsData as Post[], error: null }
+      }
     }
 
+    console.log('投稿データなし、空配列を返す')
     return { data: postsData as Post[], error: null }
   } catch (error) {
-    console.error('投稿取得エラー:', error)
+    console.error('投稿取得メインエラー:', error)
+    console.error('エラー詳細:', {
+      message: (error as any)?.message,
+      code: (error as any)?.code,
+      details: (error as any)?.details
+    })
     return { data: null, error }
   }
 }
@@ -151,7 +174,8 @@ export async function getPost(id: string) {
           name,
           school_type,
           grade,
-          category_icons
+          category_icons,
+          avatar_url
         )
       `)
       .eq('id', id)
@@ -297,7 +321,7 @@ export async function getUserLikedPosts(userId: string, limit?: number) {
       const [profilesResult, likeCountsResult, commentCountsResult] = await Promise.all([
         supabase
           .from('user_profiles')
-          .select('id, name, school_type, grade, category_icons')
+          .select('id, name, school_type, grade, category_icons, avatar_url')
           .in('id', userIds),
         supabase
           .from('post_likes')
@@ -380,7 +404,7 @@ export async function getUserBookmarkedPosts(userId: string, limit?: number) {
       const [profilesResult, likeCountsResult, commentCountsResult] = await Promise.all([
         supabase
           .from('user_profiles')
-          .select('id, name, school_type, grade, category_icons')
+          .select('id, name, school_type, grade, category_icons, avatar_url')
           .in('id', userIds),
         supabase
           .from('post_likes')

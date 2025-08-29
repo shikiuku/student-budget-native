@@ -30,6 +30,9 @@ import { createPost, getPosts, type Post } from '@/lib/api/posts'
 import { likePost, unlikePost, checkUserLikedPosts } from '@/lib/api/likes'
 import { bookmarkPost, unbookmarkPost, checkUserBookmarkedPosts } from '@/lib/api/bookmarks'
 import { PostCard } from '@/components/post-card'
+import { userProfileService } from '@/lib/database'
+import type { UserProfile } from '@/lib/types'
+import { useAuth } from '@/components/auth-provider'
 
 // カテゴリー別カラーヘルパー関数（post-card.tsxと統一）
 const getCategoryColors = (category: string) => {
@@ -74,6 +77,7 @@ const getCategoryColors = (category: string) => {
 }
 
 export default function TipsPage() {
+  const { user } = useAuth()
   const [selectedCategory, setSelectedCategory] = useState('')
   const [content, setContent] = useState('')
   const [title, setTitle] = useState('')
@@ -84,11 +88,27 @@ export default function TipsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [likedPosts, setLikedPosts] = useState<Record<string, boolean>>({})
   const [bookmarkedPosts, setBookmarkedPosts] = useState<Record<string, boolean>>({})
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
 
   // データ取得
   useEffect(() => {
     loadPosts()
-  }, [])
+    if (user) {
+      loadUserProfile()
+    }
+  }, [user])
+
+  const loadUserProfile = async () => {
+    if (!user) return
+    try {
+      const result = await userProfileService.getProfile(user.id)
+      if (result.success && result.data) {
+        setUserProfile(result.data)
+      }
+    } catch (error) {
+      console.error('ユーザープロフィール取得エラー:', error)
+    }
+  }
 
   const loadPosts = async () => {
     setLoading(true)
@@ -240,8 +260,21 @@ export default function TipsPage() {
       <div className="px-6 py-4 space-y-6 pt-6">
 
         {/* Header */}
-        <div>
+        <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-black">節約アイディア</h1>
+          {user && (
+            <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+              {userProfile?.avatar_url ? (
+                <img 
+                  src={userProfile.avatar_url} 
+                  alt="プロフィール画像"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User className="h-5 w-5 text-gray-600" />
+              )}
+            </div>
+          )}
         </div>
 
 

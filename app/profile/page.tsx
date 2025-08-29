@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SwitchVariants } from "@/components/ui/switch-variants"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { User, MapPin, School, Bell, Shield, Target, Heart, Bookmark, FileText, Settings, Palette } from "lucide-react"
+import { User, MapPin, School, Bell, Shield, Target, Heart, Bookmark, FileText, Settings, Palette, Camera, Trash2 } from "lucide-react"
 import { CategoryIconSelector } from "@/components/category-icon-selector"
 import { getCategoryIcon } from "@/lib/category-icons"
 import { BottomNav } from "@/components/bottom-nav"
@@ -67,6 +67,7 @@ export default function ProfilePage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
   
   // タブ状態
   const [activeTab, setActiveTab] = useState('posts')
@@ -288,6 +289,82 @@ export default function ProfilePage() {
     setBookmarkedPosts(prev => updatePosts(prev))
   }
 
+  // プロフィール画像のアップロード
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0] || !user) return
+
+    const file = e.target.files[0]
+    
+    // ファイルサイズチェック (5MB以下)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "エラー",
+        description: "ファイルサイズは5MB以下にしてください",
+        variant: "destructive"
+      })
+      return
+    }
+
+    // ファイル形式チェック
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "エラー",
+        description: "画像ファイルを選択してください",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setUploadingAvatar(true)
+    try {
+      const result = await userProfileService.uploadAvatar(user.id, file)
+      if (result.success && result.data) {
+        setUserProfile(prev => prev ? { ...prev, avatar_url: result.data } : null)
+        toast({
+          title: "成功",
+          description: "プロフィール画像を更新しました"
+        })
+      } else {
+        throw new Error(result.error || 'アップロードに失敗しました')
+      }
+    } catch (error) {
+      toast({
+        title: "エラー",
+        description: error instanceof Error ? error.message : "アップロードに失敗しました",
+        variant: "destructive"
+      })
+    } finally {
+      setUploadingAvatar(false)
+    }
+  }
+
+  // プロフィール画像の削除
+  const handleAvatarDelete = async () => {
+    if (!user) return
+
+    setUploadingAvatar(true)
+    try {
+      const result = await userProfileService.deleteAvatar(user.id)
+      if (result.success) {
+        setUserProfile(prev => prev ? { ...prev, avatar_url: undefined } : null)
+        toast({
+          title: "成功",
+          description: "プロフィール画像を削除しました"
+        })
+      } else {
+        throw new Error(result.error || '削除に失敗しました')
+      }
+    } catch (error) {
+      toast({
+        title: "エラー",
+        description: error instanceof Error ? error.message : "削除に失敗しました",
+        variant: "destructive"
+      })
+    } finally {
+      setUploadingAvatar(false)
+    }
+  }
+
   // フォームデータ更新
   const handleInputChange = (field: string, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -415,8 +492,16 @@ export default function ProfilePage() {
         {/* Profile Summary */}
         <div className="bg-zaim-blue-50 border border-zaim-blue-500 rounded-lg shadow-sm p-6">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center border border-gray-200">
-              <User className="h-8 w-8 text-zaim-blue-500" />
+            <div className="w-16 h-16 bg-white rounded-full overflow-hidden flex items-center justify-center border border-gray-200">
+              {userProfile?.avatar_url ? (
+                <img 
+                  src={userProfile.avatar_url} 
+                  alt="プロフィール画像"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User className="h-8 w-8 text-zaim-blue-500" />
+              )}
             </div>
             <div className="flex-1">
               <h2 className="text-xl font-bold text-black">{formData.name || "未設定"}</h2>
@@ -497,6 +582,73 @@ export default function ProfilePage() {
             基本情報
           </h2>
           <div className="space-y-4">
+            {/* プロフィール画像 */}
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                {userProfile?.avatar_url ? (
+                  <img 
+                    src={userProfile.avatar_url} 
+                    alt="プロフィール画像" 
+                    className="w-20 h-20 rounded-full object-cover border-2 border-zaim-blue-200"
+                  />
+                ) : (
+                  <div className="w-20 h-20 rounded-full bg-zaim-blue-100 flex items-center justify-center">
+                    <User className="h-10 w-10 text-zaim-blue-500" />
+                  </div>
+                )}
+                
+                {/* アップロードボタン */}
+                <label className="absolute bottom-0 right-0 bg-zaim-blue-500 rounded-full p-1.5 cursor-pointer hover:bg-zaim-blue-600 transition-colors">
+                  <Camera className="h-4 w-4 text-white" />
+                  <input 
+                    type="file" 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    disabled={uploadingAvatar}
+                  />
+                </label>
+              </div>
+              
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600">プロフィール画像</p>
+                <div className="flex gap-2">
+                  <label>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      disabled={uploadingAvatar}
+                      className="cursor-pointer"
+                      asChild
+                    >
+                      <span>
+                        {uploadingAvatar ? "アップロード中..." : "画像を変更"}
+                      </span>
+                    </Button>
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      disabled={uploadingAvatar}
+                    />
+                  </label>
+                  
+                  {userProfile?.avatar_url && (
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={handleAvatarDelete}
+                      disabled={uploadingAvatar}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+            
             <div>
               <Label htmlFor="name" className="text-black font-medium">名前</Label>
               <Input 

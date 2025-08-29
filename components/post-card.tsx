@@ -19,6 +19,8 @@ import { deletePost, type Post } from '@/lib/api/posts'
 import { getPostComments, createComment, deleteComment, type Comment } from '@/lib/api/comments'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { getCategoryIcon } from '@/lib/category-icons'
+import { userProfileService } from '@/lib/database'
+import { useEffect } from 'react'
 
 interface PostCardProps {
   post: Post
@@ -102,10 +104,28 @@ export function PostCard({ post, isLiked, isBookmarked, onLike, onBookmark, onDe
   const [isCommentsOpen, setIsCommentsOpen] = useState(false)
   const [isLoadingComments, setIsLoadingComments] = useState(false)
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
+  const [currentUserProfile, setCurrentUserProfile] = useState<any>(null)
   
   const CategoryIcon = getCategoryIcon(post.category, post.user_profiles?.category_icons || undefined)
   const categoryColors = getCategoryColors(post.category)
   const isOwnPost = user?.id === post.user_id
+
+  // 現在のユーザープロフィールを取得
+  useEffect(() => {
+    const loadCurrentUserProfile = async () => {
+      if (!user) return
+      try {
+        const result = await userProfileService.getProfile(user.id)
+        if (result.success && result.data) {
+          setCurrentUserProfile(result.data)
+        }
+      } catch (error) {
+        console.error('現在のユーザープロフィール取得エラー:', error)
+      }
+    }
+
+    loadCurrentUserProfile()
+  }, [user])
 
 
   const handleDelete = async () => {
@@ -204,8 +224,16 @@ export function PostCard({ post, isLiked, isBookmarked, onLike, onBookmark, onDe
     <Card className="bg-white border border-gray-200 shadow-sm">
       <CardContent className="p-4">
         <div className="flex items-start gap-3 mb-3">
-          <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-            <User className="h-5 w-5 text-gray-600" />
+          <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+            {post.user_profiles?.avatar_url ? (
+              <img 
+                src={post.user_profiles.avatar_url} 
+                alt="プロフィール画像"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <User className="h-5 w-5 text-gray-600" />
+            )}
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -272,8 +300,16 @@ export function PostCard({ post, isLiked, isBookmarked, onLike, onBookmark, onDe
                           comments.map((comment) => (
                             <div key={comment.id} className="border-b border-gray-100 pb-3 last:border-b-0">
                               <div className="flex items-start gap-2 mb-2">
-                                <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                                  <User className="h-4 w-4 text-gray-600" />
+                                <div className="w-8 h-8 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+                                  {comment.user_profiles?.avatar_url ? (
+                                    <img 
+                                      src={comment.user_profiles.avatar_url} 
+                                      alt="プロフィール画像"
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <User className="h-4 w-4 text-gray-600" />
+                                  )}
                                 </div>
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2 mb-1">
@@ -304,8 +340,16 @@ export function PostCard({ post, isLiked, isBookmarked, onLike, onBookmark, onDe
                       {user && (
                         <div className="border-t pt-4">
                           <div className="flex gap-2">
-                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                              <User className="h-4 w-4 text-gray-600" />
+                            <div className="w-8 h-8 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+                              {currentUserProfile?.avatar_url ? (
+                                <img 
+                                  src={currentUserProfile.avatar_url} 
+                                  alt="プロフィール画像"
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <User className="h-4 w-4 text-gray-600" />
+                              )}
                             </div>
                             <div className="flex-1">
                               <textarea

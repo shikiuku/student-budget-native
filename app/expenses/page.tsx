@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useAuth } from "@/components/auth-provider"
-import { expenseService, expenseCategoryService, csvImportService } from "@/lib/database"
+import { expenseService, expenseCategoryService, csvImportService, userProfileService } from "@/lib/database"
 import { PayPayCsvParser } from "@/lib/csv-parser"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,7 +14,7 @@ import { PlusCircle, Calendar, Receipt, Edit, Trash2, Upload, FileText } from "l
 import { BottomNav } from "@/components/bottom-nav"
 import { CategoryIconSelector } from "@/components/category-icon-selector"
 import { getCategoryIcon } from "@/lib/category-icons"
-import type { ExpenseWithCategory, ExpenseCategory, ExpenseForm } from "@/lib/types"
+import type { ExpenseWithCategory, ExpenseCategory, ExpenseForm, UserProfile } from "@/lib/types"
 
 // カテゴリー色を統一する関数（スタイルガイドに合わせた薄い背景色）
 const getCategoryColor = (categoryName: string): string => {
@@ -55,6 +55,7 @@ export default function ExpensesPage() {
   
   const [expenses, setExpenses] = useState<ExpenseWithCategory[]>([])
   const [categories, setCategories] = useState<ExpenseCategory[]>([])
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [dataLoading, setDataLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
   const [csvImporting, setCsvImporting] = useState(false)
@@ -70,13 +71,31 @@ export default function ExpensesPage() {
   })
 
   // カテゴリーアイコンが変更された時の処理
-  const handleCategoryIconChanged = (categoryId: string, newIcon: string) => {
-    // カテゴリー一覧を更新
-    setCategories(prev => prev.map(category => 
-      category.id === categoryId 
-        ? { ...category, icon: newIcon }
-        : category
-    ))
+  const handleCategoryIconChanged = async (categoryName: string, newIcon: string) => {
+    if (!user || !userProfile) return
+    
+    // ユーザープロフィールのカテゴリーアイコン設定を更新
+    const result = await userProfileService.updateCategoryIcon(user.id, categoryName, newIcon)
+    
+    if (result.success) {
+      // ローカルステートを更新
+      setUserProfile(prev => {
+        if (!prev) return prev
+        const updatedCategoryIcons = { ...prev.category_icons, [categoryName]: newIcon }
+        return { ...prev, category_icons: updatedCategoryIcons }
+      })
+      
+      toast({
+        title: "アイコンを更新しました",
+        description: `${categoryName}のアイコンを変更しました`
+      })
+    } else {
+      toast({
+        title: "エラー",
+        description: "アイコンの更新に失敗しました",
+        variant: "destructive"
+      })
+    }
   }
 
   // Load data on component mount
@@ -91,6 +110,12 @@ export default function ExpensesPage() {
 
     setDataLoading(true)
     try {
+      // Load user profile
+      const profileResult = await userProfileService.getProfile(user.id)
+      if (profileResult.success && profileResult.data) {
+        setUserProfile(profileResult.data)
+      }
+
       // Load categories
       const categoriesResult = await expenseCategoryService.getCategories()
       if (categoriesResult.success && categoriesResult.data) {
@@ -484,7 +509,7 @@ export default function ExpensesPage() {
           </div>
           
           {expenses.map((expense, index) => {
-            const IconComponent = getCategoryIcon(expense.category?.name || 'その他', undefined, expense.category?.icon)
+            const IconComponent = getCategoryIcon(expense.category?.name || 'その他', userProfile?.category_icons || undefined)
             const expenseDate = new Date(expense.date)
             const currentExpenseMonth = `${expenseDate.getFullYear()}年${expenseDate.getMonth() + 1}月`
             
@@ -569,7 +594,7 @@ export default function ExpensesPage() {
                          expenseDate.getFullYear() === currentMonth.getFullYear()
                 })
                 const categoryTotal = currentMonthExpenses.reduce((sum, exp) => sum + exp.amount, 0)
-                const IconComponent = getCategoryIcon(category.name, undefined, category.icon)
+                const IconComponent = getCategoryIcon(category.name, userProfile?.category_icons || undefined)
                 
                 if (categoryTotal === 0) return null
                 
@@ -591,8 +616,9 @@ export default function ExpensesPage() {
                       <span className="text-sm font-bold text-black">¥{categoryTotal.toLocaleString()}</span>
                       <CategoryIconSelector 
                         categoryName={category.name}
-                        currentIcon={category.icon}
-                        onIconChanged={(categoryName, newIcon) => handleCategoryIconChanged(category.id, newIcon)}
+                        currentIcon={userProfile?.category_icons?.[category.name]}
+                        userCategoryIcons={userProfile?.category_icons || undefined}
+                        onIconChanged={handleCategoryIconChanged}
                       />
                     </div>
                   </div>
