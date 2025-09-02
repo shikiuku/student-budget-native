@@ -1,8 +1,10 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/auth-provider"
 import { userProfileService } from "@/lib/database"
+import { supabase } from "@/lib/supabase"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SwitchVariants } from "@/components/ui/switch-variants"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { User, MapPin, School, Bell, Shield, Target, Heart, Bookmark, FileText, Settings, Camera, Trash2 } from "lucide-react"
+import { User, MapPin, School, Bell, Shield, Target, Heart, Bookmark, FileText, Settings, Camera, Trash2, LogOut } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { useToast } from "@/hooks/use-toast"
 import type { UserProfile, SchoolType } from "@/lib/types"
@@ -36,6 +38,7 @@ const PREFECTURES = [
 
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth()
+  const router = useRouter()
   const { toast } = useToast()
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -392,6 +395,24 @@ export default function ProfilePage() {
       })
     } finally {
       setSaving(false)
+    }
+  }
+
+  // ログアウト処理
+  const handleLogOut = async () => {
+    try {
+      await supabase.auth.signOut()
+      toast({
+        title: "ログアウトしました",
+        description: "またのご利用をお待ちしております。",
+      })
+      router.push('/login')
+    } catch (error) {
+      toast({
+        title: "ログアウトエラー",
+        description: "ログアウトに失敗しました。",
+        variant: "destructive",
+      })
     }
   }
 
@@ -897,6 +918,23 @@ export default function ProfilePage() {
         >
           {saving ? "保存中..." : "設定を保存"}
         </Button>
+
+        {/* Logout Button */}
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+          <h2 className="flex items-center gap-2 text-lg font-bold text-black mb-4">
+            <LogOut className="h-5 w-5 text-gray-500" />
+            アカウント
+          </h2>
+          <Button 
+            onClick={handleLogOut}
+            className="w-full h-12 bg-gray-500 hover:bg-gray-600 text-white"
+          >
+            ログアウト
+          </Button>
+          <p className="text-xs text-gray-500 mt-2 text-center">
+            ログアウトするとアプリからサインアウトされます
+          </p>
+        </div>
 
             </div>
           </TabsContent>

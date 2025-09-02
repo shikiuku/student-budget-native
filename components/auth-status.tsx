@@ -50,31 +50,22 @@ export function AuthStatus() {
 
   return (
     <>
-      <div className="fixed top-4 right-4 z-50 flex gap-2">
-        {user ? (
+      {!user && (
+        <div className="fixed top-4 right-4 z-50 flex gap-2">
           <Button 
-            onClick={handleLogOut}
+            onClick={handleSignInClick}
             className="rounded-full bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white px-6"
           >
-            ログアウト
+            ログイン
           </Button>
-        ) : (
-          <>
-            <Button 
-              onClick={handleSignInClick}
-              className="rounded-full bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white px-6"
-            >
-              ログイン
-            </Button>
-            <Button 
-              onClick={handleSignUpClick}
-              className="rounded-full bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white px-6"
-            >
-              新規登録
-            </Button>
-          </>
-        )}
-      </div>
+          <Button 
+            onClick={handleSignUpClick}
+            className="rounded-full bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white px-6"
+          >
+            新規登録
+          </Button>
+        </div>
+      )}
 
       <AuthModal
         isOpen={isModalOpen}
