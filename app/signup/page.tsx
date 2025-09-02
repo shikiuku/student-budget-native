@@ -113,7 +113,7 @@ export default function SignupPage() {
         <div className="text-center space-y-2">
           <img 
             src="/favicon.png" 
-            alt="学生向け節約アプリ" 
+            alt="Money Moment" 
             className="w-24 h-24 mx-auto mb-4"
           />
           <h1 className="text-3xl font-bold text-black">新規登録</h1>

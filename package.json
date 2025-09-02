@@ -1,5 +1,5 @@
 {
-  "name": "my-v0-project",
+  "name": "money-moment",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -73,7 +73,7 @@
     "@types/react-dom": "^18",
     "typescript": "^5"
   },
-  "description": "## 概要 学生向けの本格的な家計管理・節約支援アプリです。支出管理、社会的な節約情報共有、学生向け補助金情報の提供まで、学生のお金の悩みを総合的にサポートします。",
+  "description": "Money Moment - 学生向けの本格的な家計管理・節約支援アプリです。支出管理、社会的な節約情報共有、学生向け補助金情報の提供まで、学生のお金の悩みを総合的にサポートします。",
   "main": "index.js",
   "directories": {
     "lib": "lib"

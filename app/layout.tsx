@@ -18,8 +18,8 @@ const mPlusRounded = M_PLUS_Rounded_1c({
 })
 
 export const metadata: Metadata = {
-  title: "学生向け節約アプリ",
-  description: "中高生が楽しく・簡単にお金を管理し、節約の意識を持てるアプリ",
+  title: "Money Moment",
+  description: "中高生が楽しく・簡単にお金を管理し、節約の意識を持てるアプリ - Money Moment",
   generator: 'v0.dev',
   icons: {
     icon: [

@@ -1,7 +1,7 @@
-# 学生向け節約アプリ - Claude開発記録
+# Money Moment - Claude開発記録
 
 ## プロジェクト概要
-- 学生向けの家計管理・節約アプリ
+- 学生向けの家計管理・節約アプリ「Money Moment」
 - Next.js + TypeScript + Tailwind CSS
 - 開発サーバー: `npm run dev` でポート3000で起動
 - スタイルガイド: http://localhost:3000/styleguide
