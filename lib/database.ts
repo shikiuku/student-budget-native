@@ -306,16 +306,23 @@ export const expenseService = {
         original_data: expense.original_data
       };
       
+      console.log('createExpense - データ準備:', expenseData);
+      
       const { data, error } = await supabase
         .from('expenses')
         .insert(expenseData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('createExpense - Supabaseエラー:', error);
+        throw error;
+      }
 
+      console.log('createExpense - 成功:', data);
       return { data, success: true };
     } catch (error) {
+      console.error('createExpense - エラー:', error);
       return { error: (error as Error).message, success: false };
     }
   },

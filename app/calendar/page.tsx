@@ -4,14 +4,19 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BottomNav } from '@/components/bottom-nav';
 import { useAuth } from "@/components/auth-provider";
 import { userProfileService, expenseService, expenseCategoryService } from "@/lib/database";
 import { getCategoryIcon } from "@/lib/category-icons";
-import type { UserProfile, ExpenseWithCategory, ExpenseCategory } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
+import type { UserProfile, ExpenseWithCategory, ExpenseCategory, ExpenseForm } from "@/lib/types";
 
 const CalendarPage = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
   const [isClient, setIsClient] = useState(false);
@@ -20,6 +25,20 @@ const CalendarPage = () => {
   const [spent, setSpent] = useState(0);
   const [expenses, setExpenses] = useState<ExpenseWithCategory[]>([]);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
+  const [showAddForm, setShowAddForm] = useState(false);
+  
+  const [newExpense, setNewExpense] = useState<ExpenseForm>({
+    amount: "",
+    category_id: "",
+    description: "",
+    date: (() => {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = (today.getMonth() + 1).toString().padStart(2, '0');
+      const day = today.getDate().toString().padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    })()
+  });
 
 
   // 月の最初の日と最後の日を取得
@@ -42,7 +61,10 @@ const CalendarPage = () => {
   // Load user data
   useEffect(() => {
     if (user) {
+      console.log("カレンダーページ - ユーザー認証済み:", user.id);
       loadUserData();
+    } else {
+      console.log("カレンダーページ - ユーザー未認証");
     }
   }, [user, currentDate]);
 
@@ -60,14 +82,19 @@ const CalendarPage = () => {
       const categoriesResult = await expenseCategoryService.getCategories();
       if (categoriesResult.success && categoriesResult.data) {
         setCategories(categoriesResult.data);
+        console.log("カテゴリ一覧:", categoriesResult.data);
       }
 
       // Load current month expenses
+      console.log("現在の月を取得:", currentDate.getMonth() + 1, "月");
       const expensesResult = await expenseService.getExpensesByMonth(user.id, currentDate.getFullYear(), currentDate.getMonth() + 1);
       if (expensesResult.success && expensesResult.data) {
+        console.log("取得した支出データ:", expensesResult.data);
         setExpenses(expensesResult.data);
         const total = expensesResult.data.reduce((sum, expense) => sum + expense.amount, 0);
         setSpent(total);
+      } else {
+        console.log("支出データ取得エラー:", expensesResult.error);
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -78,11 +105,26 @@ const CalendarPage = () => {
   const getExpensesByDate = () => {
     const expensesByDate: { [key: number]: ExpenseWithCategory[] } = {};
     
+    console.log("支出をグループ化:", {
+      totalExpenses: expenses.length,
+      currentMonth: currentDate.getMonth(),
+      currentYear: currentDate.getFullYear()
+    });
+    
     expenses.forEach(expense => {
-      const expenseDate = new Date(expense.date);
-      if (expenseDate.getMonth() === currentDate.getMonth() && 
-          expenseDate.getFullYear() === currentDate.getFullYear()) {
-        const day = expenseDate.getDate();
+      // 日付文字列を直接分割してタイムゾーンの問題を回避
+      const [year, month, day] = expense.date.split('-').map(Number);
+      console.log("支出日付チェック:", {
+        expenseDate: expense.date,
+        parsedYear: year,
+        parsedMonth: month - 1, // 0ベースに変換
+        parsedDay: day,
+        currentMonth: currentDate.getMonth(),
+        currentYear: currentDate.getFullYear()
+      });
+      
+      if (month - 1 === currentDate.getMonth() && 
+          year === currentDate.getFullYear()) {
         if (!expensesByDate[day]) {
           expensesByDate[day] = [];
         }
@@ -90,6 +132,7 @@ const CalendarPage = () => {
       }
     });
     
+    console.log("グループ化結果:", expensesByDate);
     return expensesByDate;
   };
 
@@ -117,7 +160,12 @@ const CalendarPage = () => {
 
   const getDayExpense = (date: Date) => {
     const dateStr = formatDate(date);
-    return expenses.filter(expense => expense.date === dateStr);
+    console.log("getDayExpense - 日付検索:", dateStr);
+    const dayExpenses = expenses.filter(expense => expense.date === dateStr);
+    if (dayExpenses.length > 0) {
+      console.log("getDayExpense - 見つかった支出:", dayExpenses);
+    }
+    return dayExpenses;
   };
 
   const isCurrentMonth = (date: Date) => {
@@ -133,6 +181,89 @@ const CalendarPage = () => {
 
   const handleDateClick = (date: number) => {
     setSelectedDate(date);
+    // 選択した日付で新規支出フォームの日付を設定
+    // タイムゾーンの問題を避けるため、年月日を直接指定
+    const year = currentDate.getFullYear();
+    const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.toString().padStart(2, '0');
+    setNewExpense(prev => ({
+      ...prev,
+      date: `${year}-${month}-${day}`
+    }));
+  };
+
+  const handleAddExpense = async () => {
+    if (!user) {
+      console.error("ユーザー未認証");
+      toast({
+        title: "認証エラー",
+        description: "ログインしてください。",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!newExpense.amount || !newExpense.category_id) {
+      toast({
+        title: "入力エラー",
+        description: "金額とカテゴリを入力してください。",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      console.log("支出追加処理開始:", {
+        userId: user.id,
+        amount: parseInt(newExpense.amount),
+        category_id: newExpense.category_id,
+        description: newExpense.description,
+        date: newExpense.date,
+        source: 'manual'
+      });
+
+      const result = await expenseService.createExpense(user.id, {
+        amount: parseInt(newExpense.amount),
+        category_id: newExpense.category_id,
+        description: newExpense.description,
+        date: newExpense.date,
+        source: 'manual'
+      });
+
+      console.log("支出追加結果:", result);
+
+      if (result.success) {
+        toast({
+          title: "支出を追加しました",
+          description: `¥${parseInt(newExpense.amount).toLocaleString()} - ${newExpense.description}`,
+          variant: "success",
+        });
+        
+        // Reset form
+        const year = currentDate.getFullYear();
+        const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+        const day = (selectedDate || 1).toString().padStart(2, '0');
+        setNewExpense({
+          amount: "",
+          category_id: "",
+          description: "",
+          date: `${year}-${month}-${day}`
+        });
+        setShowAddForm(false);
+        
+        // Reload data
+        loadUserData();
+      } else {
+        throw new Error(result.error || "不明なエラー");
+      }
+    } catch (error) {
+      console.error("支出追加エラー:", error);
+      toast({
+        title: "支出追加エラー",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
+    }
   };
 
   const calendarDays = generateCalendarDays();
@@ -279,12 +410,80 @@ const CalendarPage = () => {
             <>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 sm:mb-3 gap-2">
                 <h4 className="text-sm font-semibold text-gray-800">{formatMonth(currentDate)} {selectedDate}日の支出</h4>
-                {expensesByDate[selectedDate] && expensesByDate[selectedDate].length > 0 && (
-                  <div className="text-sm font-bold text-red-600">
-                    合計: ¥{expensesByDate[selectedDate].reduce((sum, exp) => sum + exp.amount, 0).toLocaleString()}
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  {expensesByDate[selectedDate] && expensesByDate[selectedDate].length > 0 && (
+                    <div className="text-sm font-bold text-red-600">
+                      合計: ¥{expensesByDate[selectedDate].reduce((sum, exp) => sum + exp.amount, 0).toLocaleString()}
+                    </div>
+                  )}
+                  {!showAddForm && (
+                    <Button 
+                      size="sm" 
+                      onClick={() => setShowAddForm(true)}
+                      className="bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      支出を追加
+                    </Button>
+                  )}
+                </div>
               </div>
+              
+              {/* Add Expense Form */}
+              {showAddForm && (
+                <div className="bg-gray-50 rounded-lg p-4 mb-4 space-y-4">
+                  <div>
+                    <Label htmlFor="amount">金額</Label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      placeholder="1000"
+                      value={newExpense.amount}
+                      onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
+                      className="mt-1 bg-white text-black border-gray-300 focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="category">カテゴリ</Label>
+                    <Select
+                      value={newExpense.category_id}
+                      onValueChange={(value) => setNewExpense({ ...newExpense, category_id: value })}
+                    >
+                      <SelectTrigger className="mt-1 bg-white text-black border-gray-300 focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400">
+                        <SelectValue placeholder="カテゴリを選択" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id} className="text-black hover:bg-gray-100 cursor-pointer">
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="description">説明</Label>
+                    <Input
+                      id="description"
+                      placeholder="コンビニ弁当"
+                      value={newExpense.description}
+                      onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
+                      className="mt-1 bg-white text-black border-gray-300 focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400"
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button onClick={handleAddExpense} className="flex-1 bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white">
+                      記録する
+                    </Button>
+                    <Button onClick={() => setShowAddForm(false)} variant="outline" className="flex-1 border-zaim-blue-200 text-zaim-blue-600 hover:bg-zaim-blue-50">
+                      キャンセル
+                    </Button>
+                  </div>
+                </div>
+              )}
               
               {expensesByDate[selectedDate] && expensesByDate[selectedDate].length > 0 ? (
                 <div className="space-y-1 sm:space-y-2 max-h-48 md:max-h-64 overflow-y-auto">
