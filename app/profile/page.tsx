@@ -11,9 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SwitchVariants } from "@/components/ui/switch-variants"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { User, MapPin, School, Bell, Shield, Target, Heart, Bookmark, FileText, Settings, Palette, Camera, Trash2 } from "lucide-react"
-import { CategoryIconSelector } from "@/components/category-icon-selector"
-import { getCategoryIcon } from "@/lib/category-icons"
+import { User, MapPin, School, Bell, Shield, Target, Heart, Bookmark, FileText, Settings, Camera, Trash2 } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { useToast } from "@/hooks/use-toast"
 import type { UserProfile, SchoolType } from "@/lib/types"
@@ -33,33 +31,6 @@ const PREFECTURES = [
   "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"
 ]
 
-// カテゴリー背景色を取得する関数
-const getCategoryBgColor = (categoryName: string): string => {
-  switch (categoryName) {
-    case '食費': return '#FFF3E0'
-    case '交通費': return '#E0F8F8'
-    case '娯楽・趣味': return '#FFF9C4'
-    case '教材・書籍': return '#E8F5E8'
-    case '衣類・雑貨': return '#F8E8E8'
-    case '通信費': return '#F0EDFF'
-    case 'その他': return '#F3F4F6'
-    default: return '#F3F4F6'
-  }
-}
-
-// カテゴリーアイコン色を取得する関数
-const getCategoryIconColor = (categoryName: string): string => {
-  switch (categoryName) {
-    case '食費': return '#FF6B35'
-    case '交通費': return '#4ECDC4'
-    case '娯楽・趣味': return '#FFD23F'
-    case '教材・書籍': return '#6A994E'
-    case '衣類・雑貨': return '#BC4749'
-    case '通信費': return '#9C88FF'
-    case 'その他': return '#6B7280'
-    default: return '#6B7280'
-  }
-}
 
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth()
@@ -122,17 +93,24 @@ export default function ProfilePage() {
     try {
       const result = await userProfileService.getProfile(user.id)
       if (result.success && result.data) {
-        setUserProfile(result.data)
+        // アバターURLにタイムスタンプを追加してキャッシュを防ぐ
+        const profileData = result.data
+        if (profileData.avatar_url) {
+          // すでにタイムスタンプがある場合は削除してから新しいものを追加
+          const baseUrl = profileData.avatar_url.split('?')[0]
+          profileData.avatar_url = `${baseUrl}?t=${Date.now()}`
+        }
+        setUserProfile(profileData)
         setFormData({
-          name: result.data.name || "",
-          age: result.data.age || 15,
-          school_type: result.data.school_type || "middle_school",
-          prefecture: result.data.prefecture || "",
-          city: result.data.city || "",
-          school_name: result.data.school_name || "",
-          grade: result.data.grade || "",
-          monthly_budget: result.data.monthly_budget || 30000,
-          savings_balance: result.data.savings_balance || 0
+          name: profileData.name || "",
+          age: profileData.age || 15,
+          school_type: profileData.school_type || "middle_school",
+          prefecture: profileData.prefecture || "",
+          city: profileData.city || "",
+          school_name: profileData.school_name || "",
+          grade: profileData.grade || "",
+          monthly_budget: profileData.monthly_budget || 30000,
+          savings_balance: profileData.savings_balance || 0
         })
       }
     } catch (error) {
@@ -319,7 +297,9 @@ export default function ProfilePage() {
     try {
       const result = await userProfileService.uploadAvatar(user.id, file)
       if (result.success && result.data) {
-        setUserProfile(prev => prev ? { ...prev, avatar_url: result.data } : null)
+        // キャッシュを防ぐためにタイムスタンプを追加
+        const avatarUrlWithTimestamp = `${result.data}?t=${Date.now()}`
+        setUserProfile(prev => prev ? { ...prev, avatar_url: avatarUrlWithTimestamp } : null)
         toast({
           title: "成功",
           description: "プロフィール画像を更新しました"
@@ -375,16 +355,6 @@ export default function ProfilePage() {
     setFormData(prev => ({ ...prev, prefecture, city: "" }))
   }
 
-  // アイコン変更処理
-  const handleIconChanged = (categoryName: string, newIcon: string) => {
-    // ユーザープロフィールの状態を更新
-    setUserProfile(prev => {
-      if (!prev) return prev
-      
-      const updatedCategoryIcons = { ...prev.category_icons, [categoryName]: newIcon }
-      return { ...prev, category_icons: updatedCategoryIcons }
-    })
-  }
 
   // プロフィール保存
   const handleSaveProfile = async () => {
@@ -498,6 +468,7 @@ export default function ProfilePage() {
                   src={userProfile.avatar_url} 
                   alt="プロフィール画像"
                   className="w-full h-full object-cover"
+                  key={userProfile.avatar_url}
                 />
               ) : (
                 <User className="h-8 w-8 text-zaim-blue-500" />
@@ -590,6 +561,7 @@ export default function ProfilePage() {
                     src={userProfile.avatar_url} 
                     alt="プロフィール画像" 
                     className="w-20 h-20 rounded-full object-cover border-2 border-zaim-blue-200"
+                    key={userProfile.avatar_url}
                   />
                 ) : (
                   <div className="w-20 h-20 rounded-full bg-zaim-blue-100 flex items-center justify-center">
@@ -828,58 +800,16 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Category Icon Settings */}
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
-          <h2 className="flex items-center gap-2 text-lg font-bold text-black mb-4">
-            <Palette className="h-5 w-5 text-purple-600" />
-            カテゴリーアイコン設定
-          </h2>
-          <p className="text-sm text-gray-600 mb-4">
-            各カテゴリーのアイコンをお好みに変更できます。設定したアイコンは節約ページの投稿でも表示されます。
-          </p>
-          
-          <div className="space-y-3">
-            {['食費', '交通費', '娯楽・趣味', '教材・書籍', '衣類・雑貨', '通信費', 'その他'].map((category) => {
-              const IconComponent = getCategoryIcon(category, userProfile?.category_icons || undefined)
-              
-              return (
-                <div key={category} className="flex items-center justify-between py-2">
-                  <div className="flex items-center gap-3">
-                    <div 
-                      className="w-10 h-10 rounded-full flex items-center justify-center"
-                      style={{ 
-                        backgroundColor: getCategoryBgColor(category),
-                      }}
-                    >
-                      {React.createElement(IconComponent, { 
-                        className: "h-5 w-5",
-                        style: { color: getCategoryIconColor(category) }
-                      })}
-                    </div>
-                    <div>
-                      <p className="font-medium text-black">{category}</p>
-                    </div>
-                  </div>
-                  
-                  <CategoryIconSelector
-                    categoryName={category}
-                    currentIcon={userProfile?.category_icons?.[category]}
-                    userCategoryIcons={userProfile?.category_icons || undefined}
-                    onIconChanged={handleIconChanged}
-                  />
-                </div>
-              )
-            })}
-          </div>
-        </div>
 
         {/* Notification Settings */}
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+        <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 relative overflow-hidden">
           <h2 className="flex items-center gap-2 text-lg font-bold text-black mb-4">
             <Bell className="h-5 w-5 text-orange-600" />
             通知設定
           </h2>
-          <div className="space-y-4">
+          
+          {/* ぼかしコンテンツ */}
+          <div className="space-y-4 filter blur-sm pointer-events-none">
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium text-black">使いすぎアラート</p>
@@ -926,6 +856,16 @@ export default function ProfilePage() {
                 checked={notifications.tips}
                 onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, tips: checked }))}
               />
+            </div>
+          </div>
+          
+          {/* 近日公開オーバーレイ */}
+          <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70">
+            <div className="text-center">
+              <div className="bg-zaim-blue-500 text-white px-6 py-3 rounded-full font-bold text-lg shadow-lg">
+                近日公開
+              </div>
+              <p className="text-gray-600 mt-3 text-sm">通知機能は現在開発中です</p>
             </div>
           </div>
         </div>
