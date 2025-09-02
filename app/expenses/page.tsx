@@ -14,6 +14,8 @@ import { PlusCircle, Calendar, Receipt, Edit, Trash2, Upload, FileText } from "l
 import { BottomNav } from "@/components/bottom-nav"
 import { CategoryIconSelector } from "@/components/category-icon-selector"
 import { getCategoryIcon } from "@/lib/category-icons"
+import { EmptyExpenses } from "@/components/empty-state"
+import { ExpenseListSkeleton, ExpenseSummarySkeleton, CategorySummarySkeleton } from "@/components/skeleton"
 import type { ExpenseWithCategory, ExpenseCategory, ExpenseForm, UserProfile } from "@/lib/types"
 
 // カテゴリー色を統一する関数（スタイルガイドに合わせた薄い背景色）
@@ -331,11 +333,17 @@ export default function ExpensesPage() {
   // Wait for auth loading to complete first
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center pb-20">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
-          <p className="text-gray-600">認証状態を確認中...</p>
+      <div className="min-h-screen bg-white pb-20">
+        <div className="px-6 py-4 space-y-6 pt-6">
+          <ExpenseSummarySkeleton />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+          <ExpenseListSkeleton />
+          <CategorySummarySkeleton />
         </div>
+        <BottomNav currentPage="expenses" />
       </div>
     )
   }
@@ -352,11 +360,17 @@ export default function ExpensesPage() {
 
   if (dataLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center pb-20">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
-          <p className="text-gray-600">データを読み込み中...</p>
+      <div className="min-h-screen bg-white pb-20">
+        <div className="px-6 py-4 space-y-6 pt-6">
+          <ExpenseSummarySkeleton />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+          <ExpenseListSkeleton />
+          <CategorySummarySkeleton />
         </div>
+        <BottomNav currentPage="expenses" />
       </div>
     )
   }
@@ -508,7 +522,10 @@ export default function ExpensesPage() {
             )}
           </div>
           
-          {expenses.map((expense, index) => {
+          {expenses.length === 0 ? (
+            <EmptyExpenses />
+          ) : (
+            expenses.map((expense, index) => {
             const IconComponent = getCategoryIcon(expense.category?.name || 'その他', userProfile?.category_icons || undefined)
             const expenseDate = new Date(expense.date)
             const currentExpenseMonth = `${expenseDate.getFullYear()}年${expenseDate.getMonth() + 1}月`
@@ -575,7 +592,8 @@ export default function ExpensesPage() {
                 </div>
               </div>
             )
-          })}
+            })
+          )}
           
         </div>
 

@@ -33,6 +33,7 @@ import { PostCard } from '@/components/post-card'
 import { userProfileService } from '@/lib/database'
 import type { UserProfile } from '@/lib/types'
 import { useAuth } from '@/components/auth-provider'
+import { PostListSkeleton } from '@/components/skeleton'
 
 // カテゴリー別カラーヘルパー関数（post-card.tsxと統一）
 const getCategoryColors = (category: string) => {
@@ -283,9 +284,7 @@ export default function TipsPage() {
           <h2 className="text-lg font-bold text-black">みんなの節約アイディア</h2>
           
           {loading ? (
-            <div className="text-center py-8">
-              <div className="text-gray-500">読み込み中...</div>
-            </div>
+            <PostListSkeleton count={5} />
           ) : posts.length === 0 ? (
             <div className="text-center py-8">
               <div className="text-gray-500">まだ投稿がありません</div>

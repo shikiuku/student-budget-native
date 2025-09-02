@@ -11,6 +11,7 @@ import { CategoryIconSelector } from "@/components/category-icon-selector"
 import { getCategoryIcon } from "@/lib/category-icons"
 import type { UserProfile, ExpenseWithCategory, ExpenseCategory } from "@/lib/types"
 import { useRouter, useSearchParams } from "next/navigation"
+import { BudgetCardSkeleton, DonutChartSkeleton, IncomeSummarySkeleton, CategorySummarySkeleton } from "@/components/skeleton"
 
 // カテゴリー色を統一する関数（スタイルガイドに合わせた薄い背景色）
 const getCategoryColor = (categoryName: string): string => {
@@ -198,74 +199,28 @@ function HomeContent() {
   
   const budgetStatus = getBudgetStatus(spentPercentage)
 
-  // Wait for auth loading to complete first
-  if (loading) {
+  // 認証チェック中、データ読み込み中、プロフィール未設定時は全てスケルトンローディング表示
+  if (loading || !user || dataLoading || !userProfile) {
+    // プロフィール未設定の場合はオンボーディングにリダイレクト（バックグラウンドで実行）
+    if (!loading && user && !dataLoading && !userProfile) {
+      router.push('/onboarding')
+    }
+    // ログインが必要な場合はログインページにリダイレクト（バックグラウンドで実行）
+    if (!loading && !user) {
+      router.push('/login')
+    }
+    
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center pb-20">
-        <div className="text-center space-y-4">
-          <img 
-            src="/favicon.png" 
-            alt="学生向け節約アプリ" 
-            className="w-24 h-24 mx-auto animate-pulse"
-          />
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
-          <p className="text-gray-600">認証状態を確認中...</p>
+      <div className="min-h-screen bg-white pb-20">
+        <div className="px-6 py-4 space-y-6 pt-6">
+          <BudgetCardSkeleton />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <IncomeSummarySkeleton />
+            <DonutChartSkeleton />
+          </div>
+          <CategorySummarySkeleton />
         </div>
-      </div>
-    )
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center pb-20">
-        <div className="text-center space-y-4">
-          <img 
-            src="/favicon.png" 
-            alt="学生向け節約アプリ" 
-            className="w-24 h-24 mx-auto mb-4"
-          />
-          <p className="text-gray-600 mb-4">ログインが必要です</p>
-          <button 
-            onClick={() => router.push('/login')}
-            className="bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white px-6 py-2 rounded-full"
-          >
-            ログイン
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  if (dataLoading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center pb-20">
-        <div className="text-center space-y-4">
-          <img 
-            src="/favicon.png" 
-            alt="学生向け節約アプリ" 
-            className="w-24 h-24 mx-auto animate-pulse"
-          />
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
-          <p className="text-gray-600">データを読み込み中...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // If user has no profile, redirect to onboarding
-  if (!userProfile) {
-    router.push('/onboarding')
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center pb-20">
-        <div className="text-center space-y-4">
-          <img 
-            src="/favicon.png" 
-            alt="学生向け節約アプリ" 
-            className="w-24 h-24 mx-auto animate-pulse"
-          />
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
-          <p className="text-gray-600">初期設定にリダイレクト中...</p>
-        </div>
+        <BottomNav currentPage="home" />
       </div>
     )
   }
@@ -494,16 +449,16 @@ function HomeContent() {
 export default function HomePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-white flex items-center justify-center pb-20">
-        <div className="text-center space-y-4">
-          <img 
-            src="/favicon.png" 
-            alt="学生向け節約アプリ" 
-            className="w-24 h-24 mx-auto animate-pulse"
-          />
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
-          <p className="text-gray-600">読み込み中...</p>
+      <div className="min-h-screen bg-white pb-20">
+        <div className="px-6 py-4 space-y-6 pt-6">
+          <BudgetCardSkeleton />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <IncomeSummarySkeleton />
+            <DonutChartSkeleton />
+          </div>
+          <CategorySummarySkeleton />
         </div>
+        <BottomNav currentPage="home" />
       </div>
     }>
       <HomeContent />

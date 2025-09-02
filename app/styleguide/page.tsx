@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Switch } from "@/components/ui/switch"
 import { SwitchVariants } from "@/components/ui/switch-variants"
+import { EmptyPosts, EmptyLikes, EmptyBookmarks, EmptyExpenses } from "@/components/empty-state"
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -230,6 +231,7 @@ export default function StyleGuidePage() {
           <div className="bg-gray-50 p-6 rounded-lg">
             <h3 className="text-lg font-semibold text-black mb-4">目次</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
+              <a href="#empty-states" className="text-blue-600 hover:text-blue-700 font-medium">🎨 空の状態イラスト</a>
               <a href="#budget-cards" className="text-blue-600 hover:text-blue-700 font-medium">🏠 予算カード（横並び統合）</a>
               <a href="#colors" className="text-gray-600 hover:text-gray-700">カラーパレット</a>
               <a href="#typography" className="text-gray-600 hover:text-gray-700">タイポグラフィ</a>
@@ -252,6 +254,42 @@ export default function StyleGuidePage() {
             </div>
           </div>
         </div>
+
+        {/* Empty State Illustrations - 空の状態イラスト */}
+        <section id="empty-states">
+          <h2 className="text-2xl font-bold mb-4 text-black">🎨 空の状態イラスト</h2>
+          <div className="bg-purple-50 border-l-4 border-purple-500 p-4 mb-6">
+            <p className="text-sm text-purple-800">
+              <strong>データがない時に表示される可愛いイラスト</strong> - ユーザーに優しい体験を提供します
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* 投稿がない状態 */}
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">投稿なし</h3>
+              <EmptyPosts />
+            </div>
+
+            {/* いいねがない状態 */}
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">いいねなし</h3>
+              <EmptyLikes />
+            </div>
+
+            {/* ブックマークがない状態 */}
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">ブックマークなし</h3>
+              <EmptyBookmarks />
+            </div>
+
+            {/* 支出データがない状態 */}
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">支出データなし</h3>
+              <EmptyExpenses />
+            </div>
+          </div>
+        </section>
 
         {/* Budget Cards - 予算カード */}
         <section id="budget-cards">

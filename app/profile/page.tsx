@@ -20,6 +20,8 @@ import { getUserPosts, getUserLikedPosts, getUserBookmarkedPosts, type Post } fr
 import { PostCard } from '@/components/post-card'
 import { likePost, unlikePost, checkUserLikedPosts } from '@/lib/api/likes'
 import { bookmarkPost, unbookmarkPost, checkUserBookmarkedPosts } from '@/lib/api/bookmarks'
+import { EmptyPosts, EmptyLikes, EmptyBookmarks } from '@/components/empty-state'
+import { ProfileCardSkeleton, PostListSkeleton } from '@/components/skeleton'
 
 const PREFECTURES = [
   "北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
@@ -394,22 +396,20 @@ export default function ProfilePage() {
   }
 
   // 投稿リストを表示するヘルパー関数
-  const renderPostsList = (posts: Post[], emptyMessage: string) => {
+  const renderPostsList = (posts: Post[], type: 'posts' | 'liked' | 'bookmarked') => {
     if (postsLoading) {
-      return (
-        <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zaim-blue-500 mx-auto mb-2"></div>
-          <div className="text-gray-500">読み込み中...</div>
-        </div>
-      )
+      return <PostListSkeleton />
     }
 
     if (posts.length === 0) {
-      return (
-        <div className="text-center py-8">
-          <div className="text-gray-500">{emptyMessage}</div>
-        </div>
-      )
+      switch (type) {
+        case 'posts':
+          return <EmptyPosts />
+        case 'liked':
+          return <EmptyLikes />
+        case 'bookmarked':
+          return <EmptyBookmarks />
+      }
     }
 
     return (
@@ -434,13 +434,32 @@ export default function ProfilePage() {
     )
   }
 
-  if (authLoading || loading) {
+  if (authLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center pb-20">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zaim-blue-500 mx-auto"></div>
-          <p className="text-gray-600">プロフィール情報を読み込み中...</p>
+      <div className="min-h-screen bg-white pb-20">
+        <div className="p-4 space-y-6 pt-6">
+          <ProfileCardSkeleton />
+          <div className="space-y-4">
+            <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+            <PostListSkeleton />
+          </div>
         </div>
+        <BottomNav currentPage="profile" />
+      </div>
+    )
+  }
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white pb-20">
+        <div className="p-4 space-y-6 pt-6">
+          <ProfileCardSkeleton />
+          <div className="space-y-4">
+            <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+            <PostListSkeleton />
+          </div>
+        </div>
+        <BottomNav currentPage="profile" />
       </div>
     )
   }
@@ -525,21 +544,21 @@ export default function ProfilePage() {
           <TabsContent value="posts" className="mt-6">
             <div className="space-y-4">
               <h2 className="text-lg font-bold text-black">自分の投稿</h2>
-              {renderPostsList(userPosts, "まだ投稿がありません")}
+              {renderPostsList(userPosts, 'posts')}
             </div>
           </TabsContent>
 
           <TabsContent value="liked" className="mt-6">
             <div className="space-y-4">
               <h2 className="text-lg font-bold text-black">いいねした投稿</h2>
-              {renderPostsList(likedPosts, "いいねした投稿がありません")}
+              {renderPostsList(likedPosts, 'liked')}
             </div>
           </TabsContent>
 
           <TabsContent value="bookmarked" className="mt-6">
             <div className="space-y-4">
               <h2 className="text-lg font-bold text-black">保存した投稿</h2>
-              {renderPostsList(bookmarkedPosts, "保存した投稿がありません")}
+              {renderPostsList(bookmarkedPosts, 'bookmarked')}
             </div>
           </TabsContent>
 
