@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const selectedModel = model || 'gemini-1.5-flash';
+    const selectedModel = 'gemini-1.5-flash';
     const aiModel = genAI.getGenerativeModel({ model: selectedModel });
     
     // チャット履歴から文脈を構築

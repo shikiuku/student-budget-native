@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -17,8 +17,10 @@ import {
   ChevronRight,
   Loader2,
   Send,
-  Settings,
-  Plus
+  Plus,
+  Trash2,
+  MessageCircle,
+  History
 } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { useAuth } from "@/components/auth-provider"
@@ -31,6 +33,14 @@ interface ChatMessage {
   content: string
   timestamp: Date
   recommendations?: AIRecommendation[]
+}
+
+interface ChatSession {
+  id: string
+  title: string
+  messages: ChatMessage[]
+  createdAt: Date
+  updatedAt: Date
 }
 
 interface AIRecommendation {
@@ -47,11 +57,56 @@ interface AIRecommendation {
 export default function AIPage() {
   const { user } = useAuth()
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [currentSessionId, setCurrentSessionId] = useState<string>(() => {
+    return `session_${Date.now()}`
+  })
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('money-moment-chat-sessions')
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved)
+          return parsed.map((session: any) => ({
+            ...session,
+            createdAt: new Date(session.createdAt),
+            updatedAt: new Date(session.updatedAt),
+            messages: session.messages.map((msg: any) => ({
+              ...msg,
+              timestamp: new Date(msg.timestamp)
+            }))
+          }))
+        } catch (error) {
+          console.error('チャットセッション履歴の読み込みエラー:', error)
+        }
+      }
+    }
+    return []
+  })
+  const [showChatList, setShowChatList] = useState(false)
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    // 既存の単一履歴から新形式に移行
+    if (typeof window !== 'undefined') {
+      const oldSaved = localStorage.getItem('money-moment-chat-history')
+      if (oldSaved) {
+        try {
+          const parsed = JSON.parse(oldSaved)
+          const oldMessages = parsed.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }))
+          // 旧形式のデータを削除
+          localStorage.removeItem('money-moment-chat-history')
+          return oldMessages
+        } catch (error) {
+          console.error('旧チャット履歴の読み込みエラー:', error)
+        }
+      }
+    }
+    return []
+  })
   const [inputMessage, setInputMessage] = useState('')
   const [isTyping, setIsTyping] = useState(false)
-  const [selectedModel, setSelectedModel] = useState('gemini-1.5-flash')
-  const [showModelSelector, setShowModelSelector] = useState(false)
+  const selectedModel = 'gemini-1.5-flash'
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -64,18 +119,57 @@ export default function AIPage() {
     scrollToBottom()
   }, [messages])
 
+  // セッションとメッセージの保存
+  const saveCurrentSession = useCallback(() => {
+    if (messages.length === 0 || typeof window === 'undefined') return
+    
+    const sessionTitle = messages.find(msg => msg.type === 'user')?.content.slice(0, 30) + '...' || '新しい会話'
+    const now = new Date()
+    
+    setChatSessions(prev => {
+      const currentSession: ChatSession = {
+        id: currentSessionId,
+        title: sessionTitle,
+        messages: messages,
+        createdAt: prev.find(s => s.id === currentSessionId)?.createdAt || now,
+        updatedAt: now
+      }
+      
+      const updatedSessions = prev.filter(s => s.id !== currentSessionId)
+      updatedSessions.unshift(currentSession)
+      
+      // 最新20セッションまで保持
+      const limitedSessions = updatedSessions.slice(0, 20)
+      
+      localStorage.setItem('money-moment-chat-sessions', JSON.stringify(limitedSessions))
+      return limitedSessions
+    })
+  }, [messages, currentSessionId])
+
+  // messages が変更されたときに自動保存
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveCurrentSession()
+    }
+  }, [messages, saveCurrentSession])
+
   // ユーザープロフィール取得と初期メッセージ
   useEffect(() => {
     if (user) {
       loadUserProfile()
-      // 初期ウェルカムメッセージ
-      const welcomeMessage: ChatMessage = {
-        id: 'welcome',
-        type: 'ai',
-        content: 'こんにちは！私はMoney MomentのAIアシスタントです。お得情報の検索、節約アドバイス、家計管理のご相談など、何でもお気軽にお話しください！',
-        timestamp: new Date()
-      }
-      setMessages([welcomeMessage])
+      // 履歴がない場合のみウェルカムメッセージを追加
+      setMessages(prev => {
+        if (prev.length === 0) {
+          const welcomeMessage: ChatMessage = {
+            id: 'welcome',
+            type: 'ai',
+            content: 'こんにちは！私はMoney MomentのAIアシスタントです。お得情報の検索、節約アドバイス、家計管理のご相談など、何でもお気軽にお話しください！',
+            timestamp: new Date()
+          }
+          return [welcomeMessage]
+        }
+        return prev
+      })
     }
   }, [user])
 
@@ -114,9 +208,7 @@ export default function AIPage() {
         },
         body: JSON.stringify({ 
           message: content,
-          userProfile, 
-          model: selectedModel,
-          chatHistory: messages 
+          userProfile
         }),
       });
 
@@ -152,6 +244,57 @@ export default function AIPage() {
   // クイック返信用の関数
   const sendQuickReply = (message: string) => {
     sendMessage(message)
+  }
+
+  // 新しい会話を開始
+  const startNewChat = () => {
+    // 現在のセッションを保存してから新しいセッションを開始
+    if (messages.length > 0) {
+      saveCurrentSession()
+    }
+    
+    const newSessionId = `session_${Date.now()}`
+    setCurrentSessionId(newSessionId)
+    setMessages([])
+    setShowChatList(false)
+    
+    // ウェルカムメッセージを表示
+    if (user) {
+      const welcomeMessage: ChatMessage = {
+        id: 'welcome',
+        type: 'ai',
+        content: 'こんにちは！私はMoney MomentのAIアシスタントです。お得情報の検索、節約アドバイス、家計管理のご相談など、何でもお気軽にお話しください！',
+        timestamp: new Date()
+      }
+      setMessages([welcomeMessage])
+    }
+  }
+
+  // 過去のセッションを読み込み
+  const loadSession = (session: ChatSession) => {
+    // 現在のセッションを保存
+    if (messages.length > 0) {
+      saveCurrentSession()
+    }
+    
+    setCurrentSessionId(session.id)
+    setMessages(session.messages)
+    setShowChatList(false)
+  }
+
+  // セッションを削除
+  const deleteSession = (sessionId: string) => {
+    const updatedSessions = chatSessions.filter(s => s.id !== sessionId)
+    setChatSessions(updatedSessions)
+    
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('money-moment-chat-sessions', JSON.stringify(updatedSessions))
+    }
+    
+    // 現在のセッションが削除された場合は新しい会話を開始
+    if (sessionId === currentSessionId) {
+      startNewChat()
+    }
   }
 
   // Enter キー送信
@@ -229,103 +372,120 @@ export default function AIPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 flex flex-col">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 p-4 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Brain className="h-6 w-6 text-zaim-blue-500" />
-            <h1 className="text-lg font-bold text-gray-800">AIアシスタント</h1>
-            <Badge className="bg-green-100 text-green-700 text-xs">{selectedModel}</Badge>
-          </div>
-          <div className="flex items-center gap-2">
+    <div className="min-h-screen bg-gray-50 pb-20 flex">
+      {/* Left Sidebar - Chat History */}
+      {showChatList && (
+        <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+          {/* Sidebar Header */}
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-800">会話履歴</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowChatList(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ×
+              </Button>
+            </div>
             <Button
-              variant="outline"
+              onClick={startNewChat}
+              className="w-full mt-3 bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white"
               size="sm"
-              onClick={() => setShowModelSelector(!showModelSelector)}
-              className="text-gray-600 border-gray-300 hover:bg-gray-50"
             >
-              <Settings className="h-4 w-4" />
+              <MessageCircle className="h-4 w-4 mr-2" />
+              新しい会話
             </Button>
-            <div className="w-8 h-8 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center">
-              {userProfile?.avatar_url ? (
-                <img 
-                  src={userProfile.avatar_url} 
-                  alt="プロフィール画像"
-                  className="w-full h-full object-cover"
-                />
+          </div>
+          
+          {/* Chat Sessions List */}
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="space-y-2">
+              {chatSessions.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-8">まだ会話履歴がありません</p>
               ) : (
-                <User className="h-4 w-4 text-gray-600" />
+                chatSessions.map((session) => (
+                  <div 
+                    key={session.id} 
+                    className={`rounded-lg border p-3 hover:bg-gray-50 transition-colors ${
+                      session.id === currentSessionId ? 'bg-zaim-blue-50 border-zaim-blue-200' : 'bg-white border-gray-200'
+                    }`}
+                  >
+                    <Button
+                      variant="ghost"
+                      onClick={() => loadSession(session)}
+                      className="w-full justify-start text-left h-auto p-0 hover:bg-transparent"
+                    >
+                      <div className="flex flex-col items-start w-full">
+                        <span className="text-sm font-medium text-gray-800 truncate w-full">
+                          {session.title}
+                        </span>
+                        <span className="text-xs text-gray-500 mt-1">
+                          {session.updatedAt.toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' })} {session.updatedAt.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteSession(session.id)}
+                      className="text-gray-400 hover:text-red-500 mt-2 w-full"
+                      title="削除"
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      削除
+                    </Button>
+                  </div>
+                ))
               )}
             </div>
           </div>
         </div>
+      )}
 
-        {/* Model Selection (collapsible) */}
-        {showModelSelector && (
-          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-            <h3 className="text-sm font-medium text-black mb-2">AIモデル選択</h3>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  id="gemini-flash"
-                  name="model"
-                  value="gemini-1.5-flash"
-                  checked={selectedModel === 'gemini-1.5-flash'}
-                  onChange={(e) => setSelectedModel(e.target.value)}
-                  className="w-3 h-3 text-zaim-blue-600"
-                />
-                <label htmlFor="gemini-flash" className="text-xs text-black">
-                  Flash 1.5 <Badge className="ml-1 bg-green-100 text-green-700 text-xs px-1 py-0">高速</Badge>
-                </label>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  id="gemini-pro"
-                  name="model"
-                  value="gemini-1.5-pro"
-                  checked={selectedModel === 'gemini-1.5-pro'}
-                  onChange={(e) => setSelectedModel(e.target.value)}
-                  className="w-3 h-3 text-zaim-blue-600"
-                />
-                <label htmlFor="gemini-pro" className="text-xs text-black">
-                  Pro 1.5 <Badge className="ml-1 bg-blue-100 text-blue-700 text-xs px-1 py-0">高性能</Badge>
-                </label>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  id="gemini-flash-8b"
-                  name="model"
-                  value="gemini-1.5-flash-8b"
-                  checked={selectedModel === 'gemini-1.5-flash-8b'}
-                  onChange={(e) => setSelectedModel(e.target.value)}
-                  className="w-3 h-3 text-zaim-blue-600"
-                />
-                <label htmlFor="gemini-flash-8b" className="text-xs text-black">
-                  Flash 8B <Badge className="ml-1 bg-orange-100 text-orange-700 text-xs px-1 py-0">最高速</Badge>
-                </label>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  id="gemini-2-flash"
-                  name="model"
-                  value="gemini-2.0-flash-exp"
-                  checked={selectedModel === 'gemini-2.0-flash-exp'}
-                  onChange={(e) => setSelectedModel(e.target.value)}
-                  className="w-3 h-3 text-zaim-blue-600"
-                />
-                <label htmlFor="gemini-2-flash" className="text-xs text-black">
-                  Flash 2.0 <Badge className="ml-1 bg-purple-100 text-purple-700 text-xs px-1 py-0">実験版</Badge>
-                </label>
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 p-4 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Brain className="h-6 w-6 text-zaim-blue-500" />
+              <h1 className="text-lg font-bold text-gray-800">AIアシスタント</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowChatList(!showChatList)}
+                className="text-gray-600 border-gray-300 hover:bg-gray-50"
+                title="会話履歴"
+              >
+                <History className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={startNewChat}
+                className="text-gray-600 border-gray-300 hover:bg-gray-50"
+                title="新しい会話"
+              >
+                <MessageCircle className="h-4 w-4" />
+              </Button>
+              <div className="w-8 h-8 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center">
+                {userProfile?.avatar_url ? (
+                  <img 
+                    src={userProfile.avatar_url} 
+                    alt="プロフィール画像"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="h-4 w-4 text-gray-600" />
+                )}
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
 
       {/* Chat Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
@@ -500,8 +660,9 @@ export default function AIPage() {
         </div>
       </div>
 
-      <div className="relative z-30">
-        <BottomNav currentPage="ai" />
+        <div className="relative z-30">
+          <BottomNav currentPage="ai" />
+        </div>
       </div>
     </div>
   )
