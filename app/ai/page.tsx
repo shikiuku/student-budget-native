@@ -507,8 +507,8 @@ export default function AIPage() {
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : message.type === 'system' ? 'justify-center' : 'justify-start'}`}>
             {message.type === 'ai' && (
-              <div className="w-8 h-8 bg-zaim-blue-500 rounded-full flex items-center justify-center mr-2 mt-1 flex-shrink-0">
-                <Brain className="h-4 w-4 text-white" />
+              <div className="w-10 h-10 bg-zaim-blue-500 rounded-full flex items-center justify-center mr-3 mt-1 flex-shrink-0 shadow-md">
+                <Brain className="h-5 w-5 text-white" />
               </div>
             )}
             
@@ -569,7 +569,7 @@ export default function AIPage() {
             </div>
 
             {message.type === 'user' && (
-              <div className="w-8 h-8 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center ml-2 mt-1 flex-shrink-0">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full overflow-hidden flex items-center justify-center ml-3 mt-1 flex-shrink-0 shadow-md border-2 border-white">
                 {userProfile?.avatar_url ? (
                   <img 
                     src={userProfile.avatar_url} 
@@ -577,7 +577,7 @@ export default function AIPage() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <User className="h-4 w-4 text-gray-600" />
+                  <User className="h-5 w-5 text-blue-700" />
                 )}
               </div>
             )}
@@ -587,14 +587,14 @@ export default function AIPage() {
         {/* Typing indicator */}
         {isTyping && (
           <div className="flex justify-start">
-            <div className="w-8 h-8 bg-zaim-blue-500 rounded-full flex items-center justify-center mr-2 mt-1">
-              <Brain className="h-4 w-4 text-white" />
+            <div className="w-10 h-10 bg-zaim-blue-500 rounded-full flex items-center justify-center mr-3 mt-1 flex-shrink-0 shadow-md">
+              <Brain className="h-5 w-5 text-white" />
             </div>
             <div className="bg-white border border-gray-200 rounded-lg rounded-bl-none p-3 shadow-sm">
               <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                <div className="w-2 h-2 bg-zaim-blue-400 rounded-full animate-pulse"></div>
+                <div className="w-2 h-2 bg-zaim-blue-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-zaim-blue-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
               </div>
             </div>
           </div>
