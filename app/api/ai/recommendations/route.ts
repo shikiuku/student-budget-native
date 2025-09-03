@@ -84,8 +84,6 @@ categoryは "subsidy", "discount", "benefit", "tip" のいずれかを使用し�
     
     console.log('JSON形式が見つかりませんでした。全文:', text);
     throw new Error('AI応答の形式が正しくありません');
-    
-    return NextResponse.json({ recommendations });
   } catch (error) {
     console.error('AI推奨情報生成エラー詳細:', error);
     console.error('エラーメッセージ:', (error as any)?.message);
