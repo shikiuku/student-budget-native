@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { DevAccessGuard } from "@/components/dev-access-guard"
+import DevAccessGuard from "@/components/dev-access-guard"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"

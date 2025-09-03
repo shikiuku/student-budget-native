@@ -11,7 +11,7 @@ interface DevAccessGuardProps {
   children: React.ReactNode
 }
 
-export function DevAccessGuard({ children }: DevAccessGuardProps) {
+export default function DevAccessGuard({ children }: DevAccessGuardProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
