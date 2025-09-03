@@ -26,7 +26,7 @@ import {
   Gamepad2
 } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
-import { createPost, getPosts, type Post } from '@/lib/api/posts'
+import { createPost, getPosts, updatePost, type Post } from '@/lib/api/posts'
 import { likePost, unlikePost, checkUserLikedPosts } from '@/lib/api/likes'
 import { bookmarkPost, unbookmarkPost, checkUserBookmarkedPosts } from '@/lib/api/bookmarks'
 import { PostCard } from '@/components/post-card'
@@ -90,6 +90,8 @@ export default function TipsPage() {
   const [likedPosts, setLikedPosts] = useState<Record<string, boolean>>({})
   const [bookmarkedPosts, setBookmarkedPosts] = useState<Record<string, boolean>>({})
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  const [editingPost, setEditingPost] = useState<Post | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   // データ取得
   useEffect(() => {
@@ -255,6 +257,68 @@ export default function TipsPage() {
     ))
   }
 
+  // 投稿編集処理
+  const handleEdit = (post: Post) => {
+    setEditingPost(post)
+    setTitle(post.title)
+    setContent(post.content)
+    setSelectedCategory(post.category)
+    setSavingsEffect(post.savings_effect || '')
+    setIsEditDialogOpen(true)
+  }
+
+  // 投稿更新処理
+  const handleUpdate = async () => {
+    if (!title.trim() || !content.trim() || !selectedCategory || !editingPost) {
+      alert('タイトル、内容、カテゴリを入力してください')
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      const { data, error } = await updatePost(editingPost.id, {
+        title: title.trim(),
+        content: content.trim(),
+        category: selectedCategory,
+        savings_effect: savingsEffect.trim() || undefined
+      })
+
+      if (error) {
+        console.error('投稿更新エラー:', error)
+        alert('投稿の更新に失敗しました')
+        return
+      }
+
+      // フォームをリセット
+      setTitle('')
+      setContent('')
+      setSelectedCategory('')
+      setSavingsEffect('')
+      setEditingPost(null)
+      setIsEditDialogOpen(false)
+
+      // 投稿一覧を再読み込み
+      loadPosts()
+      
+      alert('投稿が更新されました！')
+    } catch (error) {
+      console.error('投稿更新エラー:', error)
+      alert('投稿の更新に失敗しました')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // 編集ダイアログのキャンセル処理
+  const handleEditCancel = () => {
+    setTitle('')
+    setContent('')
+    setSelectedCategory('')
+    setSavingsEffect('')
+    setEditingPost(null)
+    setIsEditDialogOpen(false)
+  }
+
 
   return (
     <div className="min-h-screen bg-white pb-20">
@@ -305,6 +369,7 @@ export default function TipsPage() {
                     onLike={handleLike}
                     onBookmark={handleBookmark}
                     onDelete={handleDelete}
+                    onEdit={handleEdit}
                     onCommentCountUpdate={handleCommentCountUpdate}
                   />
                 );
@@ -360,10 +425,9 @@ export default function TipsPage() {
                 {[
                   { value: '食費', icon: Utensils, label: '食費' },
                   { value: '交通費', icon: Car, label: '交通費' },
-                  { value: '娯楽・趣味', icon: Gamepad2, label: '娯楽・趣味' },
-                  { value: '教材・書籍', icon: BookOpen, label: '教材・書籍' },
-                  { value: '衣類・雑貨', icon: Shirt, label: '衣類・雑貨' },
-                  { value: '通信費', icon: Smartphone, label: '通信費' },
+                  { value: '娯楽', icon: Gamepad2, label: '娯楽・趣味' },
+                  { value: '学用品', icon: BookOpen, label: '教材・書籍' },
+                  { value: '衣類', icon: Shirt, label: '衣類・雑貨' },
                   { value: 'その他', icon: Tag, label: 'その他' }
                 ].map((category) => {
                   const Icon = category.icon;
@@ -417,6 +481,120 @@ export default function TipsPage() {
             >
               {isSubmitting ? '投稿中...' : '投稿する'}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Post Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          handleEditCancel()
+        }
+      }}>
+        <DialogContent className="sm:max-w-[425px] bg-white border-gray-200">
+          <DialogHeader>
+            <DialogTitle className="text-black">投稿を編集</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-sm font-medium text-black mb-1 block">タイトル</label>
+              <input 
+                type="text" 
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="例：お弁当作りで食費節約"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-zaim-blue-500 bg-white text-black"
+              />
+            </div>
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-sm font-medium text-black">内容</label>
+                <span className="text-xs text-gray-500">{content.length}/500</span>
+              </div>
+              <textarea 
+                rows={4}
+                maxLength={500}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="詳しい節約方法やコツを教えてください..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-zaim-blue-500 bg-white text-black resize-none modal-textarea"
+                style={{
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#f8f9fa #ffffff'
+                }}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-black mb-1 block">カテゴリを選択</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { value: '食費', icon: Utensils, label: '食費' },
+                  { value: '交通費', icon: Car, label: '交通費' },
+                  { value: '娯楽', icon: Gamepad2, label: '娯楽・趣味' },
+                  { value: '学用品', icon: BookOpen, label: '教材・書籍' },
+                  { value: '衣類', icon: Shirt, label: '衣類・雑貨' },
+                  { value: 'その他', icon: Tag, label: 'その他' }
+                ].map((category) => {
+                  const Icon = category.icon;
+                  return (
+                    <label key={category.value} className="flex flex-col items-center cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name="edit-category" 
+                        value={category.value}
+                        className="peer sr-only"
+                        checked={selectedCategory === category.value}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                      />
+                      <div className={`w-full p-3 border-2 rounded-lg transition-colors ${
+                        selectedCategory === category.value 
+                          ? `${getCategoryColors(category.value).bg} border-current`
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}>
+                        <div className="flex flex-col items-center space-y-1">
+                          <Icon className={`h-5 w-5 ${
+                            selectedCategory === category.value 
+                              ? getCategoryColors(category.value).icon
+                              : 'text-gray-600'
+                          }`} />
+                          <span className={`text-xs ${
+                            selectedCategory === category.value 
+                              ? getCategoryColors(category.value).text
+                              : 'text-gray-700'
+                          }`}>{category.label}</span>
+                        </div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-black mb-1 block">節約効果</label>
+              <input 
+                type="text" 
+                value={savingsEffect}
+                onChange={(e) => setSavingsEffect(e.target.value)}
+                placeholder="月1,000円"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-zaim-blue-500 bg-white text-black"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleEditCancel}
+                variant="outline"
+                className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                キャンセル
+              </Button>
+              <Button 
+                onClick={handleUpdate}
+                disabled={isSubmitting}
+                className="flex-1 bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white disabled:opacity-50"
+              >
+                {isSubmitting ? '更新中...' : '更新する'}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

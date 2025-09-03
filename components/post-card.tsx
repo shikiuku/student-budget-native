@@ -12,7 +12,8 @@ import {
   User,
   MessageCircle,
   MoreHorizontal,
-  Trash2
+  Trash2,
+  Edit3
 } from "lucide-react"
 import { useAuth } from "@/components/auth-provider"
 import { deletePost, type Post } from '@/lib/api/posts'
@@ -29,6 +30,7 @@ interface PostCardProps {
   onLike: (postId: string, isCurrentlyLiked: boolean) => void
   onBookmark: (postId: string, isCurrentlyBookmarked: boolean) => void
   onDelete?: (postId: string) => void
+  onEdit?: (post: Post) => void
   onCommentCountUpdate?: (postId: string, newCount: number) => void
 }
 
@@ -96,7 +98,7 @@ const formatTimeAgo = (dateString: string) => {
   return date.toLocaleDateString('ja-JP')
 }
 
-export function PostCard({ post, isLiked, isBookmarked, onLike, onBookmark, onDelete, onCommentCountUpdate }: PostCardProps) {
+export function PostCard({ post, isLiked, isBookmarked, onLike, onBookmark, onDelete, onEdit, onCommentCountUpdate }: PostCardProps) {
   const { user } = useAuth()
   const [isDeleting, setIsDeleting] = useState(false)
   const [comments, setComments] = useState<Comment[]>([])
@@ -152,7 +154,10 @@ export function PostCard({ post, isLiked, isBookmarked, onLike, onBookmark, onDe
   const loadComments = async () => {
     setIsLoadingComments(true)
     try {
+      console.log('コメント取得開始 - Post ID:', post.id)
       const { data, error } = await getPostComments(post.id)
+      
+      console.log('コメント取得結果:', { data, error })
       
       if (error) {
         console.error('コメント取得エラー:', error)
@@ -161,6 +166,7 @@ export function PostCard({ post, isLiked, isBookmarked, onLike, onBookmark, onDe
       }
       
       const commentsData = data || []
+      console.log('取得したコメント数:', commentsData.length)
       setComments(commentsData)
       return commentsData.length
     } catch (error) {
@@ -397,6 +403,15 @@ export function PostCard({ post, isLiked, isBookmarked, onLike, onBookmark, onDe
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="bg-white border-gray-200">
+                      {onEdit && (
+                        <DropdownMenuItem 
+                          onClick={() => onEdit(post)}
+                          className="text-blue-600 hover:text-blue-600 hover:bg-blue-50 focus:text-blue-600 focus:bg-blue-50 cursor-pointer"
+                        >
+                          <Edit3 className="h-4 w-4 mr-2" />
+                          編集
+                        </DropdownMenuItem>
+                      )}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <DropdownMenuItem 

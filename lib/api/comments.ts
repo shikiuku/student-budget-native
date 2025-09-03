@@ -23,24 +23,60 @@ export interface CommentCreateData {
 // 投稿のコメント一覧を取得
 export async function getPostComments(postId: string) {
   try {
-    const { data: commentsData, error } = await supabase
+    console.log('Supabaseクエリ開始 - Post ID:', postId)
+    
+    // まずコメントを取得
+    const { data: commentsData, error: commentsError } = await supabase
       .from('post_comments')
       .select(`
-        *,
-        user_profiles (
-          id,
-          name,
-          school_type,
-          grade,
-          avatar_url
-        )
+        id,
+        post_id,
+        user_id,
+        content,
+        created_at,
+        updated_at
       `)
       .eq('post_id', postId)
       .order('created_at', { ascending: true })
 
-    if (error) throw error
+    if (commentsError) {
+      console.error('コメント取得エラー:', commentsError)
+      throw commentsError
+    }
 
-    return { data: commentsData as Comment[], error: null }
+    if (!commentsData || commentsData.length === 0) {
+      return { data: [], error: null }
+    }
+
+    // ユーザーIDのリストを取得
+    const userIds = [...new Set(commentsData.map(comment => comment.user_id))]
+    
+    // ユーザープロフィールを別途取得（avatar_urlも含める）
+    const { data: userProfiles, error: profilesError } = await supabase
+      .from('user_profiles')
+      .select('id, name, school_type, grade, avatar_url')
+      .in('id', userIds)
+
+    if (profilesError) {
+      console.error('プロフィール取得エラー:', profilesError)
+      // プロフィール取得に失敗してもコメントは表示する
+    }
+
+    // コメントとプロフィールを結合
+    const commentsWithProfiles = commentsData.map(comment => {
+      const userProfile = userProfiles?.find(profile => profile.id === comment.user_id)
+      return {
+        ...comment,
+        user_profiles: userProfile || null
+      }
+    })
+
+    console.log('Supabaseクエリ結果:', { 
+      comments: commentsWithProfiles.length,
+      firstComment: commentsWithProfiles[0]
+    })
+
+    return { data: commentsWithProfiles as Comment[], error: null }
   } catch (error) {
     console.error('コメント取得エラー:', error)
     return { data: null, error }

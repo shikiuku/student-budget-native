@@ -167,6 +167,15 @@ export default function ProfilePage() {
           data = likedResult.data || []
           setLikedPosts(data)
           console.log('いいねした投稿データ:', data)
+          // 各投稿のユーザープロフィールを確認
+          data.forEach((post, index) => {
+            console.log(`投稿${index + 1}:`, {
+              title: post.title,
+              user_id: post.user_id,
+              user_profiles: post.user_profiles,
+              user_name: post.user_profiles?.name
+            })
+          })
           break
         case 'bookmarked':
           const bookmarkedResult = await getUserBookmarkedPosts(user.id, 20)

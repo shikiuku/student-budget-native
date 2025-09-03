@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Home, Receipt, Calendar, Gift, Lightbulb, User, Bell } from "lucide-react"
+import { Home, Receipt, Calendar, Brain, Lightbulb, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface BottomNavProps {
@@ -13,7 +13,7 @@ export function BottomNav({ currentPage }: BottomNavProps) {
     { href: "/", icon: Home, label: "ホーム", id: "home" },
     { href: "/expenses", icon: Receipt, label: "支出", id: "expenses" },
     { href: "/calendar", icon: Calendar, label: "カレンダー", id: "calendar" },
-    { href: "/subsidies", icon: Gift, label: "補助金", id: "subsidies" },
+    { href: "/ai", icon: Brain, label: "AI", id: "ai" },
     { href: "/tips", icon: Lightbulb, label: "節約", id: "tips" },
     { href: "/profile", icon: User, label: "ユーザー", id: "profile" },
   ]
