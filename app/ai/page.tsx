@@ -123,6 +123,13 @@ export default function AIPage() {
   const saveCurrentSession = useCallback(() => {
     if (messages.length === 0 || typeof window === 'undefined') return
     
+    // ユーザーからのメッセージが1つでもあるかチェック（ウェルカムメッセージ以外）
+    const hasUserMessage = messages.some(msg => msg.type === 'user')
+    if (!hasUserMessage) {
+      // ユーザーメッセージがない場合は保存しない
+      return
+    }
+    
     const sessionTitle = messages.find(msg => msg.type === 'user')?.content.slice(0, 30) + '...' || '新しい会話'
     const now = new Date()
     
@@ -249,8 +256,12 @@ export default function AIPage() {
   // 新しい会話を開始
   const startNewChat = () => {
     // 現在のセッションを保存してから新しいセッションを開始
+    // ただし、ユーザーメッセージがある場合のみ保存
     if (messages.length > 0) {
-      saveCurrentSession()
+      const hasUserMessage = messages.some(msg => msg.type === 'user')
+      if (hasUserMessage) {
+        saveCurrentSession()
+      }
     }
     
     const newSessionId = `session_${Date.now()}`
@@ -273,8 +284,12 @@ export default function AIPage() {
   // 過去のセッションを読み込み
   const loadSession = (session: ChatSession) => {
     // 現在のセッションを保存
+    // ただし、ユーザーメッセージがある場合のみ保存
     if (messages.length > 0) {
-      saveCurrentSession()
+      const hasUserMessage = messages.some(msg => msg.type === 'user')
+      if (hasUserMessage) {
+        saveCurrentSession()
+      }
     }
     
     setCurrentSessionId(session.id)
