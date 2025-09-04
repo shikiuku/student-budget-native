@@ -23,7 +23,9 @@ import {
   Shirt,
   MessageCircle,
   Tag,
-  Gamepad2
+  Gamepad2,
+  Filter,
+  ArrowUpDown
 } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { createPost, getPosts, updatePost, type Post } from '@/lib/api/posts'
@@ -92,6 +94,8 @@ export default function TipsPage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [editingPost, setEditingPost] = useState<Post | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [sortBy, setSortBy] = useState<'latest' | 'likes' | 'category'>('latest')
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('')
 
   // データ取得
   useEffect(() => {
@@ -319,6 +323,32 @@ export default function TipsPage() {
     setIsEditDialogOpen(false)
   }
 
+  // 並び替え・フィルタリング機能
+  const filteredAndSortedPosts = React.useMemo(() => {
+    let filtered = posts
+    
+    // カテゴリフィルタリング
+    if (selectedCategoryFilter) {
+      filtered = filtered.filter(post => post.category === selectedCategoryFilter)
+    }
+    
+    // 並び替え
+    switch (sortBy) {
+      case 'likes':
+        return [...filtered].sort((a, b) => b.likes_count - a.likes_count)
+      case 'category':
+        return [...filtered].sort((a, b) => a.category.localeCompare(b.category, 'ja'))
+      case 'latest':
+      default:
+        return [...filtered].sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )
+    }
+  }, [posts, sortBy, selectedCategoryFilter])
+
+  // カテゴリリスト
+  const categories = ['食費', '交通費', '娯楽', '学用品', '衣類', 'その他']
+
 
   return (
     <div className="min-h-screen bg-white pb-20">
@@ -345,18 +375,79 @@ export default function TipsPage() {
 
         {/* Posts List */}
         <div className="space-y-4">
-          <h2 className="text-lg font-bold text-black">みんなの節約アイディア</h2>
+          <div className="flex flex-col gap-4">
+            <h2 className="text-lg font-bold text-black">みんなの節約アイディア</h2>
+            
+            {/* Filter and Sort Controls */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  <Button
+                    variant={selectedCategoryFilter === '' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setSelectedCategoryFilter('')}
+                    className="text-xs"
+                  >
+                    すべて
+                  </Button>
+                  {categories.map(category => (
+                    <Button
+                      key={category}
+                      variant={selectedCategoryFilter === category ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setSelectedCategoryFilter(category)}
+                      className="text-xs"
+                    >
+                      {category}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  <Button
+                    variant={sortBy === 'latest' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setSortBy('latest')}
+                    className="text-xs"
+                  >
+                    新着順
+                  </Button>
+                  <Button
+                    variant={sortBy === 'likes' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setSortBy('likes')}
+                    className="text-xs"
+                  >
+                    ハート順
+                  </Button>
+                  <Button
+                    variant={sortBy === 'category' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setSortBy('category')}
+                    className="text-xs"
+                  >
+                    カテゴリ順
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
           
           {loading ? (
             <PostListSkeleton count={5} />
-          ) : posts.length === 0 ? (
+          ) : filteredAndSortedPosts.length === 0 ? (
             <div className="text-center py-8">
-              <div className="text-gray-500">まだ投稿がありません</div>
-              <div className="text-sm text-gray-400 mt-1">最初の節約アイディアを投稿してみませんか？</div>
+              <div className="text-gray-500">
+                {selectedCategoryFilter ? `「${selectedCategoryFilter}」の投稿がありません` : 'まだ投稿がありません'}
+              </div>
+              <div className="text-sm text-gray-400 mt-1">
+                {selectedCategoryFilter ? 'フィルターを変更するか、' : ''}最初の節約アイディアを投稿してみませんか？
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
-              {posts.map((post) => {
+              {filteredAndSortedPosts.map((post) => {
                 const isLiked = likedPosts[post.id] || false;
                 const isBookmarked = bookmarkedPosts[post.id] || false;
                 

@@ -1,6 +1,157 @@
 'use client';
 
 import React, { useState } from 'react';
+
+// Filter/Sort Component
+const FilterSortExample = () => {
+  const [selectedCategory, setSelectedCategory] = useState('')
+  const [sortBy, setSortBy] = useState('latest')
+  const categories = ['食費', '交通費', '娯楽', '学用品', '衣類', 'その他']
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold">フィルター・ソート コンポーネント</h3>
+      
+      {/* Style 1: Simple dropdowns */}
+      <div className="p-4 border rounded-lg">
+        <h4 className="text-sm font-medium mb-3 text-gray-600">スタイル1: シンプルドロップダウン</h4>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">カテゴリ:</span>
+            <select 
+              className="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:border-blue-300 focus:outline-none focus:ring-1 focus:ring-blue-200" 
+              style={{
+                appearance: 'none', 
+                backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3e%3c/svg%3e")', 
+                backgroundPosition: 'right 0.5rem center', 
+                backgroundRepeat: 'no-repeat', 
+                backgroundSize: '1.5em 1.5em', 
+                paddingRight: '2.5rem',
+                border: 'none',
+                outline: 'none'
+              }}
+            >
+              <option style={{border: 'none', outline: 'none'}}>すべて</option>
+              {categories.map(cat => <option key={cat} style={{border: 'none', outline: 'none'}}>{cat}</option>)}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">並び順:</span>
+            <select 
+              className="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:border-blue-300 focus:outline-none focus:ring-1 focus:ring-blue-200" 
+              style={{
+                appearance: 'none', 
+                backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3e%3c/svg%3e")', 
+                backgroundPosition: 'right 0.5rem center', 
+                backgroundRepeat: 'no-repeat', 
+                backgroundSize: '1.5em 1.5em', 
+                paddingRight: '2.5rem',
+                border: 'none',
+                outline: 'none'
+              }}
+            >
+              <option style={{border: 'none', outline: 'none'}}>新着順</option>
+              <option style={{border: 'none', outline: 'none'}}>ハート数順</option>
+              <option style={{border: 'none', outline: 'none'}}>カテゴリ順</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Style 2: Clean gray background */}
+      <div className="p-4 border rounded-lg">
+        <h4 className="text-sm font-medium mb-3 text-gray-600">スタイル2: グレー背景</h4>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">カテゴリ:</span>
+            <select 
+              className="text-sm border-0 rounded px-2 py-1 bg-gray-100 text-gray-700 focus:bg-gray-200 focus:outline-none" 
+              style={{
+                appearance: 'none', 
+                backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3e%3c/svg%3e")', 
+                backgroundPosition: 'right 0.5rem center', 
+                backgroundRepeat: 'no-repeat', 
+                backgroundSize: '1.5em 1.5em', 
+                paddingRight: '2.5rem',
+                border: 'none',
+                outline: 'none'
+              }}
+            >
+              <option style={{border: 'none', outline: 'none', backgroundColor: 'white'}}>すべて</option>
+              {categories.map(cat => <option key={cat} style={{border: 'none', outline: 'none', backgroundColor: 'white'}}>{cat}</option>)}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">並び順:</span>
+            <select 
+              className="text-sm border-0 rounded px-2 py-1 bg-gray-100 text-gray-700 focus:bg-gray-200 focus:outline-none" 
+              style={{
+                appearance: 'none', 
+                backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3e%3c/svg%3e")', 
+                backgroundPosition: 'right 0.5rem center', 
+                backgroundRepeat: 'no-repeat', 
+                backgroundSize: '1.5em 1.5em', 
+                paddingRight: '2.5rem',
+                border: 'none',
+                outline: 'none'
+              }}
+            >
+              <option style={{border: 'none', outline: 'none', backgroundColor: 'white'}}>新着順</option>
+              <option style={{border: 'none', outline: 'none', backgroundColor: 'white'}}>ハート数順</option>
+              <option style={{border: 'none', outline: 'none', backgroundColor: 'white'}}>カテゴリ順</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Style 3: Blue theme */}
+      <div className="p-4 border rounded-lg">
+        <h4 className="text-sm font-medium mb-3 text-gray-600">スタイル3: ブルーテーマ</h4>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">カテゴリ:</span>
+            <select 
+              className="text-sm border border-blue-200 rounded px-2 py-1 bg-blue-50 text-blue-800 focus:ring-2 focus:ring-blue-300 focus:outline-none focus:border-blue-400" 
+              style={{
+                appearance: 'none', 
+                backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%233b82f6\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3e%3c/svg%3e")', 
+                backgroundPosition: 'right 0.5rem center', 
+                backgroundRepeat: 'no-repeat', 
+                backgroundSize: '1.5em 1.5em', 
+                paddingRight: '2.5rem',
+                border: 'none',
+                outline: 'none'
+              }}
+            >
+              <option style={{border: 'none', outline: 'none', backgroundColor: 'white'}}>すべて</option>
+              {categories.map(cat => <option key={cat} style={{border: 'none', outline: 'none', backgroundColor: 'white'}}>{cat}</option>)}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">並び順:</span>
+            <select 
+              className="text-sm border border-blue-200 rounded px-2 py-1 bg-blue-50 text-blue-800 focus:ring-2 focus:ring-blue-300 focus:outline-none focus:border-blue-400" 
+              style={{
+                appearance: 'none', 
+                backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%233b82f6\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3e%3c/svg%3e")', 
+                backgroundPosition: 'right 0.5rem center', 
+                backgroundRepeat: 'no-repeat', 
+                backgroundSize: '1.5em 1.5em', 
+                paddingRight: '2.5rem',
+                border: 'none',
+                outline: 'none'
+              }}
+            >
+              <option style={{border: 'none', outline: 'none', backgroundColor: 'white'}}>新着順</option>
+              <option style={{border: 'none', outline: 'none', backgroundColor: 'white'}}>ハート数順</option>
+              <option style={{border: 'none', outline: 'none', backgroundColor: 'white'}}>カテゴリ順</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -226,6 +377,14 @@ export default function StyleGuidePage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-black mb-2">27 UIスタイルガイド</h1>
           <p className="text-black mb-6">学生向け節約アプリで使用中のUIコンポーネント一覧</p>
+        </div>
+
+        {/* フィルター・ソートスタイル */}
+        <section className="mb-8">
+          <FilterSortExample />
+        </section>
+
+        <div className="mb-8">
           
           {/* Table of Contents */}
           <div className="bg-gray-50 p-6 rounded-lg">
