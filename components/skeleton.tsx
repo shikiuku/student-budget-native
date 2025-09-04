@@ -129,8 +129,6 @@ export function CategorySummarySkeleton() {
             <div className="flex items-center gap-2">
               {/* 金額 */}
               <Skeleton className="h-4 w-20" />
-              {/* アイコンセレクター */}
-              <Skeleton className="h-6 w-6 rounded" />
             </div>
           </div>
         ))}
