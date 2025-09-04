@@ -165,7 +165,7 @@ function HomeContent() {
     const categoryExpenses = expenses.filter(exp => exp.category_id === category.id)
     const amount = categoryExpenses.reduce((sum, exp) => sum + exp.amount, 0)
     const percentage = spent > 0 ? Math.round((amount / spent) * 100) : 0
-    const IconComponent = getCategoryIcon(category.name, undefined, category.icon)
+    const IconComponent = getCategoryIcon(category.name)
     
     return {
       id: category.id,
