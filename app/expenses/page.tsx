@@ -631,12 +631,6 @@ export default function ExpensesPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-black">¥{categoryTotal.toLocaleString()}</span>
-                      <CategoryIconSelector 
-                        categoryName={category.name}
-                        currentIcon={userProfile?.category_icons?.[category.name]}
-                        userCategoryIcons={userProfile?.category_icons || undefined}
-                        onIconChanged={handleCategoryIconChanged}
-                      />
                     </div>
                   </div>
                 )
