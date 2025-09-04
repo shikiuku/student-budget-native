@@ -7,7 +7,6 @@ import { userProfileService, expenseService, expenseCategoryService } from "@/li
 import { Progress } from "@/components/ui/progress"
 import { TrendingUp, TrendingDown, PlusCircle, BarChart3, CheckCircle, XCircle } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
-import { CategoryIconSelector } from "@/components/category-icon-selector"
 import { getCategoryIcon } from "@/lib/category-icons"
 import type { UserProfile, ExpenseWithCategory, ExpenseCategory } from "@/lib/types"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -52,15 +51,6 @@ function HomeContent() {
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [confirmationType, setConfirmationType] = useState<'success' | 'error'>('success')
 
-  // カテゴリーアイコンが変更された時の処理
-  const handleCategoryIconChanged = (categoryId: string, newIcon: string) => {
-    // カテゴリー一覧を更新
-    setCategories(prev => prev.map(category => 
-      category.id === categoryId 
-        ? { ...category, icon: newIcon }
-        : category
-    ))
-  }
 
   // Check for email confirmation status
   useEffect(() => {
@@ -424,11 +414,6 @@ function HomeContent() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-black">¥{category.amount.toLocaleString()}</span>
-                    <CategoryIconSelector 
-                      categoryName={category.name}
-                      currentIcon={category.categoryObj.icon}
-                      onIconChanged={(categoryName, newIcon) => handleCategoryIconChanged(category.id, newIcon)}
-                    />
                   </div>
                 </div>
               )
