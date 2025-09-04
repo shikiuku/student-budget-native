@@ -50,6 +50,12 @@ function HomeContent() {
   const [dataLoading, setDataLoading] = useState(true)
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [confirmationType, setConfirmationType] = useState<'success' | 'error'>('success')
+  const [mounted, setMounted] = useState(false)
+
+  // クライアントサイドでのみマウント状態を設定
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
 
   // Check for email confirmation status
@@ -189,8 +195,8 @@ function HomeContent() {
   
   const budgetStatus = getBudgetStatus(spentPercentage)
 
-  // 認証チェック中、データ読み込み中、プロフィール未設定時は全てスケルトンローディング表示
-  if (loading || !user || dataLoading || !userProfile) {
+  // マウント前、認証チェック中、データ読み込み中、プロフィール未設定時は全てスケルトンローディング表示
+  if (!mounted || loading || !user || dataLoading || !userProfile) {
     // プロフィール未設定の場合はオンボーディングにリダイレクト（バックグラウンドで実行）
     if (!loading && user && !dataLoading && !userProfile) {
       router.push('/onboarding')
