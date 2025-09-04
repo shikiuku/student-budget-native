@@ -63,6 +63,12 @@ export default function ExpensesPage() {
   const [showingAllHistory, setShowingAllHistory] = useState(false)
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [currentMonthTotal, setCurrentMonthTotal] = useState(0)
+  const [mounted, setMounted] = useState(false)
+
+  // クライアントサイドでのみマウント状態を設定
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   
   const [newExpense, setNewExpense] = useState<ExpenseForm>({
     amount: "",
@@ -329,35 +335,8 @@ export default function ExpensesPage() {
     }
   }
 
-  // Wait for auth loading to complete first
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white pb-20">
-        <div className="px-6 py-4 space-y-6 pt-6">
-          <ExpenseSummarySkeleton />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
-            <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
-          </div>
-          <ExpenseListSkeleton />
-          <CategorySummarySkeleton />
-        </div>
-        <BottomNav currentPage="expenses" />
-      </div>
-    )
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center pb-20">
-        <div className="text-center space-y-4">
-          <p className="text-gray-600">ログインが必要です</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (dataLoading) {
+  // マウント前、認証チェック中、データ読み込み中はスケルトンローディング表示
+  if (!mounted || loading || !user || dataLoading) {
     return (
       <div className="min-h-screen bg-white pb-20">
         <div className="px-6 py-4 space-y-6 pt-6">
@@ -525,7 +504,7 @@ export default function ExpensesPage() {
             <EmptyExpenses />
           ) : (
             expenses.map((expense, index) => {
-            const IconComponent = getCategoryIcon(expense.category?.name || 'その他', userProfile?.category_icons || undefined)
+            const IconComponent = getCategoryIcon(expense.category?.name || 'その他')
             const expenseDate = new Date(expense.date)
             const currentExpenseMonth = `${expenseDate.getFullYear()}年${expenseDate.getMonth() + 1}月`
             
@@ -611,7 +590,7 @@ export default function ExpensesPage() {
                          expenseDate.getFullYear() === currentMonth.getFullYear()
                 })
                 const categoryTotal = currentMonthExpenses.reduce((sum, exp) => sum + exp.amount, 0)
-                const IconComponent = getCategoryIcon(category.name, userProfile?.category_icons || undefined)
+                const IconComponent = getCategoryIcon(category.name)
                 
                 if (categoryTotal === 0) return null
                 

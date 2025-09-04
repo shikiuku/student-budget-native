@@ -25,10 +25,8 @@ export function ExpenseCardSkeleton() {
               <Skeleton className="h-6 w-20" />
               {/* カテゴリバッジ */}
               <Skeleton className="h-5 w-16 rounded-full" />
-              {/* PayPayバッジ（ランダム表示） */}
-              {Math.random() > 0.7 && (
-                <Skeleton className="h-5 w-14 rounded-full" />
-              )}
+              {/* PayPayバッジ */}
+              <Skeleton className="h-5 w-14 rounded-full" />
             </div>
             {/* 説明 */}
             <Skeleton className="h-4 w-32 mb-1" />
