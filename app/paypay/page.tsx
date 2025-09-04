@@ -216,7 +216,7 @@ export default function PayPayPage() {
                   </p>
                 </div>
 
-                <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg">
+                <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zaim-blue-400 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-zaim-blue-500">
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50">
                       <tr>

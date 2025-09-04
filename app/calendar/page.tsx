@@ -486,7 +486,7 @@ const CalendarPage = () => {
               )}
               
               {expensesByDate[selectedDate] && expensesByDate[selectedDate].length > 0 ? (
-                <div className="space-y-1 sm:space-y-2 max-h-48 md:max-h-64 overflow-y-auto">
+                <div className="space-y-1 sm:space-y-2 max-h-48 md:max-h-64 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zaim-blue-400 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-zaim-blue-500">
                   {expensesByDate[selectedDate].map((expense) => {
                 const category = categories.find(cat => cat.id === expense.category_id);
                 const IconComponent = getCategoryIcon(expense.category?.name || category?.name || 'その他', undefined, expense.category?.icon || category?.icon);

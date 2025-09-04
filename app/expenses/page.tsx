@@ -64,6 +64,13 @@ export default function ExpensesPage() {
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [currentMonthTotal, setCurrentMonthTotal] = useState(0)
   const [mounted, setMounted] = useState(false)
+  const [editingExpense, setEditingExpense] = useState<ExpenseWithCategory | null>(null)
+  const [editForm, setEditForm] = useState<ExpenseForm>({
+    amount: "",
+    category_id: "",
+    description: "",
+    date: ""
+  })
 
   // クライアントサイドでのみマウント状態を設定
   useEffect(() => {
@@ -133,7 +140,13 @@ export default function ExpensesPage() {
       const now = new Date()
       const expensesResult = await expenseService.getExpensesByMonth(user.id, now.getFullYear(), now.getMonth() + 1)
       if (expensesResult.success && expensesResult.data) {
-        setExpenses(expensesResult.data)
+        // 時間順（新しい順）でソート - created_atタイムスタンプを優先使用
+        const sortedExpenses = expensesResult.data.sort((a, b) => {
+          const aCreated = new Date(a.created_at || a.date).getTime()
+          const bCreated = new Date(b.created_at || b.date).getTime()
+          return bCreated - aCreated
+        })
+        setExpenses(sortedExpenses)
         setCurrentMonthTotal(expensesResult.data.reduce((sum, expense) => sum + expense.amount, 0))
       }
     } catch (error) {
@@ -155,7 +168,13 @@ export default function ExpensesPage() {
       // Load all expenses
       const expensesResult = await expenseService.getExpenses(user.id, 1000) // Load up to 1000 expenses
       if (expensesResult.success && expensesResult.data) {
-        setExpenses(expensesResult.data)
+        // 時間順（新しい順）でソート - created_atタイムスタンプを優先使用
+        const sortedExpenses = expensesResult.data.sort((a, b) => {
+          const aCreated = new Date(a.created_at || a.date).getTime()
+          const bCreated = new Date(b.created_at || b.date).getTime()
+          return bCreated - aCreated
+        })
+        setExpenses(sortedExpenses)
         setShowingAllHistory(true)
       }
     } catch (error) {
@@ -220,6 +239,65 @@ export default function ExpensesPage() {
     } catch (error) {
       toast({
         title: "支出追加エラー",
+        description: (error as Error).message,
+        variant: "destructive",
+      })
+    }
+  }
+
+  const startEditExpense = (expense: ExpenseWithCategory) => {
+    setEditingExpense(expense)
+    setEditForm({
+      amount: expense.amount.toString(),
+      category_id: expense.category_id,
+      description: expense.description,
+      date: expense.date
+    })
+  }
+
+  const cancelEdit = () => {
+    setEditingExpense(null)
+    setEditForm({
+      amount: "",
+      category_id: "",
+      description: "",
+      date: ""
+    })
+  }
+
+  const handleEditExpense = async () => {
+    if (!editingExpense || !editForm.amount || !editForm.category_id || !editForm.description) {
+      toast({
+        title: "入力エラー",
+        description: "すべての項目を入力してください。",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      const result = await expenseService.updateExpense(editingExpense.id, {
+        amount: parseInt(editForm.amount),
+        category_id: editForm.category_id,
+        description: editForm.description,
+        date: editForm.date
+      })
+
+      if (result.success) {
+        toast({
+          title: "支出を更新しました",
+          description: `¥${parseInt(editForm.amount).toLocaleString()} - ${editForm.description}`,
+          variant: "success",
+        })
+        
+        cancelEdit()
+        loadData()
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      toast({
+        title: "更新エラー",
         description: (error as Error).message,
         variant: "destructive",
       })
@@ -554,7 +632,12 @@ export default function ExpensesPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-zaim-blue-600 hover:bg-zaim-blue-50">
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-8 w-8 text-zaim-blue-600 hover:bg-zaim-blue-50"
+                        onClick={() => startEditExpense(expense)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button 
@@ -638,6 +721,88 @@ export default function ExpensesPage() {
                 </>
               )}
             </Button>
+          </div>
+        )}
+
+        {/* Edit Expense Modal */}
+        {editingExpense && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg w-full max-w-md p-6 space-y-4">
+              <h2 className="text-lg font-bold text-black">支出を編集</h2>
+              
+              <div>
+                <Label htmlFor="edit-amount">金額</Label>
+                <Input
+                  id="edit-amount"
+                  type="number"
+                  placeholder="500"
+                  value={editForm.amount}
+                  onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })}
+                  className="mt-1 bg-white text-black border-gray-300 focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="edit-category">カテゴリ</Label>
+                <Select
+                  value={editForm.category_id}
+                  onValueChange={(value) => setEditForm({ ...editForm, category_id: value })}
+                >
+                  <SelectTrigger className="mt-1 border-zaim-blue-200 focus:ring-zaim-blue-400 focus:border-zaim-blue-400 bg-white text-black">
+                    <SelectValue placeholder="カテゴリを選択" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border-gray-200">
+                    {categories
+                      .sort((a, b) => {
+                        // 食費を最初に表示
+                        if (a.name === '食費') return -1
+                        if (b.name === '食費') return 1
+                        // その他を最後に表示
+                        if (a.name === 'その他') return 1
+                        if (b.name === 'その他') return -1
+                        // その他のカテゴリは名前順
+                        return a.name.localeCompare(b.name)
+                      })
+                      .map((category) => (
+                      <SelectItem key={category.id} value={category.id} className="bg-white text-black hover:bg-gray-50 hover:text-black focus:bg-gray-50 focus:text-black data-[highlighted]:bg-gray-50 data-[highlighted]:text-black">
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="edit-description">説明</Label>
+                <Input
+                  id="edit-description"
+                  placeholder="コンビニ弁当"
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  className="mt-1 bg-white text-black border-gray-300 focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="edit-date">日付</Label>
+                <Input
+                  id="edit-date"
+                  type="date"
+                  value={editForm.date}
+                  onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
+                  className="mt-1 bg-white text-black border-gray-300 focus:ring-2 focus:ring-zaim-blue-400 focus:border-zaim-blue-400"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button onClick={handleEditExpense} className="flex-1 bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white">
+                  更新する
+                </Button>
+                <Button onClick={cancelEdit} variant="outline" className="flex-1 border-zaim-blue-200 text-zaim-blue-600 hover:bg-zaim-blue-50">
+                  キャンセル
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </div>
