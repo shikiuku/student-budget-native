@@ -106,6 +106,8 @@ export default function AIPage() {
   })
   const [inputMessage, setInputMessage] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [dailyMessageCount, setDailyMessageCount] = useState(0)
+  const [isDailyLimitReached, setIsDailyLimitReached] = useState(false)
   const selectedModel = 'gemini-1.5-flash'
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -164,6 +166,7 @@ export default function AIPage() {
   useEffect(() => {
     if (user) {
       loadUserProfile()
+      loadDailyUsageCount()
       // 履歴がない場合のみウェルカムメッセージを追加
       setMessages(prev => {
         if (prev.length === 0) {
@@ -192,9 +195,22 @@ export default function AIPage() {
     }
   }
 
+  const loadDailyUsageCount = () => {
+    if (!user) return
+    
+    const today = new Date().toISOString().split('T')[0]
+    const storageKey = `daily_ai_usage_${user.id}_${today}`
+    const storedCount = localStorage.getItem(storageKey)
+    const count = storedCount ? parseInt(storedCount) : 0
+    
+    setDailyMessageCount(count)
+    setIsDailyLimitReached(count >= 5)
+  }
+
   // メッセージ送信
   const sendMessage = async (content: string) => {
     if (!content.trim() || !userProfile) return
+    if (isDailyLimitReached) return
 
     const userMessage: ChatMessage = {
       id: `user_${Date.now()}`,
@@ -215,11 +231,17 @@ export default function AIPage() {
         },
         body: JSON.stringify({ 
           message: content,
-          userProfile
+          userProfile,
+          conversationHistory: messages,
+          userId: user?.id
         }),
       });
 
       if (!response.ok) {
+        if (response.status === 429) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || '1日の使用制限に達しました');
+        }
         throw new Error('AI応答の取得に失敗しました');
       }
 
@@ -234,12 +256,23 @@ export default function AIPage() {
       }
 
       setMessages(prev => [...prev, aiMessage])
+      
+      // 送信成功時に使用回数を更新
+      const today = new Date().toISOString().split('T')[0]
+      const storageKey = `daily_ai_usage_${user.id}_${today}`
+      const newCount = dailyMessageCount + 1
+      localStorage.setItem(storageKey, newCount.toString())
+      setDailyMessageCount(newCount)
+      setIsDailyLimitReached(newCount >= 5)
+      
     } catch (error) {
       console.error('AI応答エラー:', error);
       const errorMessage: ChatMessage = {
         id: `error_${Date.now()}`,
         type: 'system',
-        content: '申し訳ございません。現在AIサービスに問題が発生しています。しばらくお待ちください。',
+        content: (error as Error).message.includes('制限') 
+          ? (error as Error).message + ' 明日の0時にリセットされます。'
+          : '申し訳ございません。現在AIサービスに問題が発生しています。しばらくお待ちください。',
         timestamp: new Date()
       }
       setMessages(prev => [...prev, errorMessage])
@@ -504,6 +537,18 @@ export default function AIPage() {
 
       {/* Chat Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zaim-blue-400 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-zaim-blue-500">
+        {/* 使用回数表示 */}
+        <div className="mb-4 p-3 bg-gray-100 rounded-lg">
+          <p className="text-sm text-center text-gray-700">
+            今日の残りメッセージ数: {5 - dailyMessageCount}/5
+          </p>
+          {isDailyLimitReached && (
+            <p className="text-xs text-center text-gray-500 mt-1">
+              明日の00:00にリセットされます
+            </p>
+          )}
+        </div>
+        
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : message.type === 'system' ? 'justify-center' : 'justify-start'}`}>
             {message.type === 'ai' && (
@@ -618,6 +663,7 @@ export default function AIPage() {
                   variant="outline" 
                   size="sm"
                   onClick={() => sendQuickReply('お得な割引情報を教えて')}
+                  disabled={isDailyLimitReached}
                   className="w-full text-left justify-start border-gray-300 text-gray-700 hover:bg-gray-50"
                 >
                   <DollarSign className="h-4 w-4 mr-2" />
@@ -627,6 +673,7 @@ export default function AIPage() {
                   variant="outline" 
                   size="sm"
                   onClick={() => sendQuickReply('節約のコツを教えて')}
+                  disabled={isDailyLimitReached}
                   className="w-full text-left justify-start border-gray-300 text-gray-700 hover:bg-gray-50"
                 >
                   <Sparkles className="h-4 w-4 mr-2" />
@@ -636,6 +683,7 @@ export default function AIPage() {
                   variant="outline" 
                   size="sm"
                   onClick={() => sendQuickReply('学生向けの補助金を調べて')}
+                  disabled={isDailyLimitReached}
                   className="w-full text-left justify-start border-gray-300 text-gray-700 hover:bg-gray-50"
                 >
                   <Gift className="h-4 w-4 mr-2" />
@@ -651,27 +699,40 @@ export default function AIPage() {
 
       {/* Chat Input (Fixed Bottom) */}
       <div className="flex-shrink-0 bg-white border-t border-gray-200 p-4">
-        <div className="flex items-center gap-2">
-          <div className="flex-1 relative">
+        <div className="space-y-1">
+          {/* 文字数カウンター */}
+          <div className="text-right">
+            <span className={`text-xs ${inputMessage.length > 450 ? 'text-orange-500' : 'text-gray-500'}`}>
+              {inputMessage.length} / 500
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 relative">
             <input
               ref={inputRef}
               type="text"
               value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
+              onChange={(e) => {
+                if (e.target.value.length <= 500) {
+                  setInputMessage(e.target.value)
+                }
+              }}
               onKeyPress={handleKeyPress}
-              placeholder={userProfile ? `${userProfile.name}さん、何かお聞きしたいことはありますか？` : 'メッセージを入力...'}
-              disabled={isTyping}
+              placeholder={isDailyLimitReached ? '1日の使用制限に達しました' : userProfile ? `${userProfile.name}さん、何かお聞きしたいことはありますか？` : 'メッセージを入力...'}
+              disabled={isTyping || isDailyLimitReached}
               className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-zaim-blue-500 focus:border-transparent bg-white text-gray-800 placeholder-gray-500"
+              maxLength={500}
             />
+            </div>
+            <Button
+              onClick={() => sendMessage(inputMessage)}
+              disabled={!inputMessage.trim() || isTyping || isDailyLimitReached}
+              size="sm"
+              className="bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white rounded-full w-12 h-12 p-0"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
           </div>
-          <Button
-            onClick={() => sendMessage(inputMessage)}
-            disabled={!inputMessage.trim() || isTyping}
-            size="sm"
-            className="bg-zaim-blue-500 hover:bg-zaim-blue-600 text-white rounded-full w-12 h-12 p-0"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
         </div>
       </div>
 

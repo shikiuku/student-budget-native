@@ -454,7 +454,18 @@ const CalendarPage = () => {
                         <SelectValue placeholder="カテゴリを選択" />
                       </SelectTrigger>
                       <SelectContent className="bg-white">
-                        {categories.map((category) => (
+                        {categories
+                          .sort((a, b) => {
+                            // 食費を最初に表示
+                            if (a.name === '食費') return -1
+                            if (b.name === '食費') return 1
+                            // その他を最後に表示
+                            if (a.name === 'その他') return 1
+                            if (b.name === 'その他') return -1
+                            // その他のカテゴリは名前順
+                            return a.name.localeCompare(b.name)
+                          })
+                          .map((category) => (
                           <SelectItem key={category.id} value={category.id} className="text-black hover:bg-gray-100 cursor-pointer">
                             {category.name}
                           </SelectItem>
