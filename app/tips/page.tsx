@@ -25,7 +25,8 @@ import {
   Tag,
   Gamepad2,
   Filter,
-  ArrowUpDown
+  ArrowUpDown,
+  Info
 } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { createPost, getPosts, updatePost, type Post } from '@/lib/api/posts'
@@ -356,7 +357,85 @@ export default function TipsPage() {
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-black">節約アイディア</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-black">節約アイディア</h1>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-600 hover:text-gray-800"
+                  title="コミュニティガイドライン"
+                >
+                  <Info className="h-5 w-5" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[550px] bg-white border-gray-200 max-h-[80vh] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zaim-blue-400 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-zaim-blue-500">
+                <DialogHeader className="pb-2">
+                  <DialogTitle className="text-black text-center">コミュニティガイドライン</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4 text-gray-700">
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-black">1. 投稿内容について</h3>
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                      <li>節約や家計管理に関する有益な情報を共有してください</li>
+                      <li>実体験に基づいた具体的なアドバイスを心がけてください</li>
+                      <li>誤解を招く情報や不確実な内容は避けてください</li>
+                      <li>商業的な宣伝や勧誘は禁止されています</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-black">2. コミュニケーションの基本</h3>
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                      <li>他のユーザーに対して礼儀正しく接してください</li>
+                      <li>建設的な議論を心がけ、批判的なコメントは避けてください</li>
+                      <li>個人の経済状況を批判したり、比較したりしないでください</li>
+                      <li>多様な価値観や生活スタイルを尊重してください</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-black">3. 禁止事項</h3>
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                      <li>個人情報（電話番号、住所、メールアドレスなど）の投稿</li>
+                      <li>著作権を侵害するコンテンツの共有</li>
+                      <li>差別的、攻撃的、または不適切な表現の使用</li>
+                      <li>スパム投稿や同一内容の繰り返し投稿</li>
+                      <li>違法行為や規約違反を促すような内容</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-black">4. 投稿のヒント</h3>
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                      <li>タイトルは内容を簡潔に表すものにしましょう</li>
+                      <li>カテゴリを適切に選択してください</li>
+                      <li>節約効果は可能な限り具体的な数値で示しましょう</li>
+                      <li>実践方法は分かりやすく段階的に説明してください</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-black">5. 安全性について</h3>
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                      <li>金銭的なリスクを伴う内容は慎重に扱ってください</li>
+                      <li>投資や金融商品に関する具体的なアドバイスは避けてください</li>
+                      <li>詐欺や悪質商法に関する情報を見つけた場合は報告してください</li>
+                      <li>未成年者の安全に配慮した内容を心がけてください</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="bg-gray-100 rounded-lg p-4 mt-6">
+                    <p className="text-sm text-gray-600">
+                      これらのガイドラインは、すべてのユーザーが安心して利用できる環境を維持するためのものです。
+                      違反が確認された場合、投稿の削除やアカウント制限などの措置を取る場合があります。
+                    </p>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
           {user && (
             <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
               {userProfile?.avatar_url ? (

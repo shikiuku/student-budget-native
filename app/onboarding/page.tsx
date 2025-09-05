@@ -161,7 +161,7 @@ function OnboardingContent() {
             <h2 className="text-xl font-bold text-black">基本情報を入力してください</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="name" className="text-black">名前</Label>
+                <Label htmlFor="name" className="text-black">ユーザー名</Label>
                 <Input
                   id="name"
                   type="text"
