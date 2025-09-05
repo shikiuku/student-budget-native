@@ -259,7 +259,7 @@ export default function AIPage() {
       
       // 送信成功時に使用回数を更新
       const today = new Date().toISOString().split('T')[0]
-      const storageKey = `daily_ai_usage_${user.id}_${today}`
+      const storageKey = `daily_ai_usage_${user?.id}_${today}`
       const newCount = dailyMessageCount + 1
       localStorage.setItem(storageKey, newCount.toString())
       setDailyMessageCount(newCount)
