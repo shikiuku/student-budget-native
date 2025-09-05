@@ -250,7 +250,7 @@ export default function ExpensesPage() {
     setEditForm({
       amount: expense.amount.toString(),
       category_id: expense.category_id,
-      description: expense.description,
+      description: expense.description || '',
       date: expense.date
     })
   }
