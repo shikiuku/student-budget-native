@@ -11,32 +11,20 @@ import {
   Alert,
   Modal,
   Image,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
+import { getPosts, Post } from '../../services/posts';
 import { getCategoryIcon, getCategoryColor, getCategoryBackgroundColor } from '../../utils/categoryIcons';
 import { Colors } from '../../constants/colors';
 import { Fonts } from '../../constants/fonts';
+import CommentsModal from '../../components/CommentsModal';
 
-// 元のWebアプリと同じ型定義
-interface Post {
-  id: string;
-  title: string;
-  content: string;
-  category: string;
-  savings_effect?: string;
-  user_id: string;
-  user_profiles?: {
-    id: string;
-    name: string;
-    school_type?: string;
-    grade?: string;
-  };
-  likes_count: number;
-  created_at: string;
-  updated_at: string;
-}
+// posts.tsから型をインポートしているので削除
 
 interface PostForm {
   title: string;
@@ -135,6 +123,10 @@ export default function TipsScreen() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [activePostId, setActivePostId] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
+  
+  // コメント機能用の状態
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -149,52 +141,27 @@ export default function TipsScreen() {
 
     setLoading(true);
     try {
-      const { data: postsData, error: postsError } = await supabase
-        .from('posts')
-        .select(`
-          *
-        `)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (postsError) throw postsError;
+      const result = await getPosts({ limit: 20 });
       
-      // 投稿に関連するユーザープロフィールといいね数を取得
-      if (postsData && postsData.length > 0) {
-        const userIds = [...new Set(postsData.map(post => post.user_id))];
-        const postIds = postsData.map(post => post.id);
-        
-        const { data: profilesData } = await supabase
-          .from('user_profiles')
-          .select('id, name, school_type, grade, avatar_url')
-          .in('id', userIds);
-        
-        console.log('Profile data loaded:', profilesData); // デバッグ用
-
-        // 各投稿のいいね数を取得
-        const { data: likeCounts } = await supabase
-          .from('post_likes')
-          .select('post_id')
-          .in('post_id', postIds);
-
-        // 投稿ごとのいいね数を集計
-        const likeCountMap: Record<string, number> = {};
-        postIds.forEach(postId => {
-          likeCountMap[postId] = likeCounts?.filter(like => like.post_id === postId).length || 0;
-        });
-
-        // 投稿データにプロフィール情報といいね数を結合
-        const postsWithProfiles = postsData.map(post => ({
-          ...post,
-          user_profiles: profilesData?.find(profile => profile.id === post.user_id) || null,
-          likes_count: likeCountMap[post.id] || 0
-        }));
-
-        setPosts(postsWithProfiles || []);
-      } else {
-        setPosts(postsData || []);
+      if (result.error) {
+        console.error('Posts loading error:', result.error);
+        Alert.alert('エラー', '投稿の読み込みに失敗しました。');
+        return;
       }
 
+      if (result.data) {
+        console.log('Posts loaded:', result.data.length); // デバッグ用
+        console.log('Posts with counts:', result.data.map(p => ({ 
+          id: p.id, 
+          title: p.title, 
+          likes_count: p.likes_count, 
+          comments_count: p.comments_count 
+        }))); // デバッグ用
+        
+        setPosts(result.data);
+      } else {
+        setPosts([]);
+      }
 
     } catch (error) {
       console.error('Error loading posts:', error);
@@ -552,6 +519,25 @@ export default function TipsScreen() {
     }
   };
 
+  // コメントモーダルを開く
+  const handleShowComments = (post: Post) => {
+    setSelectedPost(post);
+    setShowCommentsModal(true);
+  };
+
+  // コメント追加後の処理
+  const handleCommentAdded = (newCount: number) => {
+    if (selectedPost) {
+      setPosts(prev => 
+        prev.map(post => 
+          post.id === selectedPost.id 
+            ? { ...post, comments_count: newCount }
+            : post
+        )
+      );
+    }
+  };
+
   // 並び替え・フィルタリング機能
   const filteredAndSortedPosts = React.useMemo(() => {
     let filtered = posts;
@@ -864,7 +850,7 @@ export default function TipsScreen() {
                             >
                               <Ionicons 
                                 name={isLiked ? "heart" : "heart-outline"} 
-                                size={16} 
+                                size={20} 
                                 color={isLiked ? Colors.error[500] : Colors.gray[500]} 
                               />
                               <Text style={[styles.actionText, isLiked && { color: Colors.error[500] }]}>
@@ -872,9 +858,12 @@ export default function TipsScreen() {
                               </Text>
                             </TouchableOpacity>
                             
-                            <TouchableOpacity style={styles.actionButton}>
-                              <Ionicons name="chatbubble-outline" size={16} color={Colors.gray[500]} />
-                              <Text style={styles.actionText}>0</Text>
+                            <TouchableOpacity 
+                              style={styles.actionButton}
+                              onPress={() => handleShowComments(post)}
+                            >
+                              <Ionicons name="chatbubble-outline" size={20} color={Colors.gray[500]} />
+                              <Text style={styles.actionText}>{post.comments_count || 0}</Text>
                             </TouchableOpacity>
                             
                             <TouchableOpacity 
@@ -883,8 +872,8 @@ export default function TipsScreen() {
                             >
                               <Ionicons 
                                 name={isBookmarked ? "bookmark" : "bookmark-outline"} 
-                                size={16} 
-                                color={isBookmarked ? Colors.zaimBlue[500] : Colors.gray[500]} 
+                                size={20} 
+                                color={isBookmarked ? Colors.zaimYellow[600] : Colors.gray[500]} 
                               />
                             </TouchableOpacity>
                             
@@ -1004,7 +993,7 @@ export default function TipsScreen() {
       <Modal
         visible={showModal}
         animationType="slide"
-        presentationStyle="pageSheet"
+        presentationStyle="fullScreen"
         onRequestClose={() => setShowModal(false)}
       >
         <View style={styles.modalContainer}>
@@ -1018,7 +1007,21 @@ export default function TipsScreen() {
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.modalContent}>
+          <KeyboardAvoidingView 
+            style={styles.modalKeyboardView}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+            enabled
+          >
+            <ScrollView 
+              style={styles.modalContent}
+              contentContainerStyle={styles.modalScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              bounces={true}
+              automaticallyAdjustContentInsets={false}
+              contentInsetAdjustmentBehavior="never"
+            >
             <View style={styles.modalFormContainer}>
               <TextInput
                 style={styles.modalInlineInput}
@@ -1086,16 +1089,16 @@ export default function TipsScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
-          </ScrollView>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
-
 
       {/* 投稿編集モーダル */}
       <Modal
         visible={showEditModal}
         animationType="slide"
-        presentationStyle="pageSheet"
+        presentationStyle="fullScreen"
         onRequestClose={() => setShowEditModal(false)}
       >
         <View style={styles.modalContainer}>
@@ -1109,7 +1112,21 @@ export default function TipsScreen() {
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.modalContent}>
+          <KeyboardAvoidingView 
+            style={styles.modalKeyboardView}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+            enabled
+          >
+            <ScrollView 
+              style={styles.modalContent}
+              contentContainerStyle={styles.modalScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              bounces={true}
+              automaticallyAdjustContentInsets={false}
+              contentInsetAdjustmentBehavior="never"
+            >
             <View style={styles.modalFormContainer}>
               <TextInput
                 style={styles.modalInlineInput}
@@ -1177,10 +1194,24 @@ export default function TipsScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
-          </ScrollView>
-
+            </ScrollView>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
+
+      {/* Comments Modal */}
+      {showCommentsModal && selectedPost && (
+        <CommentsModal
+          visible={showCommentsModal}
+          onClose={() => {
+            setShowCommentsModal(false);
+            setSelectedPost(null);
+          }}
+          postId={selectedPost.id}
+          postTitle={selectedPost.title}
+          onCommentAdded={handleCommentAdded}
+        />
+      )}
 
     </View>
   );
@@ -1591,9 +1622,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 8,
+    minWidth: 44,
+    minHeight: 32,
+    justifyContent: 'center',
   },
   actionText: {
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: Fonts.regular,
     color: Colors.gray[500],
     marginLeft: 2,
@@ -1701,10 +1738,17 @@ const styles = StyleSheet.create({
   closeButton: {
     padding: 4,
   },
+  modalKeyboardView: {
+    flex: 1,
+  },
   modalContent: {
     flex: 1,
     paddingHorizontal: 20,
+  },
+  modalScrollContent: {
     paddingVertical: 20,
+    paddingBottom: 200, // キーボード用の余分なスペースを大幅に追加
+    minHeight: '120%', // 最小高さを設定してスクロール可能にする
   },
   modalFormContainer: {
     gap: 12,

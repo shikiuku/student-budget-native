@@ -9,10 +9,15 @@ import {
   Modal,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
+import { Colors } from '../../constants/colors';
+import { Fonts } from '../../constants/fonts';
+import * as ImagePicker from 'expo-image-picker';
+import { getUserPosts, getUserLikedPosts, getUserBookmarkedPosts, type Post } from '../../services/posts';
 
 // 元のWebアプリと同じ型定義
 interface UserProfile {
@@ -26,21 +31,12 @@ interface UserProfile {
   grade?: string;
   monthly_budget?: number;
   savings_balance?: number;
+  avatar_url?: string;
   created_at: string;
   updated_at: string;
 }
 
-interface Post {
-  id: string;
-  title: string;
-  content: string;
-  category: string;
-  likes_count: number;
-  created_at: string;
-  user_profiles?: {
-    name?: string;
-  };
-}
+// Post型はservices/posts.tsからインポート
 
 // 都道府県データ
 const PREFECTURES = [
@@ -71,9 +67,12 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('posts');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   
   // 投稿関連の状態
   const [userPosts, setUserPosts] = useState<Post[]>([]);
+  const [likedPosts, setLikedPosts] = useState<Post[]>([]);
+  const [bookmarkedPosts, setBookmarkedPosts] = useState<Post[]>([]);
   const [postsLoading, setPostsLoading] = useState(false);
   
   // フォーム状態
@@ -107,6 +106,12 @@ export default function ProfileScreen() {
       loadUserProfile();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (user && activeTab !== 'settings') {
+      loadTabData();
+    }
+  }, [user, activeTab]);
 
   const loadUserProfile = async () => {
     if (!user) return;
@@ -142,6 +147,49 @@ export default function ProfileScreen() {
       console.error('プロフィール読み込みエラー:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTabData = async () => {
+    if (!user) return;
+    
+    setPostsLoading(true);
+    try {
+      switch (activeTab) {
+        case 'posts':
+          const postsResult = await getUserPosts(user.id, 20);
+          if (postsResult.data) {
+            setUserPosts(postsResult.data);
+          } else {
+            console.error('ユーザー投稿取得エラー:', postsResult.error);
+            setUserPosts([]);
+          }
+          break;
+          
+        case 'liked':
+          const likedResult = await getUserLikedPosts(user.id, 20);
+          if (likedResult.data) {
+            setLikedPosts(likedResult.data);
+          } else {
+            console.error('いいねした投稿取得エラー:', likedResult.error);
+            setLikedPosts([]);
+          }
+          break;
+          
+        case 'bookmarked':
+          const bookmarkedResult = await getUserBookmarkedPosts(user.id, 20);
+          if (bookmarkedResult.data) {
+            setBookmarkedPosts(bookmarkedResult.data);
+          } else {
+            console.error('ブックマークした投稿取得エラー:', bookmarkedResult.error);
+            setBookmarkedPosts([]);
+          }
+          break;
+      }
+    } catch (error) {
+      console.error('データ読み込みエラー:', error);
+    } finally {
+      setPostsLoading(false);
     }
   };
 
@@ -190,6 +238,236 @@ export default function ProfileScreen() {
     );
   };
 
+  const handleAvatarUpload = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('エラー', 'カメラロールへのアクセスが必要です。');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setUploadingAvatar(true);
+        
+        const image = result.assets[0];
+        const fileName = `${user.id}-${Date.now()}.jpg`;
+        
+        // ファイルをアップロード
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, {
+            uri: image.uri,
+            type: 'image/jpeg',
+            name: fileName,
+          } as any);
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        // パブリックURLを取得
+        const { data: publicUrlData } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+
+        // ユーザープロファイルを更新
+        const { error: updateError } = await supabase
+          .from('user_profiles')
+          .upsert({
+            id: user.id,
+            avatar_url: publicUrlData.publicUrl,
+            updated_at: new Date().toISOString()
+          });
+
+        if (updateError) {
+          throw updateError;
+        }
+
+        await loadUserProfile();
+        Alert.alert('成功', 'アバターを更新しました。');
+      }
+    } catch (error) {
+      console.error('アバターアップロードエラー:', error);
+      Alert.alert('エラー', 'アバターのアップロードに失敗しました。');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleAvatarDelete = async () => {
+    if (!userProfile?.avatar_url) return;
+    
+    Alert.alert(
+      'アバターを削除',
+      'アバターを削除しますか？',
+      [
+        { text: 'キャンセル', style: 'cancel' },
+        {
+          text: '削除',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setUploadingAvatar(true);
+              
+              // ユーザープロファイルからアバターURLを削除
+              const { error } = await supabase
+                .from('user_profiles')
+                .update({
+                  avatar_url: null,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', user.id);
+
+              if (error) {
+                throw error;
+              }
+
+              await loadUserProfile();
+              Alert.alert('成功', 'アバターを削除しました。');
+            } catch (error) {
+              console.error('アバター削除エラー:', error);
+              Alert.alert('エラー', 'アバターの削除に失敗しました。');
+            } finally {
+              setUploadingAvatar(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const renderPostList = (posts: Post[]) => {
+    if (postsLoading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color={Colors.zaimBlue[500]} />
+          <Text style={styles.loadingText}>読み込み中...</Text>
+        </View>
+      );
+    }
+
+    if (posts.length === 0) {
+      const emptyMessage = {
+        posts: 'まだ投稿がありません',
+        liked: 'いいねした投稿がありません',
+        bookmarked: '保存した投稿がありません'
+      }[activeTab] || '投稿がありません';
+      
+      return (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>{emptyMessage}</Text>
+        </View>
+      );
+    }
+
+    return (
+      <ScrollView style={styles.postsList}>
+        {posts.map((post) => (
+          <View key={post.id} style={styles.postCard}>
+            {/* TipsScreenと同じレイアウト: 左側アイコン + 右側コンテンツ */}
+            <View style={styles.postLayout}>
+              {/* 左側: ユーザーアイコン */}
+              <View style={styles.userAvatarLarge}>
+                {post.user_profiles?.avatar_url ? (
+                  <Image 
+                    source={{ uri: post.user_profiles.avatar_url }}
+                    style={styles.avatarImage}
+                  />
+                ) : (
+                  <Ionicons name="person" size={24} color={Colors.gray[600]} />
+                )}
+              </View>
+              
+              {/* 右側: 投稿内容 */}
+              <View style={styles.postContent}>
+                {/* ユーザー情報 + 投稿時間 */}
+                <View style={styles.postHeaderInfo}>
+                  <View style={styles.userInfo}>
+                    <Text style={styles.authorName}>
+                      {post.user_profiles?.name || 'Unknown'}
+                    </Text>
+                    <Text style={styles.userGrade}>
+                      {post.user_profiles?.school_type && post.user_profiles?.grade ? 
+                        `${post.user_profiles.school_type} ${post.user_profiles.grade}` : 
+                        '学生'
+                      }
+                    </Text>
+                  </View>
+                  <Text style={styles.postDate}>
+                    {new Date(post.created_at).toLocaleDateString('ja-JP', {
+                      month: 'numeric',
+                      day: 'numeric'
+                    }) === new Date().toLocaleDateString('ja-JP', {
+                      month: 'numeric', 
+                      day: 'numeric'
+                    }) ? '数分前' : new Date(post.created_at).toLocaleDateString('ja-JP')}
+                  </Text>
+                </View>
+                
+                {/* 投稿タイトル */}
+                <Text style={styles.postTitle}>{post.title}</Text>
+                
+                {/* 投稿内容 */}
+                <Text style={styles.postContentText}>{post.content}</Text>
+                
+                {/* カテゴリバッジ + 節約効果 + アクションボタン（同じ行） */}
+                <View style={styles.postMetaRow}>
+                  <View style={styles.postBadges}>
+                    <View style={styles.categoryBadge}>
+                      <Text style={styles.categoryBadgeText}>{post.category}</Text>
+                    </View>
+                    {post.savings_effect && (
+                      <View style={styles.savingsBadge}>
+                        <Text style={styles.savingsBadgeText}>{post.savings_effect}</Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* アクションボタン（右寄せ） */}
+                  <View style={styles.postActions}>
+                    <TouchableOpacity style={styles.actionButton}>
+                      <Ionicons 
+                        name={activeTab === 'liked' ? "heart" : "heart-outline"} 
+                        size={16} 
+                        color={activeTab === 'liked' ? Colors.error[500] : Colors.gray[500]} 
+                      />
+                      <Text style={[
+                        styles.actionText, 
+                        activeTab === 'liked' && { color: Colors.error[500] }
+                      ]}>
+                        {post.likes_count || 0}
+                      </Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity style={styles.actionButton}>
+                      <Ionicons name="chatbubble-outline" size={16} color={Colors.gray[500]} />
+                      <Text style={styles.actionText}>{post.comments_count || 0}</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity style={styles.actionButton}>
+                      <Ionicons 
+                        name={activeTab === 'bookmarked' ? "bookmark" : "bookmark-outline"} 
+                        size={16} 
+                        color={activeTab === 'bookmarked' ? Colors.zaimYellow[600] : Colors.gray[500]} 
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+    );
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -212,9 +490,38 @@ export default function ProfileScreen() {
       {/* プロフィールサマリー */}
       <View style={styles.profileSummary}>
         <View style={styles.avatarContainer}>
-          <View style={styles.avatar}>
-            <Ionicons name="person" size={32} color="#3B82F6" />
-          </View>
+          <TouchableOpacity
+            style={styles.avatarWrapper}
+            onPress={handleAvatarUpload}
+            disabled={uploadingAvatar}
+          >
+            <View style={styles.avatar}>
+              {userProfile?.avatar_url ? (
+                <Image
+                  source={{ uri: userProfile.avatar_url }}
+                  style={styles.avatarImage}
+                />
+              ) : (
+                <Ionicons name="person" size={32} color={Colors.zaimBlue[500]} />
+              )}
+            </View>
+            <View style={styles.avatarOverlay}>
+              {uploadingAvatar ? (
+                <ActivityIndicator size="small" color={Colors.white} />
+              ) : (
+                <Ionicons name="camera" size={16} color={Colors.white} />
+              )}
+            </View>
+          </TouchableOpacity>
+          {userProfile?.avatar_url && (
+            <TouchableOpacity
+              style={styles.deleteAvatarButton}
+              onPress={handleAvatarDelete}
+              disabled={uploadingAvatar}
+            >
+              <Ionicons name="trash" size={12} color={Colors.error[500]} />
+            </TouchableOpacity>
+          )}
         </View>
         <View style={styles.profileInfo}>
           <Text style={styles.profileName}>{formData.name || "未設定"}</Text>
@@ -292,28 +599,19 @@ export default function ProfileScreen() {
       {/* タブコンテンツ */}
       {activeTab === 'posts' && (
         <View style={styles.tabContent}>
-          <Text style={styles.sectionTitle}>自分の投稿</Text>
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>まだ投稿がありません</Text>
-          </View>
+          {renderPostList(userPosts)}
         </View>
       )}
 
       {activeTab === 'liked' && (
         <View style={styles.tabContent}>
-          <Text style={styles.sectionTitle}>いいねした投稿</Text>
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>いいねした投稿がありません</Text>
-          </View>
+          {renderPostList(likedPosts)}
         </View>
       )}
 
       {activeTab === 'bookmarked' && (
         <View style={styles.tabContent}>
-          <Text style={styles.sectionTitle}>保存した投稿</Text>
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>保存した投稿がありません</Text>
-          </View>
+          {renderPostList(bookmarkedPosts)}
         </View>
       )}
 
@@ -487,8 +785,11 @@ export default function ProfileScreen() {
           {/* 通知設定 */}
           <View style={styles.settingsCard}>
             <View style={styles.settingsHeader}>
-              <Ionicons name="notifications" size={20} color="#F97316" />
+              <Ionicons name="notifications" size={20} color={Colors.warning[500]} />
               <Text style={styles.settingsTitle}>通知設定</Text>
+              <View style={styles.comingSoonBadge}>
+                <Text style={styles.comingSoonText}>近日公開</Text>
+              </View>
             </View>
             
             <View style={styles.notificationItem}>
@@ -581,10 +882,17 @@ export default function ProfileScreen() {
             )}
           </TouchableOpacity>
 
-          {/* ログアウトボタン */}
-          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-            <Text style={styles.signOutText}>ログアウト</Text>
-          </TouchableOpacity>
+          {/* ログアウトセクション */}
+          <View style={styles.settingsCard}>
+            <View style={styles.settingsHeader}>
+              <Ionicons name="log-out" size={20} color={Colors.error[500]} />
+              <Text style={styles.settingsTitle}>ログアウト</Text>
+            </View>
+            <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
+              <Ionicons name="log-out" size={16} color={Colors.error[500]} />
+              <Text style={styles.logoutButtonText}>ログアウト</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
@@ -723,16 +1031,52 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     marginRight: 16,
+    position: 'relative',
+  },
+  avatarWrapper: {
+    position: 'relative',
   },
   avatar: {
     width: 64,
     height: 64,
-    backgroundColor: 'white',
+    backgroundColor: Colors.white,
     borderRadius: 32,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.gray[200],
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 32,
+  },
+  avatarOverlay: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 20,
+    height: 20,
+    backgroundColor: Colors.zaimBlue[500],
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: Colors.white,
+  },
+  deleteAvatarButton: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 20,
+    height: 20,
+    backgroundColor: Colors.white,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.error[200],
   },
   profileInfo: {
     flex: 1,
@@ -833,6 +1177,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
     gap: 8,
+  },
+  comingSoonBadge: {
+    backgroundColor: Colors.warning[100],
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    marginLeft: 'auto',
+  },
+  comingSoonText: {
+    fontSize: 10,
+    color: Colors.warning[700],
+    fontWeight: '500',
+    fontFamily: Fonts.medium,
   },
   settingsTitle: {
     fontSize: 18,
@@ -999,17 +1356,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#111827',
   },
-  signOutButton: {
-    marginTop: 16,
-    paddingVertical: 12,
-    borderRadius: 6,
+  logoutButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEE2E2',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: Colors.error[50],
+    borderRadius: 6,
+    gap: 8,
+    alignSelf: 'flex-start',
   },
-  signOutText: {
-    color: '#DC2626',
-    fontSize: 16,
-    fontWeight: '600',
+  logoutButtonText: {
+    color: Colors.error[600],
+    fontSize: 14,
+    fontWeight: '500',
+    fontFamily: Fonts.medium,
   },
   notificationItem: {
     flexDirection: 'row',
@@ -1050,5 +1411,140 @@ const styles = StyleSheet.create({
   },
   switchDotActive: {
     transform: [{ translateX: 20 }],
+  },
+  // 投稿リストスタイル（TipsScreenと同じ）
+  postsList: {
+    flex: 1,
+    gap: 16,
+    paddingBottom: 20,
+  },
+  postCard: {
+    backgroundColor: Colors.white,
+    borderColor: Colors.gray[200],
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  // TipsScreenと同じレイアウト（左アイコン + 右コンテンツ）
+  postLayout: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  userAvatarLarge: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Colors.gray[100],
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  postContent: {
+    flex: 1,
+  },
+  postHeaderInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  authorName: {
+    fontSize: 14,
+    fontFamily: Fonts.semibold,
+    fontWeight: '600',
+    color: Colors.black,
+  },
+  userGrade: {
+    fontSize: 12,
+    fontFamily: Fonts.regular,
+    color: Colors.gray[500],
+  },
+  postDate: {
+    fontSize: 12,
+    fontFamily: Fonts.regular,
+    color: Colors.gray[500],
+  },
+  postTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    fontFamily: Fonts.bold,
+    color: Colors.black,
+    marginBottom: 4,
+    marginTop: 2,
+  },
+  postContentText: {
+    fontSize: 14,
+    fontFamily: Fonts.regular,
+    color: Colors.gray[700],
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  // TipsScreenと同じ: カテゴリタグとアクションボタンを同じ行に
+  postMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  postBadges: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  categoryBadge: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  categoryBadgeText: {
+    fontSize: 12,
+    fontFamily: Fonts.medium,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  savingsBadge: {
+    backgroundColor: Colors.success[50],
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  savingsBadgeText: {
+    fontSize: 12,
+    fontFamily: Fonts.medium,
+    color: Colors.success[600],
+    fontWeight: '500',
+  },
+  postActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  actionText: {
+    fontSize: 12,
+    fontFamily: Fonts.regular,
+    color: Colors.gray[500],
+    marginLeft: 2,
   },
 });
