@@ -15,6 +15,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
 import Svg, { Circle } from 'react-native-svg';
 import { getCategoryIcon, getCategoryColor } from '../../utils/categoryIcons';
+import { Colors, getCategoryColor as getNewCategoryColor, getCategoryBackgroundColor } from '../../constants/colors';
+import { Fonts, getFontFamily } from '../../constants/fonts';
 
 // 元のWebアプリと同じ型定義
 interface UserProfile {
@@ -144,7 +146,7 @@ export default function HomeScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#10B981" />
+        <ActivityIndicator size="large" color={Colors.zaimBlue[400]} />
         <Text style={styles.loadingText}>データを読み込み中...</Text>
       </View>
     );
@@ -166,7 +168,7 @@ export default function HomeScreen() {
       name: category.name,
       amount,
       icon: category.icon || category.name,
-      color: getCategoryColor(category.name) || category.color || "#6b7280",
+      color: getNewCategoryColor(category.name) || "#6b7280",
       percentage
     };
   }).filter(cat => cat.amount > 0)
@@ -175,21 +177,21 @@ export default function HomeScreen() {
   // 予算ステータスの色分け（Zaim風）
   const getBudgetStatus = () => {
     if (spentPercentage <= 60) return { 
-      color: '#10B981', 
-      bgColor: '#ECFDF5', 
-      borderColor: '#10B981', 
+      color: Colors.zaimBlue[400], 
+      bgColor: Colors.success[50], 
+      borderColor: Colors.zaimBlue[400], 
       status: '余裕あり' 
     };
     if (spentPercentage <= 80) return { 
-      color: '#F59E0B', 
-      bgColor: '#FFFBEB', 
-      borderColor: '#F59E0B', 
+      color: Colors.warning[500], 
+      bgColor: Colors.warning[50], 
+      borderColor: Colors.warning[500], 
       status: '注意' 
     };
     return { 
-      color: '#EF4444', 
-      bgColor: '#FEF2F2', 
-      borderColor: '#EF4444', 
+      color: Colors.error[500], 
+      bgColor: Colors.error[50], 
+      borderColor: Colors.error[500], 
       status: spentPercentage > 100 ? '予算オーバー' : '要注意' 
     };
   };
@@ -255,78 +257,115 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* 収支リスト */}
-      <View style={styles.sectionCard}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>収支</Text>
-        </View>
-        <View style={styles.incomeExpenseList}>
-          <View style={styles.incomeExpenseItem}>
-            <View style={styles.incomeExpenseLeft}>
-              <View style={[styles.iconCircle, { backgroundColor: '#E0F2E0' }]}>
-                <Ionicons name="trending-up" size={16} color="#5A9C5A" />
-              </View>
-              <Text style={styles.incomeExpenseLabel}>収入</Text>
-            </View>
-            <Text style={styles.incomeExpenseAmount}>¥{monthlyBudget.toLocaleString()}</Text>
+      {/* Web版レイアウト: 収支 + 支出内訳を横並び */}
+      <View style={styles.horizontalContainer}>
+        {/* 収支リスト */}
+        <View style={[styles.sectionCard, styles.halfWidthCard]}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>収支</Text>
           </View>
-          <View style={styles.divider} />
-          <View style={styles.incomeExpenseItem}>
-            <View style={styles.incomeExpenseLeft}>
-              <View style={[styles.iconCircle, { backgroundColor: '#F9E0E0' }]}>
-                <Ionicons name="trending-down" size={16} color="#CC5A5A" />
+          <View style={styles.incomeExpenseList}>
+            <View style={styles.incomeExpenseItem}>
+              <View style={styles.incomeExpenseLeft}>
+                <View style={[styles.iconCircle, { backgroundColor: Colors.success[100] }]}>
+                  <Ionicons name="trending-up" size={16} color={Colors.success[600]} />
+                </View>
+                <Text style={styles.incomeExpenseLabel}>収入</Text>
               </View>
-              <Text style={styles.incomeExpenseLabel}>支出</Text>
+              <Text style={styles.incomeExpenseAmount}>¥{monthlyBudget.toLocaleString()}</Text>
             </View>
-            <Text style={styles.incomeExpenseAmount}>¥{spent.toLocaleString()}</Text>
+            <View style={styles.divider} />
+            <View style={styles.incomeExpenseItem}>
+              <View style={styles.incomeExpenseLeft}>
+                <View style={[styles.iconCircle, { backgroundColor: Colors.error[100] }]}>
+                  <Ionicons name="trending-down" size={16} color={Colors.error[600]} />
+                </View>
+                <Text style={styles.incomeExpenseLabel}>支出</Text>
+              </View>
+              <Text style={styles.incomeExpenseAmount}>¥{spent.toLocaleString()}</Text>
+            </View>
           </View>
         </View>
+
+        {/* 支出内訳（ドーナツチャート - Web版と同じ横並び配置） */}
+        {categoryBreakdown.length > 0 && (
+          <View style={[styles.sectionCard, styles.halfWidthCard]}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>支出内訳</Text>
+            </View>
+            <View style={styles.donutChartContainer}>
+              <View style={styles.donutChartSection}>
+                <View style={styles.donutChartWrapper}>
+                  <Svg width={150} height={150} viewBox="0 0 200 200" style={{ transform: [{ rotate: '-90deg' }] }}>
+                    {categoryBreakdown.map((category, index) => {
+                      const prevPercentage = categoryBreakdown.slice(0, index).reduce((sum, cat) => sum + cat.percentage, 0);
+                      const strokeDasharray = `${category.percentage * 5.03} 502.65`;
+                      const strokeDashoffset = `-${prevPercentage * 5.03}`;
+                      return (
+                        <Circle
+                          key={category.name}
+                          cx="100"
+                          cy="100"
+                          r="80"
+                          fill="none"
+                          stroke={category.color}
+                          strokeWidth="16"
+                          strokeDasharray={strokeDasharray}
+                          strokeDashoffset={strokeDashoffset}
+                        />
+                      );
+                    })}
+                  </Svg>
+                  <View style={styles.donutChartCenter}>
+                    <Text style={styles.donutChartAmountSmall}>¥{spent.toLocaleString()}</Text>
+                    <Text style={styles.donutChartLabelSmall}>合計支出</Text>
+                  </View>
+                </View>
+                <View style={styles.donutChartLegendCompact}>
+                  {categoryBreakdown.slice(0, 3).map((category) => (
+                    <View key={category.name} style={styles.donutLegendItemCompact}>
+                      <View style={[styles.donutLegendColorSmall, { backgroundColor: category.color }]} />
+                      <Text style={styles.donutLegendTextSmall}>{category.name}</Text>
+                      <Text style={styles.donutLegendPercentSmall}>{category.percentage}%</Text>
+                    </View>
+                  ))}
+                  {categoryBreakdown.length > 3 && (
+                    <Text style={styles.moreItemsTextSmall}>他{categoryBreakdown.length - 3}項目</Text>
+                  )}
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
       </View>
 
-      {/* 支出内訳（棒チャート） */}
+      {/* カテゴリ別支出リスト（Webバージョンと同じ） */}
       {categoryBreakdown.length > 0 && (
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>支出内訳</Text>
+            <Text style={styles.sectionTitle}>カテゴリ別支出</Text>
           </View>
-          <View style={styles.barChartContainer}>
-            <View style={styles.totalAmountSection}>
-              <Text style={styles.chartTotalAmount}>¥{spent.toLocaleString()}</Text>
-              <Text style={styles.chartTotalLabel}>合計支出</Text>
-            </View>
-            <View style={styles.barChartArea}>
-              {categoryBreakdown.map((category, index) => (
-                <View key={category.name} style={styles.barChartItem}>
-                  <View style={styles.barChartRow}>
-                    <View style={styles.barLabelSection}>
-                      <View style={[styles.barCategoryIcon, { backgroundColor: category.color }]}>
-                        <Ionicons 
-                          name={getCategoryIcon(category.icon)} 
-                          size={12} 
-                          color="#FFF" 
-                        />
-                      </View>
-                      <Text style={styles.barCategoryName}>{category.name}</Text>
+          <View style={styles.categoryDetailsList}>
+            {categoryBreakdown.map((category, index) => (
+              <View key={category.name}>
+                <View style={styles.categoryDetailItem}>
+                  <View style={styles.categoryLeft}>
+                    <View style={[styles.categoryIcon, { backgroundColor: getCategoryBackgroundColor(category.name) }]}>
+                      <Ionicons 
+                        name={getCategoryIcon(category.icon)} 
+                        size={16} 
+                        color={category.color}
+                      />
                     </View>
-                    <View style={styles.barSection}>
-                      <View style={styles.barBackground}>
-                        <View 
-                          style={[
-                            styles.barFill, 
-                            { 
-                              width: `${category.percentage}%`,
-                              backgroundColor: category.color 
-                            }
-                          ]} 
-                        />
-                      </View>
-                      <Text style={styles.barPercentage}>{category.percentage}%</Text>
-                    </View>
-                    <Text style={styles.barAmount}>¥{category.amount.toLocaleString()}</Text>
+                    <Text style={styles.categoryName}>{category.name}</Text>
+                  </View>
+                  <View style={styles.categoryRight}>
+                    <Text style={styles.categoryAmount}>¥{category.amount.toLocaleString()}</Text>
                   </View>
                 </View>
-              ))}
-            </View>
+                {index < categoryBreakdown.length - 1 && <View style={styles.divider} />}
+              </View>
+            ))}
           </View>
         </View>
       )}
@@ -339,30 +378,41 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.gray[50], // Webバージョンと同じ背景色
   },
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.gray[50], // Webバージョンと同じ背景色
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.white,
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#6B7280',
+    fontFamily: Fonts.regular,
+    color: Colors.gray[500],
   },
   
   // メイン予算ステータスカード（元のWebアプリのデザイン）
   budgetCard: {
-    margin: 24,
-    padding: 24,
-    borderRadius: 16,
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 8,
     borderWidth: 1,
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   budgetHeader: {
     marginBottom: 12,
@@ -380,6 +430,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 14,
     fontWeight: '500',
+    fontFamily: Fonts.medium,
     paddingHorizontal: 8,
     paddingVertical: 4,
     backgroundColor: 'rgba(255,255,255,0.5)',
@@ -397,11 +448,13 @@ const styles = StyleSheet.create({
   remainingAmount: {
     fontSize: 32,
     fontWeight: 'bold',
+    fontFamily: Fonts.bold,
     marginBottom: 4,
   },
   remainingLabel: {
     fontSize: 14,
-    color: '#6B7280',
+    fontFamily: Fonts.regular,
+    color: Colors.gray[500],
     marginBottom: 16,
   },
   budgetProgress: {
@@ -414,11 +467,12 @@ const styles = StyleSheet.create({
   },
   budgetProgressText: {
     fontSize: 12,
-    color: '#6B7280',
+    fontFamily: Fonts.regular,
+    color: Colors.gray[500],
   },
   progressBar: {
     height: 12,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: Colors.gray[200],
     borderRadius: 6,
     overflow: 'hidden',
   },
@@ -435,15 +489,15 @@ const styles = StyleSheet.create({
   },
   savingsLabel: {
     fontSize: 14,
-    color: '#6B7280',
+    color: Colors.gray[500],
   },
   savingsAmount: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#10B981',
+    color: Colors.zaimBlue[400],
   },
   savingsNote: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.gray[50],
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -451,14 +505,14 @@ const styles = StyleSheet.create({
   },
   savingsNoteText: {
     fontSize: 12,
-    color: '#6B7280',
+    color: Colors.gray[500],
   },
   
   // 横並びコンテナ
   horizontalContainer: {
     flexDirection: 'row',
-    marginHorizontal: 24,
-    marginBottom: 24,
+    marginHorizontal: 16,
+    marginBottom: 16,
     gap: 12,
   },
   halfWidthCard: {
@@ -468,25 +522,34 @@ const styles = StyleSheet.create({
   },
   // セクションカード
   sectionCard: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 24,
-    marginBottom: 24,
+    backgroundColor: Colors.white,
+    marginHorizontal: 16,
+    marginBottom: 16,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.gray[200],
     overflow: 'hidden',
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   sectionHeader: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.gray[50],
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: Colors.gray[200],
   },
   sectionTitle: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#000',
+    fontFamily: Fonts.medium,
+    color: Colors.black,
   },
   
   // 収支リスト
@@ -515,11 +578,13 @@ const styles = StyleSheet.create({
   incomeExpenseLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#000',
+    fontFamily: Fonts.medium,
+    color: Colors.black,
   },
   moreItemsText: {
     fontSize: 11,
-    color: '#9CA3AF',
+    fontFamily: Fonts.regular,
+    color: Colors.gray[400],
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: 4,
@@ -527,95 +592,115 @@ const styles = StyleSheet.create({
   incomeExpenseAmount: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#000',
+    fontFamily: Fonts.bold,
+    color: Colors.black,
   },
   divider: {
     height: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: Colors.gray[200],
   },
   
-  // 棒チャートエリア
-  barChartContainer: {
+  // ドーナツチャートエリア（Web版と同じ）
+  donutChartContainer: {
     padding: 16,
   },
-  totalAmountSection: {
+  donutChartSection: {
     alignItems: 'center',
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
-  chartTotalAmount: {
+  donutChartWrapper: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  donutChartCenter: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  donutChartAmount: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#000',
+    fontFamily: Fonts.bold,
+    color: Colors.black,
   },
-  chartTotalLabel: {
-    fontSize: 10,
-    color: '#6B7280',
+  donutChartLabel: {
+    fontSize: 12,
+    fontFamily: Fonts.regular,
+    color: Colors.gray[600],
     marginTop: 2,
   },
-  barChartArea: {
-    gap: 12,
+  donutChartAmountSmall: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    fontFamily: Fonts.bold,
+    color: Colors.black,
   },
-  barChartItem: {
-    marginBottom: 4,
+  donutChartLabelSmall: {
+    fontSize: 10,
+    fontFamily: Fonts.regular,
+    color: Colors.gray[600],
+    marginTop: 2,
   },
-  barChartRow: {
+  donutChartLegend: {
+    gap: 8,
+    alignItems: 'center',
+  },
+  donutLegendItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  barLabelSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    width: 80,
+  donutLegendColor: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
-  barCategoryIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  barCategoryName: {
-    fontSize: 11,
+  donutLegendText: {
+    fontSize: 12,
     fontWeight: '500',
-    color: '#000',
-    flex: 1,
+    fontFamily: Fonts.medium,
+    color: Colors.black,
   },
-  barSection: {
-    flex: 1,
+  donutLegendPercent: {
+    fontSize: 12,
+    fontFamily: Fonts.regular,
+    color: Colors.gray[600],
+  },
+  donutChartLegendCompact: {
+    gap: 4,
+    alignItems: 'center',
+  },
+  donutLegendItemCompact: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  barBackground: {
-    flex: 1,
-    height: 16,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 8,
-    overflow: 'hidden',
+  donutLegendColorSmall: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
-  barFill: {
-    height: '100%',
-    borderRadius: 8,
-    minWidth: 4,
-  },
-  barPercentage: {
+  donutLegendTextSmall: {
     fontSize: 10,
     fontWeight: '500',
-    color: '#6B7280',
-    width: 28,
-    textAlign: 'right',
+    fontFamily: Fonts.medium,
+    color: Colors.black,
   },
-  barAmount: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: '#000',
-    width: 60,
-    textAlign: 'right',
+  donutLegendPercentSmall: {
+    fontSize: 10,
+    fontFamily: Fonts.regular,
+    color: Colors.gray[600],
+  },
+  moreItemsTextSmall: {
+    fontSize: 9,
+    fontFamily: Fonts.regular,
+    color: Colors.gray[400],
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 2,
   },
   
   // カテゴリ詳細リスト（統合版）
@@ -648,16 +733,19 @@ const styles = StyleSheet.create({
   categoryName: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#000',
+    fontFamily: Fonts.medium,
+    color: Colors.black,
   },
   categoryAmount: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#000',
+    fontFamily: Fonts.bold,
+    color: Colors.black,
   },
   categoryPercentage: {
     fontSize: 11,
-    color: '#6B7280',
+    fontFamily: Fonts.regular,
+    color: Colors.gray[500],
     marginTop: 2,
   },
   
@@ -668,6 +756,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: '#6B7280',
+    fontFamily: Fonts.regular,
+    color: Colors.gray[500],
   },
 });

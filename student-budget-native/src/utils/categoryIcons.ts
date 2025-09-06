@@ -10,14 +10,18 @@ export const categoryIconMap: { [key: string]: keyof typeof Ionicons.glyphMap } 
   'その他': 'pricetag',
 };
 
-// 統一されたカテゴリカラーマップ（節約術ページと同じ）
+// Web版と完全に統一されたカテゴリカラーマップ
 export const categoryColorMap: { [key: string]: string } = {
-  '食費': '#FF6B35',
-  '交通費': '#4ECDC4',
-  '娯楽': '#FFD23F',
-  '学用品': '#6A994E',
-  '衣類': '#BC4749',
-  'その他': '#6B7280',
+  '食費': '#FF6B35', // Web版と同じ
+  '交通費': '#4ECDC4', // Web版と同じ
+  '娯楽': '#FFD23F', // Web版の娯楽・趣味と同じ
+  '娯楽・趣味': '#FFD23F', // Web版と同じ
+  '学用品': '#6A994E', // Web版の教材・書籍と同じ
+  '教材・書籍': '#6A994E', // Web版と同じ
+  '衣類': '#BC4749', // Web版の衣類・雑貨と同じ
+  '衣類・雑貨': '#BC4749', // Web版と同じ
+  '通信費': '#9C88FF', // Web版と同じ
+  'その他': '#6B7280', // Web版と同じ
 };
 
 // 絵文字からIoniconマップへの変換（既存のコードとの互換性のため）
@@ -62,7 +66,24 @@ export const getCategoryIcon = (categoryNameOrIcon: string): keyof typeof Ionico
   return unifiedIconMap[categoryNameOrIcon] || 'pricetag';
 };
 
-// カテゴリ名から色を取得するヘルパー関数
+// Web版の背景色（薄い色）を取得する関数
+export const getCategoryBackgroundColor = (categoryName: string): string => {
+  switch (categoryName) {
+    case '食費': return '#FFF3E0';
+    case '交通費': return '#E0F8F8';
+    case '娯楽': 
+    case '娯楽・趣味': return '#FFF9C4';
+    case '学用品':
+    case '教材・書籍': return '#E8F5E8';
+    case '衣類':
+    case '衣類・雑貨': return '#F8E8E8';
+    case '通信費': return '#F0EDFF';
+    case 'その他': return '#F3F4F6';
+    default: return '#F3F4F6';
+  }
+};
+
+// カテゴリ名からアイコン色（濃い色）を取得する関数 - Web版と同じ
 export const getCategoryColor = (categoryName: string): string => {
   return categoryColorMap[categoryName] || '#6B7280';
 };

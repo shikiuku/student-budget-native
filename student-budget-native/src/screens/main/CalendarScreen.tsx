@@ -13,7 +13,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
-import { getCategoryIcon, getCategoryColor } from '../../utils/categoryIcons';
+import { getCategoryIcon, getCategoryColor, getCategoryBackgroundColor } from '../../utils/categoryIcons';
+import { Colors } from '../../constants/colors';
+import { Fonts } from '../../constants/fonts';
 
 interface UserProfile {
   id: string;
@@ -57,6 +59,7 @@ export default function CalendarScreen() {
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
   const [newExpense, setNewExpense] = useState({
     amount: '',
     description: '',
@@ -242,7 +245,8 @@ export default function CalendarScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#3B82F6" />
+        <ActivityIndicator size="large" color={Colors.zaimBlue[500]} />
+        <Text style={styles.loadingText}>データを読み込み中...</Text>
       </View>
     );
   }
@@ -325,10 +329,10 @@ export default function CalendarScreen() {
                   <Text style={[
                     styles.dayText,
                     !isCurrentMonthDay && styles.disabledDayText,
+                    day.getDay() === 0 && isCurrentMonthDay && !isTodayDate && styles.sundayText,
+                    day.getDay() === 6 && isCurrentMonthDay && !isTodayDate && styles.saturdayText,
                     isTodayDate && !isSelected && styles.todayText,
                     isSelected && styles.selectedDayText,
-                    day.getDay() === 0 && isCurrentMonthDay && styles.sundayText,
-                    day.getDay() === 6 && isCurrentMonthDay && styles.saturdayText,
                   ]}>
                     {date}
                   </Text>
@@ -353,19 +357,82 @@ export default function CalendarScreen() {
               <Text style={styles.detailsTitle}>
                 {formatMonth(currentDate)} {selectedDate}日の支出
               </Text>
-              {expensesByDate[selectedDate] && expensesByDate[selectedDate].length > 0 && (
-                <Text style={styles.detailsTotal}>
-                  合計: ¥{expensesByDate[selectedDate].reduce((sum, exp) => sum + exp.amount, 0).toLocaleString()}
-                </Text>
-              )}
+              <View style={styles.detailsRight}>
+                {expensesByDate[selectedDate] && expensesByDate[selectedDate].length > 0 && (
+                  <Text style={styles.detailsTotal}>
+                    合計: ¥{expensesByDate[selectedDate].reduce((sum, exp) => sum + exp.amount, 0).toLocaleString()}
+                  </Text>
+                )}
+                {!showAddForm && (
+                  <TouchableOpacity
+                    style={styles.addExpenseButton}
+                    onPress={() => setShowAddForm(true)}
+                  >
+                    <Ionicons name="add" size={16} color={Colors.white} />
+                    <Text style={styles.addExpenseButtonText}>支出を追加</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
+
+            {/* 支出追加フォーム */}
+            {showAddForm && (
+              <View style={styles.addForm}>
+                <View style={styles.formRow}>
+                  <View style={styles.formGroup}>
+                    <Text style={styles.formLabel}>金額</Text>
+                    <TextInput
+                      style={styles.formInput}
+                      value={newExpense.amount}
+                      onChangeText={(text) => setNewExpense({ ...newExpense, amount: text })}
+                      placeholder="1000"
+                      keyboardType="numeric"
+                    />
+                  </View>
+                  
+                  <View style={styles.formGroup}>
+                    <Text style={styles.formLabel}>カテゴリ</Text>
+                    <TouchableOpacity
+                      style={styles.categorySelect}
+                      onPress={() => setShowAddModal(true)}
+                    >
+                      <Text style={[styles.categorySelectText, !newExpense.category_id && styles.placeholder]}>
+                        {newExpense.category_id ? 
+                          categories.find(c => c.id === newExpense.category_id)?.name || 'カテゴリを選択' : 
+                          'カテゴリを選択'
+                        }
+                      </Text>
+                      <Ionicons name="chevron-down" size={16} color={Colors.gray[500]} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel}>説明</Text>
+                  <TextInput
+                    style={styles.formInput}
+                    value={newExpense.description}
+                    onChangeText={(text) => setNewExpense({ ...newExpense, description: text })}
+                    placeholder="コンビニ弁当"
+                  />
+                </View>
+
+                <View style={styles.formActions}>
+                  <TouchableOpacity style={styles.saveButton} onPress={handleAddExpense}>
+                    <Text style={styles.saveButtonText}>記録する</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.cancelButton} onPress={() => setShowAddForm(false)}>
+                    <Text style={styles.cancelButtonText}>キャンセル</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
             
             {expensesByDate[selectedDate] && expensesByDate[selectedDate].length > 0 ? (
               <ScrollView style={styles.expensesList}>
                 {expensesByDate[selectedDate].map((expense) => {
                   const category = expense.category || categories.find(cat => cat.id === expense.category_id);
                   const iconName = getCategoryIcon(category?.icon || category?.name || 'その他');
-                  const categoryColor = getCategoryColor(category?.name || 'その他') || category?.color || '#6B7280';
                   const expenseTime = new Date(expense.created_at).toLocaleTimeString('ja-JP', { 
                     hour: '2-digit', 
                     minute: '2-digit' 
@@ -376,9 +443,9 @@ export default function CalendarScreen() {
                       <View style={styles.expenseInfo}>
                         <View style={[
                           styles.categoryIcon,
-                          { backgroundColor: categoryColor }
+                          { backgroundColor: getCategoryBackgroundColor(category?.name || 'その他') }
                         ]}>
-                          <Ionicons name={iconName} size={16} color="white" />
+                          <Ionicons name={iconName} size={16} color={getCategoryColor(category?.name || 'その他')} />
                         </View>
                         <View style={styles.expenseTextInfo}>
                           <Text style={styles.expenseDescription}>
@@ -403,23 +470,6 @@ export default function CalendarScreen() {
         )}
       </View>
 
-      {/* 支出追加ボタン */}
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => {
-          const selectedDateStr = selectedDate 
-            ? `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate).padStart(2, '0')}`
-            : new Date().toISOString().split('T')[0];
-          
-          setNewExpense({
-            ...newExpense,
-            date: selectedDateStr,
-          });
-          setShowAddModal(true);
-        }}
-      >
-        <Ionicons name="add" size={28} color="white" style={{ fontWeight: 'bold' }} />
-      </TouchableOpacity>
 
       {/* 支出追加モーダル */}
       <Modal
@@ -478,10 +528,10 @@ export default function CalendarScreen() {
                     >
                       <View style={[
                         styles.categoryIconContainer,
-                        { backgroundColor: category.color },
+                        { backgroundColor: getCategoryBackgroundColor(category.name || 'その他') },
                         isSelected && styles.selectedCategoryIcon
                       ]}>
-                        <Ionicons name={iconName} size={20} color="white" />
+                        <Ionicons name={iconName} size={20} color={getCategoryColor(category.name || 'その他')} />
                       </View>
                       <Text style={[
                         styles.categoryName,
@@ -508,16 +558,16 @@ export default function CalendarScreen() {
 
           <View style={styles.modalFooter}>
             <TouchableOpacity
-              style={styles.cancelButton}
+              style={styles.modalCancelButton}
               onPress={() => setShowAddModal(false)}
             >
-              <Text style={styles.cancelButtonText}>キャンセル</Text>
+              <Text style={styles.modalCancelButtonText}>キャンセル</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.saveButton}
+              style={styles.modalSaveButton}
               onPress={handleAddExpense}
             >
-              <Text style={styles.saveButtonText}>保存</Text>
+              <Text style={styles.modalSaveButtonText}>保存</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -529,86 +579,121 @@ export default function CalendarScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.gray[50],
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: Colors.gray[50],
   },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    fontFamily: Fonts.regular,
+    color: Colors.gray[500],
+  },
+  // 月ナビゲーション
   monthNavigation: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    backgroundColor: 'white',
-    marginHorizontal: 16,
-    marginTop: 16,
+    paddingVertical: 12,
+    backgroundColor: Colors.white,
+    marginHorizontal: 12,
+    marginTop: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.gray[200],
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   navButton: {
     padding: 8,
+    borderRadius: 4,
   },
   monthText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
-    color: '#111827',
-    marginHorizontal: 24,
-    minWidth: 200,
+    fontFamily: Fonts.semibold,
+    color: Colors.black,
+    marginHorizontal: 20,
+    minWidth: 180,
     textAlign: 'center',
   },
+
+  // 月次サマリー
   summaryContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 4,
   },
   summaryCard: {
     flex: 1,
     paddingVertical: 8,
-    paddingHorizontal: 8,
-    borderRadius: 8,
+    paddingHorizontal: 6,
+    borderRadius: 6,
     alignItems: 'center',
   },
   incomeCard: {
-    backgroundColor: '#EBF8FF',
+    backgroundColor: Colors.success[50],
   },
   expenseCard: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: Colors.error[50],
   },
   balanceCard: {
-    backgroundColor: '#F0FDF4',
+    backgroundColor: Colors.success[50],
   },
   summaryLabel: {
     fontSize: 12,
-    color: '#6B7280',
+    fontFamily: Fonts.regular,
+    color: Colors.gray[600],
     marginBottom: 4,
   },
   incomeAmount: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
-    color: '#2563EB',
+    fontFamily: Fonts.bold,
+    color: Colors.success[600],
   },
   expenseAmount: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
-    color: '#DC2626',
+    fontFamily: Fonts.bold,
+    color: Colors.error[600],
   },
   balanceAmount: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
-    color: '#059669',
+    fontFamily: Fonts.bold,
+    color: Colors.success[600],
   },
+
+  // カレンダーコンテナ
   calendarContainer: {
-    backgroundColor: 'white',
-    margin: 16,
+    backgroundColor: Colors.white,
+    margin: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    padding: 16,
+    borderColor: Colors.gray[200],
+    padding: 12,
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
+  // カレンダーヘッダー
   weekHeader: {
     flexDirection: 'row',
     marginBottom: 8,
@@ -616,89 +701,105 @@ const styles = StyleSheet.create({
   weekDay: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: 4,
   },
   weekDayText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
-    color: '#6B7280',
+    fontFamily: Fonts.medium,
+    color: Colors.gray[600],
   },
   sundayText: {
-    color: '#DC2626',
+    color: Colors.error[500],
   },
   saturdayText: {
-    color: '#2563EB',
+    color: Colors.zaimBlue[500],
   },
+
+  // カレンダーグリッド
   calendarGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: 2,
   },
   calendarDay: {
-    width: '14.28%',
-    height: 54,
-    paddingHorizontal: 1,
-    paddingVertical: 0,
-    alignItems: 'center',
-  },
-  dayContent: {
-    width: 40,
+    width: '13.8%',
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 20,
+  },
+  dayContent: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 18,
     position: 'relative',
   },
   selectedDay: {
-    backgroundColor: '#EBF8FF',
+    backgroundColor: Colors.zaimBlue[100],
     borderWidth: 2,
-    borderColor: '#3B82F6',
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    borderColor: Colors.zaimBlue[500],
   },
   todayDay: {
     backgroundColor: 'transparent',
   },
   dayText: {
-    fontSize: 24,
+    fontSize: 14,
     fontWeight: '500',
-    color: '#111827',
+    fontFamily: Fonts.medium,
+    color: Colors.black,
   },
   disabledDayText: {
-    color: '#D1D5DB',
+    color: Colors.gray[300],
   },
   todayText: {
-    color: '#111827',
+    color: Colors.error[500],
     fontWeight: 'bold',
+    fontFamily: Fonts.bold,
   },
   selectedDayText: {
-    color: '#3B82F6',
+    color: Colors.zaimBlue[700],
     fontWeight: 'bold',
+    fontFamily: Fonts.bold,
   },
+  // カレンダーの点
   expenseDot: {
     position: 'absolute',
     top: -2,
     right: -2,
-    width: 8,
-    height: 8,
-    backgroundColor: '#DC2626',
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    backgroundColor: Colors.error[500],
+    borderRadius: 3,
+    borderWidth: 1,
+    borderColor: Colors.white,
   },
   todayDot: {
     position: 'absolute',
     bottom: -2,
-    width: 6,
-    height: 6,
-    backgroundColor: '#10B981',
-    borderRadius: 3,
+    width: 4,
+    height: 4,
+    backgroundColor: Colors.success[500],
+    borderRadius: 2,
   },
+
+  // 支出詳細エリア
   expenseDetails: {
-    backgroundColor: 'white',
-    margin: 16,
+    backgroundColor: Colors.white,
+    margin: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    padding: 16,
+    borderColor: Colors.gray[200],
+    padding: 12,
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   detailsHeader: {
     flexDirection: 'row',
@@ -706,16 +807,126 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
+  detailsRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   detailsTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#111827',
+    fontFamily: Fonts.semibold,
+    color: Colors.black,
   },
   detailsTotal: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
-    color: '#DC2626',
+    fontFamily: Fonts.bold,
+    color: Colors.error[600],
   },
+
+  // 支出追加ボタン（支出ページと同じ灰色）
+  addExpenseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#64748B', // 支出ページと同じslate-500色
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    gap: 4,
+  },
+  addExpenseButtonText: {
+    color: Colors.white,
+    fontSize: 12,
+    fontWeight: '500',
+    fontFamily: Fonts.medium,
+  },
+
+  // 支出追加フォーム
+  addForm: {
+    backgroundColor: Colors.gray[50],
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    gap: 12,
+  },
+  formRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  formGroup: {
+    flex: 1,
+  },
+  formLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    fontFamily: Fonts.medium,
+    color: Colors.gray[700],
+    marginBottom: 4,
+  },
+  formInput: {
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.gray[300],
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 14,
+    fontFamily: Fonts.regular,
+    color: Colors.black,
+  },
+  categorySelect: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.gray[300],
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  categorySelectText: {
+    fontSize: 14,
+    fontFamily: Fonts.regular,
+    color: Colors.black,
+  },
+  placeholder: {
+    color: Colors.gray[400],
+  },
+  formActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  saveButton: {
+    flex: 1,
+    backgroundColor: Colors.zaimBlue[500],
+    paddingVertical: 10,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: Colors.white,
+    fontSize: 14,
+    fontWeight: '500',
+    fontFamily: Fonts.medium,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.zaimBlue[200],
+    paddingVertical: 10,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: Colors.zaimBlue[600],
+    fontSize: 14,
+    fontWeight: '500',
+    fontFamily: Fonts.medium,
+  },
+  // 支出リスト
   expensesList: {
     maxHeight: 200,
   },
@@ -723,10 +934,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.gray[50],
     padding: 12,
     borderRadius: 8,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   expenseInfo: {
     flexDirection: 'row',
@@ -746,46 +957,41 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   expenseDescription: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
-    color: '#111827',
+    fontFamily: Fonts.medium,
+    color: Colors.black,
   },
   expenseTime: {
-    fontSize: 12,
-    color: '#6B7280',
+    fontSize: 11,
+    fontFamily: Fonts.regular,
+    color: Colors.gray[500],
     marginTop: 2,
   },
   expenseAmount: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
-    color: '#111827',
+    fontFamily: Fonts.bold,
+    color: Colors.black,
   },
   noExpensesText: {
-    fontSize: 14,
-    color: '#6B7280',
+    fontSize: 13,
+    fontFamily: Fonts.regular,
+    color: Colors.gray[500],
     textAlign: 'center',
-    paddingVertical: 32,
+    paddingVertical: 24,
   },
   noSelectionText: {
-    fontSize: 14,
-    color: '#6B7280',
+    fontSize: 13,
+    fontFamily: Fonts.regular,
+    color: Colors.gray[500],
     textAlign: 'center',
-    paddingVertical: 32,
+    paddingVertical: 24,
   },
-  addButton: {
-    position: 'absolute',
-    right: 24,
-    bottom: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#6B91C7',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  // モーダル
   modalContainer: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: Colors.white,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -794,12 +1000,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: Colors.gray[200],
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111827',
+    fontFamily: Fonts.semibold,
+    color: Colors.black,
   },
   closeButton: {
     padding: 4,
@@ -809,24 +1016,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 20,
   },
-  formGroup: {
-    marginBottom: 20,
-  },
   label: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
-    color: '#374151',
+    fontFamily: Fonts.medium,
+    color: Colors.gray[700],
     marginBottom: 8,
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: Colors.gray[300],
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
     fontSize: 16,
-    backgroundColor: '#F9FAFB',
+    fontFamily: Fonts.regular,
+    backgroundColor: Colors.gray[50],
+    color: Colors.black,
   },
+  // カテゴリ選択リスト
   categoryList: {
     flexDirection: 'row',
     marginTop: 8,
@@ -839,7 +1047,7 @@ const styles = StyleSheet.create({
     minHeight: 80,
   },
   selectedCategoryItem: {
-    backgroundColor: '#EBF8FF',
+    backgroundColor: Colors.zaimBlue[50],
     borderRadius: 8,
     paddingHorizontal: 8,
   },
@@ -853,49 +1061,55 @@ const styles = StyleSheet.create({
   },
   selectedCategoryIcon: {
     borderWidth: 2,
-    borderColor: '#3B82F6',
+    borderColor: Colors.zaimBlue[500],
   },
   categoryName: {
     fontSize: 12,
-    color: '#6B7280',
+    fontFamily: Fonts.regular,
+    color: Colors.gray[600],
     textAlign: 'center',
     flexWrap: 'wrap',
     lineHeight: 14,
   },
   selectedCategoryName: {
-    color: '#3B82F6',
+    color: Colors.zaimBlue[600],
     fontWeight: '500',
+    fontFamily: Fonts.medium,
   },
+
+  // モーダルフッター
   modalFooter: {
     flexDirection: 'row',
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: Colors.gray[200],
     gap: 12,
   },
-  cancelButton: {
+  modalCancelButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: Colors.gray[300],
     alignItems: 'center',
   },
-  cancelButtonText: {
+  modalCancelButtonText: {
     fontSize: 16,
-    color: '#6B7280',
+    fontFamily: Fonts.regular,
+    color: Colors.gray[600],
   },
-  saveButton: {
+  modalSaveButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: '#10B981',
+    backgroundColor: Colors.success[500],
     alignItems: 'center',
   },
-  saveButtonText: {
+  modalSaveButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: 'white',
+    fontFamily: Fonts.semibold,
+    color: Colors.white,
   },
 });

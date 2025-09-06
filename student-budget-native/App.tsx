@@ -5,6 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/contexts/AuthContext';
 import RootNavigator from './src/navigation/RootNavigator';
+import { useFont } from './src/hooks/useFont';
 import 'react-native-url-polyfill/auto';
 
 // Keep the splash screen visible while we fetch resources
@@ -12,6 +13,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function App() {
   const [isReady, setIsReady] = useState(false);
+  const fontsLoaded = useFont();
 
   useEffect(() => {
     async function prepare() {
@@ -26,10 +28,12 @@ export default function App() {
       }
     }
 
-    prepare();
-  }, []);
+    if (fontsLoaded) {
+      prepare();
+    }
+  }, [fontsLoaded]);
 
-  if (!isReady) {
+  if (!isReady || !fontsLoaded) {
     return null;
   }
 

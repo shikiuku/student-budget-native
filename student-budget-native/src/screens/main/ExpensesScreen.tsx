@@ -14,6 +14,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
+import { Colors } from '../../constants/colors';
+import { Fonts } from '../../constants/fonts';
+import { getCategoryIcon, getCategoryColor, getCategoryBackgroundColor } from '../../utils/categoryIcons';
 
 // 元のWebアプリと同じ型定義
 interface ExpenseCategory {
@@ -44,15 +47,7 @@ interface ExpenseForm {
   date: string;
 }
 
-// アイコンマップ（元のWebアプリと同じ）
-const iconMap = {
-  "Utensils": "restaurant" as const,
-  "Car": "car" as const,
-  "ShoppingBag": "bag" as const,
-  "BookOpen": "book" as const,
-  "Shirt": "shirt" as const,
-  "Home": "home" as const
-};
+// 統一されたアイコンマップを使用
 
 export default function ExpensesScreen() {
   const { user } = useAuth();
@@ -372,7 +367,7 @@ export default function ExpensesScreen() {
 
         {expenses.map((expense, index) => {
           const category = expense.category;
-          const iconName = category?.icon ? iconMap[category.icon as keyof typeof iconMap] || "home" : "home";
+          const iconName = getCategoryIcon(category?.icon || category?.name || 'その他');
           const expenseDate = new Date(expense.date);
           const currentExpenseMonth = `${expenseDate.getFullYear()}年${expenseDate.getMonth() + 1}月`;
           
@@ -390,8 +385,8 @@ export default function ExpensesScreen() {
               <View style={styles.expenseCard}>
                 <View style={styles.expenseContent}>
                   <View style={styles.expenseLeft}>
-                    <View style={[styles.categoryIcon, { backgroundColor: category?.color || "#6b7280" }]}>
-                      <Ionicons name={iconName} size={16} color="#FFF" />
+                    <View style={[styles.categoryIcon, { backgroundColor: getCategoryBackgroundColor(category?.name || 'その他') }]}>
+                      <Ionicons name={iconName} size={16} color={getCategoryColor(category?.name || 'その他')} />
                     </View>
                     <View style={styles.expenseInfo}>
                       <View style={styles.expenseAmountRow}>
@@ -415,7 +410,7 @@ export default function ExpensesScreen() {
                   </View>
                   <View style={styles.expenseActions}>
                     <TouchableOpacity style={styles.editButton}>
-                      <Ionicons name="create" size={16} color="#10B981" />
+                      <Ionicons name="create" size={16} color="#64748B" />
                     </TouchableOpacity>
                     <TouchableOpacity 
                       style={styles.deleteButton}
@@ -436,12 +431,12 @@ export default function ExpensesScreen() {
         <View style={styles.categorySection}>
           <Text style={styles.categoryTitle}>今月のカテゴリ別集計</Text>
           {categoryBreakdown.map((category) => {
-            const iconName = category.icon ? iconMap[category.icon as keyof typeof iconMap] || "home" : "home";
+            const iconName = getCategoryIcon(category.icon || category.name || 'その他');
             return (
               <View key={category.id} style={styles.categoryItem}>
                 <View style={styles.categoryLeft}>
-                  <View style={[styles.categoryIcon, { backgroundColor: category.color || "#6b7280" }]}>
-                    <Ionicons name={iconName} size={16} color="#FFF" />
+                  <View style={[styles.categoryIcon, { backgroundColor: getCategoryBackgroundColor(category.name || 'その他') }]}>
+                    <Ionicons name={iconName} size={16} color={getCategoryColor(category.name || 'その他')} />
                   </View>
                   <Text style={styles.categoryName}>{category.name}</Text>
                 </View>
@@ -491,11 +486,11 @@ export default function ExpensesScreen() {
                       setShowCategoryPicker(false);
                     }}
                   >
-                    <View style={[styles.categoryIcon, { backgroundColor: category.color || "#6b7280" }]}>
+                    <View style={[styles.categoryIcon, { backgroundColor: getCategoryBackgroundColor(category.name || 'その他') }]}>
                       <Ionicons 
-                        name={category.icon ? iconMap[category.icon as keyof typeof iconMap] || "home" : "home"} 
+                        name={getCategoryIcon(category.icon || category.name || 'その他')} 
                         size={16} 
-                        color="#FFF" 
+                        color={getCategoryColor(category.name || 'その他')} 
                       />
                     </View>
                     <Text style={styles.categoryOptionText}>{category.name}</Text>
@@ -512,38 +507,50 @@ export default function ExpensesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.gray[50],
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.gray[50],
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#6B7280',
+    fontFamily: Fonts.regular,
+    color: Colors.gray[500],
   },
 
   // サマリーカード
   summaryCard: {
-    backgroundColor: '#EBF8FF',
-    borderColor: '#BFDBFE',
+    backgroundColor: '#F9FAFB', // Web版の暗めの灰色系 (gray-50)
+    borderColor: '#E5E7EB', // Web版の暗めの灰色系 (gray-200)
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 8,
     padding: 16,
-    margin: 24,
+    marginHorizontal: 16,
+    marginVertical: 16,
     alignItems: 'center',
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   summaryAmount: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#000',
+    fontFamily: Fonts.bold,
+    color: Colors.black,
   },
   summaryLabel: {
     fontSize: 14,
-    color: '#6B7280',
+    fontFamily: Fonts.regular,
+    color: Colors.gray[500],
     marginTop: 4,
   },
 
@@ -551,12 +558,12 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     gap: 16,
-    paddingHorizontal: 24,
-    marginBottom: 24,
+    paddingHorizontal: 16,
+    marginBottom: 16,
   },
   addButton: {
     flex: 1,
-    backgroundColor: '#10B981',
+    backgroundColor: '#64748B', // Web版の薩めの青灰色 (slate-500)
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -565,13 +572,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   addButtonText: {
-    color: '#FFF',
+    color: Colors.white,
     fontSize: 14,
     fontWeight: '500',
+    fontFamily: Fonts.medium,
   },
   importButton: {
     flex: 1,
-    backgroundColor: '#10B981',
+    backgroundColor: '#64748B', // Web版の薩めの青灰色 (slate-500)
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -580,25 +588,35 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   importButtonText: {
-    color: '#FFF',
+    color: Colors.white,
     fontSize: 14,
     fontWeight: '500',
+    fontFamily: Fonts.medium,
   },
 
   // フォームカード
   formCard: {
-    backgroundColor: '#FFF',
-    borderColor: '#E5E7EB',
+    backgroundColor: Colors.white,
+    borderColor: Colors.gray[200],
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 8,
     padding: 16,
-    marginHorizontal: 24,
-    marginBottom: 24,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   formTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000',
+    fontFamily: Fonts.bold,
+    color: Colors.black,
     marginBottom: 16,
   },
   formGroup: {
@@ -606,34 +624,37 @@ const styles = StyleSheet.create({
   },
   formLabel: {
     fontSize: 14,
-    color: '#374151',
+    fontFamily: Fonts.regular,
+    color: Colors.gray[700],
     marginBottom: 8,
   },
   formInput: {
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: Colors.gray[300],
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#FFF',
-    color: '#000',
+    fontFamily: Fonts.regular,
+    backgroundColor: Colors.white,
+    color: Colors.black,
   },
   categoryPicker: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: Colors.gray[300],
     borderRadius: 8,
     padding: 12,
-    backgroundColor: '#FFF',
+    backgroundColor: Colors.white,
   },
   categoryPickerText: {
     fontSize: 16,
-    color: '#000',
+    fontFamily: Fonts.regular,
+    color: Colors.black,
   },
   placeholder: {
-    color: '#9CA3AF',
+    color: Colors.gray[400],
   },
   formButtons: {
     flexDirection: 'row',
@@ -641,34 +662,36 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     flex: 1,
-    backgroundColor: '#10B981',
+    backgroundColor: '#64748B', // Web版の薩めの青灰色 (slate-500)
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
   },
   saveButtonText: {
-    color: '#FFF',
+    color: Colors.white,
     fontSize: 16,
     fontWeight: '500',
+    fontFamily: Fonts.medium,
   },
   cancelButton: {
     flex: 1,
-    backgroundColor: '#FFF',
+    backgroundColor: Colors.white,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: Colors.gray[300],
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
   },
   cancelButtonText: {
-    color: '#10B981',
+    color: '#64748B', // Web版の薩めの青灰色 (slate-500)
     fontSize: 16,
     fontWeight: '500',
+    fontFamily: Fonts.medium,
   },
 
   // 履歴セクション
   historySection: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
   },
   historyHeader: {
     flexDirection: 'row',
@@ -679,24 +702,27 @@ const styles = StyleSheet.create({
   historyTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000',
+    fontFamily: Fonts.bold,
+    color: Colors.black,
   },
   backButton: {
-    backgroundColor: '#FFF',
+    backgroundColor: Colors.white,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: Colors.gray[300],
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
   },
   backButtonText: {
-    color: '#10B981',
+    color: '#64748B', // Web版の薩めの青灰色 (slate-500)
     fontSize: 12,
+    fontFamily: Fonts.regular,
   },
   monthHeader: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#6B7280',
+    fontFamily: Fonts.medium,
+    color: Colors.gray[500],
     marginTop: 24,
     marginBottom: 8,
     paddingLeft: 8,
@@ -704,12 +730,20 @@ const styles = StyleSheet.create({
 
   // 支出カード
   expenseCard: {
-    backgroundColor: '#FFF',
-    borderColor: '#E5E7EB',
+    backgroundColor: Colors.white,
+    borderColor: Colors.gray[200],
     borderWidth: 1,
     borderRadius: 8,
     padding: 16,
     marginBottom: 8,
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   expenseContent: {
     flexDirection: 'row',
@@ -741,20 +775,22 @@ const styles = StyleSheet.create({
   expenseAmount: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#000',
+    fontFamily: Fonts.bold,
+    color: Colors.black,
   },
   categoryBadge: {
-    backgroundColor: '#EBF8FF',
+    backgroundColor: '#E5E7EB', // Web版の暗めの灰色系 (gray-200)
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 12,
   },
   categoryBadgeText: {
     fontSize: 12,
-    color: '#10B981',
+    fontFamily: Fonts.regular,
+    color: '#64748B', // Web版の薩めの青灰色 (slate-500)
   },
   sourceBadge: {
-    backgroundColor: '#FFFBEB',
+    backgroundColor: Colors.warning[50],
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 8,
@@ -764,12 +800,14 @@ const styles = StyleSheet.create({
   },
   sourceBadgeText: {
     fontSize: 10,
-    color: '#F59E0B',
+    fontFamily: Fonts.regular,
+    color: Colors.warning[500],
   },
   expenseDescription: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#000',
+    fontFamily: Fonts.medium,
+    color: Colors.black,
     marginBottom: 4,
   },
   expenseDate: {
@@ -779,39 +817,57 @@ const styles = StyleSheet.create({
   },
   expenseDateText: {
     fontSize: 12,
-    color: '#6B7280',
+    fontFamily: Fonts.regular,
+    color: Colors.gray[500],
   },
   expenseActions: {
     flexDirection: 'row',
     gap: 8,
   },
   editButton: {
-    padding: 8,
+    width: 32, // Web版の8x8 = 32px
+    height: 32,
     borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent', // ghost variant
   },
   deleteButton: {
-    padding: 8,
+    width: 32, // Web版の8x8 = 32px
+    height: 32,
     borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent', // ghost variant
   },
 
   // カテゴリセクション
   categorySection: {
-    backgroundColor: '#FFF',
-    borderColor: '#E5E7EB',
+    backgroundColor: Colors.white,
+    borderColor: Colors.gray[200],
     borderWidth: 1,
     borderRadius: 8,
-    marginHorizontal: 24,
-    marginTop: 24,
+    marginHorizontal: 16,
+    marginTop: 16,
     overflow: 'hidden',
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   categoryTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000',
+    fontFamily: Fonts.bold,
+    color: Colors.black,
     padding: 16,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.gray[50],
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: Colors.gray[200],
   },
   categoryItem: {
     flexDirection: 'row',
@@ -819,7 +875,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: Colors.gray[100],
   },
   categoryLeft: {
     flexDirection: 'row',
@@ -829,12 +885,14 @@ const styles = StyleSheet.create({
   categoryName: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#000',
+    fontFamily: Fonts.medium,
+    color: Colors.black,
   },
   categoryAmount: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#000',
+    fontFamily: Fonts.bold,
+    color: Colors.black,
   },
 
   // 全履歴表示セクション
@@ -843,7 +901,7 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
   showAllButton: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#64748B', // Web版の薩めの青灰色 (slate-500)
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 24,
@@ -852,9 +910,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   showAllButtonText: {
-    color: '#FFF',
+    color: Colors.white,
     fontSize: 16,
     fontWeight: '500',
+    fontFamily: Fonts.medium,
   },
 
   // モーダル
@@ -864,7 +923,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFF',
+    backgroundColor: Colors.white,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     maxHeight: '70%',
@@ -875,12 +934,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: Colors.gray[200],
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000',
+    fontFamily: Fonts.bold,
+    color: Colors.black,
   },
   categoryList: {
     padding: 16,
@@ -895,6 +955,7 @@ const styles = StyleSheet.create({
   },
   categoryOptionText: {
     fontSize: 16,
-    color: '#000',
+    fontFamily: Fonts.regular,
+    color: Colors.black,
   },
 });

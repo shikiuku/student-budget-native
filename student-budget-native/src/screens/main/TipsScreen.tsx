@@ -10,11 +10,14 @@ import {
   TextInput,
   Alert,
   Modal,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabase';
-import { getCategoryIcon, getCategoryColor } from '../../utils/categoryIcons';
+import { getCategoryIcon, getCategoryColor, getCategoryBackgroundColor } from '../../utils/categoryIcons';
+import { Colors } from '../../constants/colors';
+import { Fonts } from '../../constants/fonts';
 
 // 元のWebアプリと同じ型定義
 interface Post {
@@ -45,6 +48,67 @@ interface PostForm {
 // 統一されたカテゴリ定義
 const categories = ['食費', '交通費', '娯楽', '学用品', '衣類', 'その他'] as const;
 
+// ソート・フィルター用の型定義
+type SortType = 'latest' | 'likes' | 'category';
+
+// 学年表示用ヘルパー関数
+const getDisplayGrade = (schoolType: string, grade: string): string => {
+  console.log('getDisplayGrade called with:', { schoolType, grade }); // デバッグログ
+  
+  // gradeに既に学校名が含まれているかチェック
+  if (grade && (
+    grade.includes('高校') ||
+    grade.includes('中学') ||
+    grade.includes('小学') ||
+    grade.includes('大学') ||
+    grade.includes('大学院')
+  )) {
+    // 既に完全な形式で入っている場合はそのまま返す
+    return grade;
+  }
+  
+  let displaySchoolType = '';
+  
+  switch (schoolType) {
+    case 'elementary':
+      displaySchoolType = '小学校';
+      break;
+    case 'junior_high':
+      displaySchoolType = '中学校';
+      break;
+    case 'high_school':
+      displaySchoolType = '高校';
+      break;
+    case 'university':
+      displaySchoolType = '大学';
+      break;
+    case 'graduate_school':
+      displaySchoolType = '大学院';
+      break;
+    default:
+      displaySchoolType = '学校';
+      break;
+  }
+  
+  // 学年のフォーマットも整理
+  let displayGrade = grade;
+  if (grade && !grade.includes('年')) {
+    // "一年"、"1年"などの形式に変換
+    displayGrade = grade.replace(/[0-9]+/, (match) => {
+      const gradeNumber = parseInt(match);
+      const kanjiNumbers = ['一', '二', '三', '四', '五', '六'];
+      return kanjiNumbers[gradeNumber - 1] || match;
+    });
+    if (!displayGrade.includes('年')) {
+      displayGrade += '年生';
+    }
+  }
+  
+  const result = `${displaySchoolType}${displayGrade}`;
+  console.log('getDisplayGrade result:', result); // デバッグログ
+  return result;
+};
+
 export default function TipsScreen() {
   const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
@@ -62,11 +126,21 @@ export default function TipsScreen() {
   });
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [sortBy, setSortBy] = useState<SortType>('latest');
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('');
+  const [showGuidelinesModal, setShowGuidelinesModal] = useState(false);
+  const [editOptionsPost, setEditOptionsPost] = useState<Post | null>(null);
+  const [showEditOptions, setShowEditOptions] = useState(false);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [activePostId, setActivePostId] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   useEffect(() => {
     if (user) {
       loadPosts();
       loadUserInteractions();
+      loadCurrentUserProfile();
     }
   }, [user]);
 
@@ -92,8 +166,10 @@ export default function TipsScreen() {
         
         const { data: profilesData } = await supabase
           .from('user_profiles')
-          .select('id, name, school_type, grade')
+          .select('id, name, school_type, grade, avatar_url')
           .in('id', userIds);
+        
+        console.log('Profile data loaded:', profilesData); // デバッグ用
 
         // 各投稿のいいね数を取得
         const { data: likeCounts } = await supabase
@@ -180,7 +256,33 @@ export default function TipsScreen() {
     setRefreshing(true);
     await loadPosts();
     await loadUserInteractions();
+    if (user) {
+      await loadCurrentUserProfile();
+    }
     setRefreshing(false);
+  };
+
+  // 現在のユーザープロフィール取得
+  const loadCurrentUserProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: profileData, error } = await supabase
+        .from('user_profiles')
+        .select('id, name, school_type, grade, avatar_url')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Current user profile load error:', error);
+        return;
+      }
+
+      console.log('Current user profile loaded:', profileData);
+      setUserProfile(profileData);
+    } catch (error) {
+      console.error('Error loading current user profile:', error);
+    }
   };
 
   const handleSubmitPost = async () => {
@@ -342,10 +444,141 @@ export default function TipsScreen() {
     }
   };
 
+  // 編集ツールバー表示切り替え
+  const handleShowEditOptions = (post: Post) => {
+    if (activePostId === post.id) {
+      // 既に表示中の場合は非表示に
+      setActivePostId(null);
+    } else {
+      // 新しい投稿のツールバーを表示
+      setActivePostId(post.id);
+    }
+    setEditOptionsPost(post);
+  };
+
+  // 投稿編集処理
+  const handleEditPost = (post: Post) => {
+    setEditingPost(post);
+    setNewPost({
+      title: post.title,
+      content: post.content,
+      category: post.category,
+      savings_effect: post.savings_effect || ''
+    });
+    setActivePostId(null); // ツールバーを非表示
+    setShowEditModal(true);
+  };
+
+  // 投稿削除処理
+  const handleDeletePost = async (post: Post) => {
+    Alert.alert(
+      '投稿を削除',
+      'この投稿を削除しますか？',
+      [
+        {
+          text: 'キャンセル',
+          style: 'cancel'
+        },
+        {
+          text: '削除',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const { error } = await supabase
+                .from('posts')
+                .delete()
+                .eq('id', post.id)
+                .eq('user_id', user?.id);
+
+              if (error) throw error;
+
+              // ローカル状態から削除
+              setPosts(prev => prev.filter(p => p.id !== post.id));
+              setActivePostId(null); // ツールバーを非表示
+              Alert.alert('成功', '投稿を削除しました。');
+            } catch (error) {
+              console.error('Error deleting post:', error);
+              Alert.alert('エラー', '投稿の削除に失敗しました。');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // 投稿更新処理
+  const handleUpdatePost = async () => {
+    if (!user || !editingPost || !newPost.title.trim() || !newPost.content.trim() || !newPost.category) {
+      Alert.alert('エラー', 'タイトル、内容、カテゴリを入力してください。');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('posts')
+        .update({
+          title: newPost.title.trim(),
+          content: newPost.content.trim(),
+          category: newPost.category,
+          savings_effect: newPost.savings_effect.trim() || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingPost.id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      Alert.alert('成功', '投稿を更新しました！');
+      
+      // フォームリセット
+      setNewPost({
+        title: '',
+        content: '',
+        category: '',
+        savings_effect: ''
+      });
+      setEditingPost(null);
+      setShowEditModal(false);
+
+      // 投稿一覧を再読み込み
+      loadPosts();
+
+    } catch (error) {
+      console.error('Error updating post:', error);
+      Alert.alert('エラー', '投稿の更新に失敗しました。');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // 並び替え・フィルタリング機能
+  const filteredAndSortedPosts = React.useMemo(() => {
+    let filtered = posts;
+    
+    // カテゴリフィルタリング
+    if (selectedCategoryFilter) {
+      filtered = filtered.filter(post => post.category === selectedCategoryFilter);
+    }
+    
+    // 並び替え
+    switch (sortBy) {
+      case 'likes':
+        return [...filtered].sort((a, b) => b.likes_count - a.likes_count);
+      case 'category':
+        return [...filtered].sort((a, b) => a.category.localeCompare(b.category, 'ja'));
+      case 'latest':
+      default:
+        return [...filtered].sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+    }
+  }, [posts, sortBy, selectedCategoryFilter]);
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#10B981" />
+        <ActivityIndicator size="large" color={Colors.zaimBlue[500]} />
         <Text style={styles.loadingText}>読み込み中...</Text>
       </View>
     );
@@ -361,7 +594,28 @@ export default function TipsScreen() {
       >
         {/* ヘッダー */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>節約アイディア</Text>
+          <View style={styles.headerLeft}>
+            <Text style={styles.headerTitle}>節約アイディア</Text>
+            <TouchableOpacity
+              style={styles.infoButton}
+              onPress={() => setShowGuidelinesModal(true)}
+            >
+              <Ionicons name="information-circle-outline" size={20} color={Colors.gray[600]} />
+            </TouchableOpacity>
+          </View>
+          {user && (
+            <View style={styles.userAvatar}>
+              {userProfile?.avatar_url ? (
+                <Image 
+                  source={{ uri: userProfile.avatar_url }}
+                  style={styles.userAvatarImage}
+                  onError={() => console.log('Failed to load user avatar')}
+                />
+              ) : (
+                <Ionicons name="person" size={20} color={Colors.gray[600]} />
+              )}
+            </View>
+          )}
         </View>
 
         {/* 投稿フォーム */}
@@ -453,16 +707,78 @@ export default function TipsScreen() {
 
         {/* 投稿一覧 */}
         <View style={styles.postsSection}>
-          <Text style={styles.sectionTitle}>みんなの節約アイディア</Text>
+          <View style={styles.postsHeader}>
+            <Text style={styles.sectionTitle}>みんなの節約アイディア</Text>
+            
+            {/* フィルターとソートコントロール（同じ行に配置） */}
+            <View style={styles.controlsContainer}>
+              <View style={styles.controlsRow}>
+                {/* カテゴリフィルター */}
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterContainer}>
+                  <TouchableOpacity
+                    style={[styles.filterChip, selectedCategoryFilter === '' && styles.filterChipSelected]}
+                    onPress={() => setSelectedCategoryFilter('')}
+                  >
+                    <Text style={[styles.filterChipText, selectedCategoryFilter === '' && styles.filterChipTextSelected]}>
+                      すべて
+                    </Text>
+                  </TouchableOpacity>
+                  {categories.map(category => (
+                    <TouchableOpacity
+                      key={category}
+                      style={[styles.filterChip, selectedCategoryFilter === category && styles.filterChipSelected]}
+                      onPress={() => setSelectedCategoryFilter(category)}
+                    >
+                      <Text style={[styles.filterChipText, selectedCategoryFilter === category && styles.filterChipTextSelected]}>
+                        {category}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+                
+                {/* ソートボタン */}
+                <View style={styles.sortContainer}>
+                  <TouchableOpacity
+                    style={[styles.sortChip, sortBy === 'latest' && styles.sortChipSelected]}
+                    onPress={() => setSortBy('latest')}
+                  >
+                    <Text style={[styles.sortChipText, sortBy === 'latest' && styles.sortChipTextSelected]}>
+                      新着順
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.sortChip, sortBy === 'likes' && styles.sortChipSelected]}
+                    onPress={() => setSortBy('likes')}
+                  >
+                    <Text style={[styles.sortChipText, sortBy === 'likes' && styles.sortChipTextSelected]}>
+                      ハート順
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.sortChip, sortBy === 'category' && styles.sortChipSelected]}
+                    onPress={() => setSortBy('category')}
+                  >
+                    <Text style={[styles.sortChipText, sortBy === 'category' && styles.sortChipTextSelected]}>
+                      カテゴリ順
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </View>
           
-          {posts.length === 0 ? (
+          {filteredAndSortedPosts.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>まだ投稿がありません</Text>
-              <Text style={styles.emptySubtext}>最初の節約アイディアを投稿してみませんか？</Text>
+              <Text style={styles.emptyText}>
+                {selectedCategoryFilter ? `「${selectedCategoryFilter}」の投稿がありません` : 'まだ投稿がありません'}
+              </Text>
+              <Text style={styles.emptySubtext}>
+                {selectedCategoryFilter ? 'フィルターを変更するか、' : ''}最初の節約アイディアを投稿してみませんか？
+              </Text>
             </View>
           ) : (
             <View style={styles.postsList}>
-              {posts.map((post) => {
+              {filteredAndSortedPosts.map((post) => {
                 const categoryIcon = getCategoryIcon(post.category);
                 const categoryColor = getCategoryColor(post.category);
                 const isLiked = Boolean(likedPosts[post.id]);
@@ -480,66 +796,133 @@ export default function TipsScreen() {
                 
                 return (
                   <View key={post.id} style={styles.postCard}>
-                    <View style={styles.postHeader}>
-                      <View style={styles.postAuthor}>
-                        <View style={styles.authorAvatar}>
-                          <Ionicons name="person" size={16} color="#6B7280" />
-                        </View>
-                        <Text style={styles.authorEmail}>
-                          {post.user_profiles?.name || 'Unknown'}
-                        </Text>
+                    {/* Web版と同じレイアウト: 左側アイコン + 右側コンテンツ */}
+                    <View style={styles.postLayout}>
+                      {/* 左側: ユーザーアイコン */}
+                      <View style={styles.userAvatarLarge}>
+                        {post.user_profiles?.avatar_url ? (
+                          <Image 
+                            source={{ uri: post.user_profiles.avatar_url }}
+                            style={styles.avatarImage}
+                          />
+                        ) : (
+                          <Ionicons name="person" size={24} color={Colors.gray[600]} />
+                        )}
                       </View>
-                      <Text style={styles.postDate}>
-                        {new Date(post.created_at).toLocaleDateString('ja-JP')}
-                      </Text>
-                    </View>
-                    
-                    <Text style={styles.postTitle}>{post.title}</Text>
-                    <Text style={styles.postContent}>{post.content}</Text>
-                    
-                    <View style={styles.postMeta}>
-                      <View style={styles.postBadges}>
-                        <View style={[styles.categoryBadge, { backgroundColor: categoryColor }]}>
-                          <Ionicons name={categoryIcon} size={12} color="#FFF" />
-                          <Text style={styles.categoryBadgeText}>{post.category}</Text>
+                      
+                      {/* 右側: 投稿内容 */}
+                      <View style={styles.postContent}>
+                        {/* ユーザー情報 + 投稿時間 */}
+                        <View style={styles.postHeaderInfo}>
+                          <View style={styles.userInfo}>
+                            <Text style={styles.authorName}>
+                              {post.user_profiles?.name || 'Unknown'}
+                            </Text>
+                            <Text style={styles.userGrade}>
+                              {post.user_profiles?.school_type && post.user_profiles?.grade ? 
+                                getDisplayGrade(post.user_profiles.school_type, post.user_profiles.grade) : 
+                                '学生'
+                              }
+                            </Text>
+                          </View>
+                          <Text style={styles.postDate}>
+                            {new Date(post.created_at).toLocaleDateString('ja-JP', {
+                              month: 'numeric',
+                              day: 'numeric'
+                            }) === new Date().toLocaleDateString('ja-JP', {
+                              month: 'numeric', 
+                              day: 'numeric'
+                            }) ? '数分前' : new Date(post.created_at).toLocaleDateString('ja-JP')}
+                          </Text>
                         </View>
-                        {post.savings_effect && (
-                          <View style={styles.savingsBadge}>
-                            <Text style={styles.savingsBadgeText}>{post.savings_effect}</Text>
+                        
+                        {/* 投稿タイトル */}
+                        <Text style={styles.postTitle}>{post.title}</Text>
+                        
+                        {/* 投稿内容 */}
+                        <Text style={styles.postContentText}>{post.content}</Text>
+                        
+                        {/* カテゴリバッジ + 節約効果 + アクションボタン（同じ行） */}
+                        <View style={styles.postMetaRow}>
+                          <View style={styles.postBadges}>
+                            <View style={[styles.categoryBadge, { backgroundColor: getCategoryBackgroundColor(post.category) }]}>
+                              <Ionicons name={categoryIcon} size={12} color={getCategoryColor(post.category)} />
+                              <Text style={[styles.categoryBadgeText, { color: getCategoryColor(post.category) }]}>{post.category}</Text>
+                            </View>
+                            {post.savings_effect && (
+                              <View style={styles.savingsBadge}>
+                                <Text style={styles.savingsBadgeText}>{post.savings_effect}</Text>
+                              </View>
+                            )}
+                          </View>
+
+                          {/* アクションボタン（右寄せ） */}
+                          <View style={styles.postActions}>
+                            <TouchableOpacity 
+                              style={styles.actionButton}
+                              onPress={() => handleLike(post.id)}
+                            >
+                              <Ionicons 
+                                name={isLiked ? "heart" : "heart-outline"} 
+                                size={16} 
+                                color={isLiked ? Colors.error[500] : Colors.gray[500]} 
+                              />
+                              <Text style={[styles.actionText, isLiked && { color: Colors.error[500] }]}>
+                                {post.likes_count}
+                              </Text>
+                            </TouchableOpacity>
+                            
+                            <TouchableOpacity style={styles.actionButton}>
+                              <Ionicons name="chatbubble-outline" size={16} color={Colors.gray[500]} />
+                              <Text style={styles.actionText}>0</Text>
+                            </TouchableOpacity>
+                            
+                            <TouchableOpacity 
+                              style={styles.actionButton}
+                              onPress={() => handleBookmark(post.id)}
+                            >
+                              <Ionicons 
+                                name={isBookmarked ? "bookmark" : "bookmark-outline"} 
+                                size={16} 
+                                color={isBookmarked ? Colors.zaimBlue[500] : Colors.gray[500]} 
+                              />
+                            </TouchableOpacity>
+                            
+                            {/* 自分の投稿の場合のみ編集・削除ボタン */}
+                            {user && post.user_id === user.id && (
+                              <TouchableOpacity
+                                style={styles.moreButton}
+                                onPress={() => handleShowEditOptions(post)}
+                              >
+                                <Ionicons name="ellipsis-horizontal" size={16} color={Colors.gray[500]} />
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                        </View>
+                        
+                        {/* 編集ツールバー（自分の投稿かつアクティブな場合のみ表示） */}
+                        {user && post.user_id === user.id && activePostId === post.id && (
+                          <View style={styles.editToolbar}>
+                            <TouchableOpacity
+                              style={styles.toolbarButton}
+                              onPress={() => handleEditPost(post)}
+                            >
+                              <Ionicons name="create-outline" size={16} color={Colors.zaimBlue[600]} />
+                              <Text style={[styles.toolbarButtonText, { color: Colors.zaimBlue[600] }]}>編集</Text>
+                            </TouchableOpacity>
+                            
+                            <View style={styles.toolbarDivider} />
+                            
+                            <TouchableOpacity
+                              style={styles.toolbarButton}
+                              onPress={() => handleDeletePost(post)}
+                            >
+                              <Ionicons name="trash-outline" size={16} color={Colors.error[500]} />
+                              <Text style={[styles.toolbarButtonText, { color: Colors.error[500] }]}>削除</Text>
+                            </TouchableOpacity>
                           </View>
                         )}
                       </View>
-                    </View>
-
-                    <View style={styles.postActions}>
-                      <TouchableOpacity 
-                        style={styles.actionButton}
-                        onPress={() => handleLike(post.id)}
-                      >
-                        <Ionicons 
-                          name={isLiked ? "heart" : "heart-outline"} 
-                          size={20} 
-                          color={isLiked ? "#EF4444" : "#6B7280"} 
-                        />
-                        <Text style={[styles.actionText, isLiked && { color: "#EF4444" }]}>
-                          {post.likes_count}
-                        </Text>
-                      </TouchableOpacity>
-                      
-                      <TouchableOpacity 
-                        style={styles.actionButton}
-                        onPress={() => handleBookmark(post.id)}
-                      >
-                        <Ionicons 
-                          name={isBookmarked ? "bookmark" : "bookmark-outline"} 
-                          size={20} 
-                          color={isBookmarked ? "#10B981" : "#6B7280"} 
-                        />
-                      </TouchableOpacity>
-                      
-                      <TouchableOpacity style={styles.actionButton}>
-                        <Ionicons name="share-outline" size={20} color="#6B7280" />
-                      </TouchableOpacity>
                     </View>
                   </View>
                 );
@@ -549,13 +932,73 @@ export default function TipsScreen() {
         </View>
       </ScrollView>
 
-      {/* 右下の投稿ボタン */}
+      {/* 右下の投稿ボタン（Web版と同じ） */}
       <TouchableOpacity
         style={styles.floatingAddButton}
         onPress={() => setShowModal(true)}
       >
-        <Ionicons name="add" size={28} color="white" style={{ fontWeight: 'bold' }} />
+        <Ionicons name="add" size={24} color={Colors.white} />
       </TouchableOpacity>
+
+      {/* コミュニティガイドラインモーダル */}
+      <Modal
+        visible={showGuidelinesModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowGuidelinesModal(false)}
+      >
+        <View style={styles.guidelinesContainer}>
+          <View style={styles.guidelinesHeader}>
+            <Text style={styles.guidelinesTitle}>コミュニティガイドライン</Text>
+            <TouchableOpacity
+              onPress={() => setShowGuidelinesModal(false)}
+              style={styles.closeButton}
+            >
+              <Ionicons name="close" size={24} color={Colors.gray[600]} />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.guidelinesContent}>
+            <View style={styles.guidelinesSection}>
+              <Text style={styles.guidelinesSectionTitle}>1. 投稿内容について</Text>
+              <View style={styles.guidelinesListContainer}>
+                <Text style={styles.guidelinesListItem}>• 節約や家計管理に関する有益な情報を共有してください</Text>
+                <Text style={styles.guidelinesListItem}>• 実体験に基づいた具体的なアドバイスを心がけてください</Text>
+                <Text style={styles.guidelinesListItem}>• 誤解を招く情報や不確実な内容は避けてください</Text>
+                <Text style={styles.guidelinesListItem}>• 商業的な宣伝や勧誘は禁止されています</Text>
+              </View>
+            </View>
+            
+            <View style={styles.guidelinesSection}>
+              <Text style={styles.guidelinesSectionTitle}>2. コミュニケーションの基本</Text>
+              <View style={styles.guidelinesListContainer}>
+                <Text style={styles.guidelinesListItem}>• 他のユーザーに対して礼儀正しく接してください</Text>
+                <Text style={styles.guidelinesListItem}>• 建設的な議論を心がけ、批判的なコメントは避けてください</Text>
+                <Text style={styles.guidelinesListItem}>• 個人の経済状況を批判したり、比較したりしないでください</Text>
+                <Text style={styles.guidelinesListItem}>• 多様な価値観や生活スタイルを尊重してください</Text>
+              </View>
+            </View>
+            
+            <View style={styles.guidelinesSection}>
+              <Text style={styles.guidelinesSectionTitle}>3. 禁止事項</Text>
+              <View style={styles.guidelinesListContainer}>
+                <Text style={styles.guidelinesListItem}>• 個人情報（電話番号、住所、メールアドレスなど）の投稿</Text>
+                <Text style={styles.guidelinesListItem}>• 著作権を侵害するコンテンツの共有</Text>
+                <Text style={styles.guidelinesListItem}>• 差別的、攻撃的、または不適切な表現の使用</Text>
+                <Text style={styles.guidelinesListItem}>• スパム投稿や同一内容の繰り返し投稿</Text>
+                <Text style={styles.guidelinesListItem}>• 違法行為や規約違反を促すような内容</Text>
+              </View>
+            </View>
+            
+            <View style={styles.guidelinesNotice}>
+              <Text style={styles.guidelinesNoticeText}>
+                これらのガイドラインは、すべてのユーザーが安心して利用できる環境を維持するためのものです。
+                違反が確認された場合、投稿の削除やアカウント制限などの措置を取る場合があります。
+              </Text>
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
 
       {/* 投稿作成モーダル */}
       <Modal
@@ -660,6 +1103,115 @@ export default function TipsScreen() {
         </View>
       </Modal>
 
+
+      {/* 投稿編集モーダル */}
+      <Modal
+        visible={showEditModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowEditModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>投稿を編集</Text>
+            <TouchableOpacity
+              onPress={() => setShowEditModal(false)}
+              style={styles.closeButton}
+            >
+              <Ionicons name="close" size={24} color={Colors.gray[600]} />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.modalContent}>
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>タイトル *</Text>
+              <TextInput
+                style={styles.textInput}
+                value={newPost.title}
+                onChangeText={(text) => setNewPost({ ...newPost, title: text })}
+                placeholder="タイトルを入力してください..."
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>内容 *</Text>
+              <TextInput
+                style={[styles.textInput, styles.textArea]}
+                value={newPost.content}
+                onChangeText={(text) => setNewPost({ ...newPost, content: text })}
+                placeholder="節約のコツや詳しい方法を教えてください..."
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>カテゴリー *</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryList}>
+                {categories.map((category) => {
+                  const iconName = getCategoryIcon(category);
+                  const isSelected = newPost.category === category;
+                  
+                  return (
+                    <TouchableOpacity
+                      key={category}
+                      style={[
+                        styles.categoryItem,
+                        isSelected && styles.selectedCategoryItem
+                      ]}
+                      onPress={() => setNewPost({ ...newPost, category })}
+                    >
+                      <View style={[
+                        styles.categoryIconContainer,
+                        { backgroundColor: getCategoryBackgroundColor(category) },
+                        isSelected && styles.selectedCategoryIcon
+                      ]}>
+                        <Ionicons name={iconName} size={20} color={getCategoryColor(category)} />
+                      </View>
+                      <Text style={[
+                        styles.categoryName,
+                        isSelected && styles.selectedCategoryName
+                      ]}>
+                        {category}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>節約効果</Text>
+              <TextInput
+                style={styles.textInput}
+                value={newPost.savings_effect}
+                onChangeText={(text) => setNewPost({ ...newPost, savings_effect: text })}
+                placeholder="例: 月1000円"
+              />
+            </View>
+          </ScrollView>
+
+          <View style={styles.modalFooter}>
+            <TouchableOpacity
+              style={styles.modalCancelButton}
+              onPress={() => setShowEditModal(false)}
+            >
+              <Text style={styles.modalCancelButtonText}>キャンセル</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalSaveButton, isSubmitting && { backgroundColor: Colors.gray[400] }]}
+              onPress={handleUpdatePost}
+              disabled={isSubmitting}
+            >
+              <Text style={styles.modalSaveButtonText}>
+                {isSubmitting ? '更新中...' : '更新する'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -667,33 +1219,65 @@ export default function TipsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.white,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.white,
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#6B7280',
+    fontFamily: Fonts.regular,
+    color: Colors.gray[500],
   },
   scrollContainer: {
     flex: 1,
   },
   
-  // ヘッダー
+  // ヘッダー（Web版と同じレイアウト）
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 24,
     paddingTop: 24,
     paddingBottom: 16,
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#000',
+    fontFamily: Fonts.bold,
+    color: Colors.black,
+  },
+  infoButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  userAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: Colors.gray[100],
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  userAvatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
   },
 
   // 投稿作成カード
@@ -793,18 +1377,19 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   inlineSubmitButton: {
-    backgroundColor: '#6B91C7',
+    backgroundColor: Colors.zaimBlue[500],
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 8,
   },
   inlineSubmitButtonDisabled: {
-    backgroundColor: '#9CA3AF',
+    backgroundColor: Colors.gray[400],
   },
   inlineSubmitButtonText: {
-    color: '#FFF',
+    color: Colors.white,
     fontSize: 14,
+    fontFamily: Fonts.medium,
     fontWeight: '500',
   },
 
@@ -812,11 +1397,78 @@ const styles = StyleSheet.create({
   postsSection: {
     paddingHorizontal: 24,
   },
+  postsHeader: {
+    marginBottom: 16,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000',
+    fontFamily: Fonts.bold,
+    color: Colors.black,
     marginBottom: 16,
+  },
+  
+  // フィルター・ソートコントロール（Web版と同じ）
+  controlsContainer: {
+    marginBottom: 12,
+  },
+  controlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  filterContainer: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  filterChip: {
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.gray[300],
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 8,
+  },
+  filterChipSelected: {
+    backgroundColor: Colors.zaimBlue[500],
+    borderColor: Colors.zaimBlue[500],
+  },
+  filterChipText: {
+    fontSize: 12,
+    fontFamily: Fonts.medium,
+    color: Colors.gray[700],
+  },
+  filterChipTextSelected: {
+    color: Colors.white,
+    fontWeight: '500',
+  },
+  sortContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  sortChip: {
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.gray[300],
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  sortChipSelected: {
+    backgroundColor: Colors.zaimBlue[500],
+    borderColor: Colors.zaimBlue[500],
+  },
+  sortChipText: {
+    fontSize: 12,
+    fontFamily: Fonts.medium,
+    color: Colors.gray[700],
+  },
+  sortChipTextSelected: {
+    color: Colors.white,
+    fontWeight: '500',
   },
   emptyState: {
     paddingVertical: 32,
@@ -824,71 +1476,115 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#6B7280',
+    fontFamily: Fonts.regular,
+    color: Colors.gray[500],
     marginBottom: 4,
+    textAlign: 'center',
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#9CA3AF',
+    fontFamily: Fonts.regular,
+    color: Colors.gray[400],
+    textAlign: 'center',
   },
   postsList: {
     gap: 16,
     paddingBottom: 80,
   },
 
-  // 投稿カード
+  // 投稿カード（Web版スタイル）
   postCard: {
-    backgroundColor: '#FFF',
-    borderColor: '#E5E7EB',
+    backgroundColor: Colors.white,
+    borderColor: Colors.gray[200],
     borderWidth: 1,
     borderRadius: 12,
     padding: 16,
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
-  postHeader: {
+  
+  // Web版と同じレイアウト（左アイコン + 右コンテンツ）
+  postLayout: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    gap: 12,
   },
-  postAuthor: {
+  userAvatarLarge: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Colors.gray[100],
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 24,
+  },
+  postContent: {
+    flex: 1,
+  },
+  postHeaderInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  authorAvatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#F3F4F6',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  authorEmail: {
+  userGrade: {
     fontSize: 12,
-    color: '#6B7280',
+    fontFamily: Fonts.regular,
+    color: Colors.gray[500],
+  },
+  authorName: {
+    fontSize: 14,
+    fontFamily: Fonts.semibold,
+    fontWeight: '600',
+    color: Colors.black,
   },
   postDate: {
     fontSize: 12,
-    color: '#9CA3AF',
+    fontFamily: Fonts.regular,
+    color: Colors.gray[500],
   },
   postTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 8,
+    fontFamily: Fonts.bold,
+    color: Colors.black,
+    marginBottom: 4,
+    marginTop: 2,
   },
-  postContent: {
+  postContentText: {
     fontSize: 14,
-    color: '#374151',
+    fontFamily: Fonts.regular,
+    color: Colors.gray[700],
     lineHeight: 20,
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  postMeta: {
-    marginBottom: 16,
+  // Web版と同じ: カテゴリタグとアクションボタンを同じ行に
+  postMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
   postBadges: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
+    flex: 1,
   },
   categoryBadge: {
     flexDirection: 'row',
@@ -900,24 +1596,25 @@ const styles = StyleSheet.create({
   },
   categoryBadgeText: {
     fontSize: 12,
-    color: '#FFF',
+    fontFamily: Fonts.medium,
     fontWeight: '500',
   },
   savingsBadge: {
-    backgroundColor: '#ECFDF5',
+    backgroundColor: Colors.success[50],
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
   },
   savingsBadgeText: {
     fontSize: 12,
-    color: '#10B981',
+    fontFamily: Fonts.medium,
+    color: Colors.success[600],
     fontWeight: '500',
   },
   postActions: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
-    gap: 24,
+    alignItems: 'center',
+    gap: 12,
   },
   actionButton: {
     flexDirection: 'row',
@@ -925,22 +1622,90 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   actionText: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginLeft: 4,
+    fontSize: 12,
+    fontFamily: Fonts.regular,
+    color: Colors.gray[500],
+    marginLeft: 2,
   },
 
-  // 右下の浮動ボタン
+  // 右下の浮動ボタン（位置調整）
   floatingAddButton: {
     position: 'absolute',
-    right: 24,
-    bottom: 24,
+    right: 20,
+    bottom: 30, // タブナビゲーションの上に配置
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#6B91C7',
+    backgroundColor: Colors.zaimBlue[500],
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: Colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  
+  // ガイドラインモーダル
+  guidelinesContainer: {
+    flex: 1,
+    backgroundColor: Colors.white,
+  },
+  guidelinesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.gray[200],
+  },
+  guidelinesTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    fontFamily: Fonts.bold,
+    color: Colors.black,
+    textAlign: 'center',
+  },
+  guidelinesContent: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+  },
+  guidelinesSection: {
+    marginBottom: 24,
+  },
+  guidelinesSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: Fonts.semibold,
+    color: Colors.black,
+    marginBottom: 12,
+  },
+  guidelinesListContainer: {
+    paddingLeft: 8,
+  },
+  guidelinesListItem: {
+    fontSize: 14,
+    fontFamily: Fonts.regular,
+    color: Colors.gray[700],
+    lineHeight: 20,
+    marginBottom: 6,
+  },
+  guidelinesNotice: {
+    backgroundColor: Colors.gray[100],
+    borderRadius: 8,
+    padding: 16,
+    marginTop: 16,
+  },
+  guidelinesNoticeText: {
+    fontSize: 14,
+    fontFamily: Fonts.regular,
+    color: Colors.gray[600],
+    lineHeight: 20,
   },
 
   // モーダル関連のスタイル
@@ -1056,16 +1821,89 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: '#6B91C7',
+    backgroundColor: Colors.zaimBlue[500],
     alignItems: 'center',
   },
   saveButtonDisabled: {
-    backgroundColor: '#9CA3AF',
+    backgroundColor: Colors.gray[400],
   },
   saveButtonText: {
     fontSize: 16,
+    fontFamily: Fonts.semibold,
     fontWeight: '600',
-    color: 'white',
+    color: Colors.white,
+  },
+
+  // モーダル内ボタンスタイル統一
+  submitButton: {
+    backgroundColor: Colors.zaimBlue[500],
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  submitButtonDisabled: {
+    backgroundColor: Colors.gray[400],
+    opacity: 0.5,
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontFamily: Fonts.semibold,
+    fontWeight: '600',
+    color: Colors.white,
+  },
+  updateButton: {
+    flex: 1,
+    backgroundColor: Colors.zaimBlue[500],
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  updateButtonDisabled: {
+    backgroundColor: Colors.gray[400],
+    opacity: 0.5,
+  },
+  updateButtonText: {
+    fontSize: 16,
+    fontFamily: Fonts.semibold,
+    fontWeight: '600',
+    color: Colors.white,
+  },
+
+  // 編集ツールバースタイル
+  moreButton: {
+    padding: 6,
+    borderRadius: 4,
+  },
+  editToolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.gray[50],
+    borderRadius: 8,
+    marginTop: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: Colors.gray[200],
+    alignSelf: 'flex-end', // 右寄せ
+  },
+  toolbarButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    gap: 4,
+  },
+  toolbarButtonText: {
+    fontSize: 12,
+    fontFamily: Fonts.medium,
+    fontWeight: '500',
+  },
+  toolbarDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: Colors.gray[300],
+    marginHorizontal: 8,
   },
 
 });
