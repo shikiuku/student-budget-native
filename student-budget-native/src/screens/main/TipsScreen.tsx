@@ -642,6 +642,7 @@ export default function TipsScreen() {
               <TextInput
                 style={styles.inlineInput}
                 placeholder="タイトルを入力してください..."
+                placeholderTextColor={Colors.gray[400]}
                 value={newPost.title}
                 onChangeText={(text) => setNewPost({ ...newPost, title: text })}
               />
@@ -649,6 +650,7 @@ export default function TipsScreen() {
               <TextInput
                 style={[styles.inlineInput, styles.inlineTextArea]}
                 placeholder="節約のコツや詳しい方法を教えてください..."
+                placeholderTextColor={Colors.gray[400]}
                 value={newPost.content}
                 onChangeText={(text) => setNewPost({ ...newPost, content: text })}
                 multiline
@@ -687,6 +689,7 @@ export default function TipsScreen() {
                 <TextInput
                   style={styles.savingsInput}
                   placeholder="節約効果 (例: 月1000円)"
+                  placeholderTextColor={Colors.gray[400]}
                   value={newPost.savings_effect}
                   onChangeText={(text) => setNewPost({ ...newPost, savings_effect: text })}
                 />
@@ -779,8 +782,6 @@ export default function TipsScreen() {
           ) : (
             <View style={styles.postsList}>
               {filteredAndSortedPosts.map((post) => {
-                const categoryIcon = getCategoryIcon(post.category);
-                const categoryColor = getCategoryColor(post.category);
                 const isLiked = Boolean(likedPosts[post.id]);
                 const isBookmarked = Boolean(bookmarkedPosts[post.id]);
                 
@@ -845,9 +846,8 @@ export default function TipsScreen() {
                         {/* カテゴリバッジ + 節約効果 + アクションボタン（同じ行） */}
                         <View style={styles.postMetaRow}>
                           <View style={styles.postBadges}>
-                            <View style={[styles.categoryBadge, { backgroundColor: getCategoryBackgroundColor(post.category) }]}>
-                              <Ionicons name={categoryIcon} size={12} color={getCategoryColor(post.category)} />
-                              <Text style={[styles.categoryBadgeText, { color: getCategoryColor(post.category) }]}>{post.category}</Text>
+                            <View style={styles.categoryBadge}>
+                              <Text style={styles.categoryBadgeText}>{post.category}</Text>
                             </View>
                             {post.savings_effect && (
                               <View style={styles.savingsBadge}>
@@ -1019,87 +1019,74 @@ export default function TipsScreen() {
           </View>
 
           <ScrollView style={styles.modalContent}>
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>タイトル *</Text>
+            <View style={styles.modalFormContainer}>
               <TextInput
-                style={styles.textInput}
+                style={styles.modalInlineInput}
+                placeholder="タイトルを入力してください..."
+                placeholderTextColor={Colors.gray[400]}
                 value={newPost.title}
                 onChangeText={(text) => setNewPost({ ...newPost, title: text })}
-                placeholder="タイトルを入力してください..."
               />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>内容 *</Text>
+              
               <TextInput
-                style={[styles.textInput, styles.textArea]}
+                style={[styles.modalInlineInput, styles.modalInlineTextArea]}
+                placeholder="節約のコツや詳しい方法を教えてください..."
+                placeholderTextColor={Colors.gray[400]}
                 value={newPost.content}
                 onChangeText={(text) => setNewPost({ ...newPost, content: text })}
-                placeholder="節約のコツや詳しい方法を教えてください..."
                 multiline
-                numberOfLines={4}
+                numberOfLines={3}
                 textAlignVertical="top"
               />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>カテゴリー *</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryList}>
-                {categories.map((category) => (
-                  <TouchableOpacity
-                    key={category}
-                    style={[
-                      styles.categoryItem,
-                      newPost.category === category && styles.selectedCategoryItem
-                    ]}
-                    onPress={() => setNewPost({ ...newPost, category })}
+              
+              <View style={styles.modalInlineFormRow}>
+                <View style={styles.modalCategorySelector}>
+                  <Text style={styles.modalSelectorLabel}>カテゴリ:</Text>
+                  <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.modalCategoryScroll}
                   >
-                    <View style={[
-                      styles.categoryIconContainer,
-                      { backgroundColor: getCategoryColor(category) },
-                      newPost.category === category && styles.selectedCategoryIcon
-                    ]}>
-                      <Ionicons name={getCategoryIcon(category)} size={20} color="white" />
-                    </View>
-                    <Text style={[
-                      styles.categoryName,
-                      newPost.category === category && styles.selectedCategoryName
-                    ]}>
-                      {category}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>節約効果</Text>
-              <TextInput
-                style={styles.textInput}
-                value={newPost.savings_effect}
-                onChangeText={(text) => setNewPost({ ...newPost, savings_effect: text })}
-                placeholder="例: 月1000円"
-              />
+                    {categories.map((category) => (
+                      <TouchableOpacity
+                        key={category}
+                        style={[
+                          styles.modalCategoryChip,
+                          newPost.category === category && styles.modalCategoryChipSelected
+                        ]}
+                        onPress={() => setNewPost({ ...newPost, category })}
+                      >
+                        <Text style={[
+                          styles.modalCategoryChipText,
+                          newPost.category === category && styles.modalCategoryChipTextSelected
+                        ]}>
+                          {category}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+                
+                <TextInput
+                  style={styles.modalSavingsInput}
+                  placeholder="節約効果 (例: 月1000円)"
+                  placeholderTextColor={Colors.gray[400]}
+                  value={newPost.savings_effect}
+                  onChangeText={(text) => setNewPost({ ...newPost, savings_effect: text })}
+                />
+              </View>
+              
+              <TouchableOpacity
+                style={[styles.modalInlineSubmitButton, isSubmitting && styles.modalInlineSubmitButtonDisabled]}
+                onPress={handleSubmitPost}
+                disabled={isSubmitting || !newPost.title.trim() || !newPost.content.trim() || !newPost.category}
+              >
+                <Text style={styles.modalInlineSubmitButtonText}>
+                  {isSubmitting ? '投稿中...' : '投稿する'}
+                </Text>
+              </TouchableOpacity>
             </View>
           </ScrollView>
-
-          <View style={styles.modalFooter}>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => setShowModal(false)}
-            >
-              <Text style={styles.cancelButtonText}>キャンセル</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.saveButton, isSubmitting && styles.saveButtonDisabled]}
-              onPress={handleSubmitPost}
-              disabled={isSubmitting || !newPost.title.trim() || !newPost.content.trim() || !newPost.category}
-            >
-              <Text style={styles.saveButtonText}>
-                {isSubmitting ? '投稿中...' : '投稿する'}
-              </Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </Modal>
 
@@ -1123,92 +1110,75 @@ export default function TipsScreen() {
           </View>
 
           <ScrollView style={styles.modalContent}>
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>タイトル *</Text>
+            <View style={styles.modalFormContainer}>
               <TextInput
-                style={styles.textInput}
+                style={styles.modalInlineInput}
+                placeholder="タイトルを入力してください..."
+                placeholderTextColor={Colors.gray[400]}
                 value={newPost.title}
                 onChangeText={(text) => setNewPost({ ...newPost, title: text })}
-                placeholder="タイトルを入力してください..."
               />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>内容 *</Text>
+              
               <TextInput
-                style={[styles.textInput, styles.textArea]}
+                style={[styles.modalInlineInput, styles.modalInlineTextArea]}
+                placeholder="節約のコツや詳しい方法を教えてください..."
+                placeholderTextColor={Colors.gray[400]}
                 value={newPost.content}
                 onChangeText={(text) => setNewPost({ ...newPost, content: text })}
-                placeholder="節約のコツや詳しい方法を教えてください..."
                 multiline
-                numberOfLines={4}
+                numberOfLines={3}
                 textAlignVertical="top"
               />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>カテゴリー *</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryList}>
-                {categories.map((category) => {
-                  const iconName = getCategoryIcon(category);
-                  const isSelected = newPost.category === category;
-                  
-                  return (
-                    <TouchableOpacity
-                      key={category}
-                      style={[
-                        styles.categoryItem,
-                        isSelected && styles.selectedCategoryItem
-                      ]}
-                      onPress={() => setNewPost({ ...newPost, category })}
-                    >
-                      <View style={[
-                        styles.categoryIconContainer,
-                        { backgroundColor: getCategoryBackgroundColor(category) },
-                        isSelected && styles.selectedCategoryIcon
-                      ]}>
-                        <Ionicons name={iconName} size={20} color={getCategoryColor(category)} />
-                      </View>
-                      <Text style={[
-                        styles.categoryName,
-                        isSelected && styles.selectedCategoryName
-                      ]}>
-                        {category}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>節約効果</Text>
-              <TextInput
-                style={styles.textInput}
-                value={newPost.savings_effect}
-                onChangeText={(text) => setNewPost({ ...newPost, savings_effect: text })}
-                placeholder="例: 月1000円"
-              />
+              
+              <View style={styles.modalInlineFormRow}>
+                <View style={styles.modalCategorySelector}>
+                  <Text style={styles.modalSelectorLabel}>カテゴリ:</Text>
+                  <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.modalCategoryScroll}
+                  >
+                    {categories.map((category) => (
+                      <TouchableOpacity
+                        key={category}
+                        style={[
+                          styles.modalCategoryChip,
+                          newPost.category === category && styles.modalCategoryChipSelected
+                        ]}
+                        onPress={() => setNewPost({ ...newPost, category })}
+                      >
+                        <Text style={[
+                          styles.modalCategoryChipText,
+                          newPost.category === category && styles.modalCategoryChipTextSelected
+                        ]}>
+                          {category}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+                
+                <TextInput
+                  style={styles.modalSavingsInput}
+                  placeholder="節約効果 (例: 月1000円)"
+                  placeholderTextColor={Colors.gray[400]}
+                  value={newPost.savings_effect}
+                  onChangeText={(text) => setNewPost({ ...newPost, savings_effect: text })}
+                />
+              </View>
+              
+              <TouchableOpacity
+                style={[styles.modalInlineSubmitButton, isSubmitting && styles.modalInlineSubmitButtonDisabled]}
+                onPress={handleUpdatePost}
+                disabled={isSubmitting || !newPost.title.trim() || !newPost.content.trim() || !newPost.category}
+              >
+                <Text style={styles.modalInlineSubmitButtonText}>
+                  {isSubmitting ? '更新中...' : '更新する'}
+                </Text>
+              </TouchableOpacity>
             </View>
           </ScrollView>
 
-          <View style={styles.modalFooter}>
-            <TouchableOpacity
-              style={styles.modalCancelButton}
-              onPress={() => setShowEditModal(false)}
-            >
-              <Text style={styles.modalCancelButtonText}>キャンセル</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalSaveButton, isSubmitting && { backgroundColor: Colors.gray[400] }]}
-              onPress={handleUpdatePost}
-              disabled={isSubmitting}
-            >
-              <Text style={styles.modalSaveButtonText}>
-                {isSubmitting ? '更新中...' : '更新する'}
-              </Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </Modal>
 
@@ -1587,16 +1557,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   categoryBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 12,
   },
   categoryBadgeText: {
     fontSize: 12,
     fontFamily: Fonts.medium,
+    color: '#64748B',
     fontWeight: '500',
   },
   savingsBadge: {
@@ -1734,6 +1705,83 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingVertical: 20,
+  },
+  modalFormContainer: {
+    gap: 12,
+  },
+  modalInlineInput: {
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    backgroundColor: '#FFF',
+    color: '#000',
+  },
+  modalInlineTextArea: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  modalInlineFormRow: {
+    gap: 12,
+  },
+  modalCategorySelector: {
+    marginBottom: 8,
+  },
+  modalSelectorLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  modalCategoryScroll: {
+    flexDirection: 'row',
+  },
+  modalCategoryChip: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 8,
+  },
+  modalCategoryChipSelected: {
+    backgroundColor: '#EBF8FF',
+    borderColor: '#6B91C7',
+  },
+  modalCategoryChipText: {
+    fontSize: 12,
+    color: '#64748B',
+  },
+  modalCategoryChipTextSelected: {
+    color: '#6B91C7',
+    fontWeight: '500',
+  },
+  modalSavingsInput: {
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    backgroundColor: '#FFF',
+    color: '#000',
+  },
+  modalInlineSubmitButton: {
+    backgroundColor: Colors.zaimBlue[500],
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  modalInlineSubmitButtonDisabled: {
+    backgroundColor: Colors.gray[400],
+  },
+  modalInlineSubmitButtonText: {
+    color: Colors.white,
+    fontSize: 14,
+    fontFamily: Fonts.medium,
+    fontWeight: '500',
   },
   formGroup: {
     marginBottom: 20,
