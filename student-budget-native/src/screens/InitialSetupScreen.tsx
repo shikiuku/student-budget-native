@@ -12,6 +12,15 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../services/supabase';
+import { CITIES_BY_PREFECTURE } from '../../../../lib/prefecture-data';
+
+// 学校種別データ
+type SchoolType = 'middle_school' | 'high_school';
+
+const SCHOOL_TYPES: { value: SchoolType; label: string }[] = [
+  { value: 'middle_school', label: '中学校' },
+  { value: 'high_school', label: '高等学校' },
+];
 
 // 都道府県データ
 const PREFECTURES = [
@@ -33,8 +42,10 @@ export default function InitialSetupScreen() {
   const [formData, setFormData] = useState({
     name: '',
     age: 15,
+    school_type: 'high_school' as SchoolType,
     grade: '',
     prefecture: '',
+    city: '',
     school_name: '',
     monthly_budget: 30000,
     savings_balance: 0,
@@ -44,7 +55,7 @@ export default function InitialSetupScreen() {
     if (!user) return;
     
     // 必須項目のチェック
-    if (!formData.name || !formData.grade || !formData.prefecture) {
+    if (!formData.name || !formData.grade || !formData.prefecture || !formData.city) {
       Alert.alert('入力エラー', '必須項目をすべて入力してください');
       return;
     }
@@ -57,12 +68,13 @@ export default function InitialSetupScreen() {
           id: user.id,
           name: formData.name,
           age: formData.age,
+          school_type: formData.school_type,
           grade: formData.grade,
           prefecture: formData.prefecture,
+          city: formData.city,
           school_name: formData.school_name,
           monthly_budget: formData.monthly_budget,
           savings_balance: formData.savings_balance,
-          school_type: 'high_school',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         });
@@ -121,9 +133,35 @@ export default function InitialSetupScreen() {
       </View>
 
       <View style={styles.inputGroup}>
+        <Text style={styles.label}>学校種別 *</Text>
+        <View style={styles.schoolTypeSelector}>
+          {SCHOOL_TYPES.map((type) => (
+            <TouchableOpacity
+              key={type.value}
+              style={[
+                styles.schoolTypeOption,
+                formData.school_type === type.value && styles.schoolTypeOptionSelected
+              ]}
+              onPress={() => setFormData({ ...formData, school_type: type.value, grade: '' })}
+            >
+              <Text style={[
+                styles.schoolTypeOptionText,
+                formData.school_type === type.value && styles.schoolTypeOptionTextSelected
+              ]}>
+                {type.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.inputGroup}>
         <Text style={styles.label}>学年 *</Text>
         <View style={styles.gradeSelector}>
-          {['高校1年生', '高校2年生', '高校3年生'].map((grade) => (
+          {(formData.school_type === 'middle_school' 
+            ? ['中学1年生', '中学2年生', '中学3年生']
+            : ['高校1年生', '高校2年生', '高校3年生']
+          ).map((grade) => (
             <TouchableOpacity
               key={grade}
               style={[
@@ -168,7 +206,7 @@ export default function InitialSetupScreen() {
                   styles.prefectureOption,
                   formData.prefecture === prefecture && styles.prefectureOptionSelected
                 ]}
-                onPress={() => setFormData({ ...formData, prefecture })}
+                onPress={() => setFormData({ ...formData, prefecture, city: '' })}
               >
                 <Text style={[
                   styles.prefectureOptionText,
@@ -181,6 +219,33 @@ export default function InitialSetupScreen() {
           </View>
         </ScrollView>
       </View>
+
+      {formData.prefecture && (
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>市区町村 *</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cityScroll}>
+            <View style={styles.cityContainer}>
+              {CITIES_BY_PREFECTURE[formData.prefecture]?.map((city) => (
+                <TouchableOpacity
+                  key={city}
+                  style={[
+                    styles.cityOption,
+                    formData.city === city && styles.cityOptionSelected
+                  ]}
+                  onPress={() => setFormData({ ...formData, city })}
+                >
+                  <Text style={[
+                    styles.cityOptionText,
+                    formData.city === city && styles.cityOptionTextSelected
+                  ]}>
+                    {city}
+                  </Text>
+                </TouchableOpacity>
+              )) || <Text style={styles.noCityText}>市区町村が見つかりません</Text>}
+            </View>
+          </ScrollView>
+        </View>
+      )}
 
       <View style={styles.inputGroup}>
         <Text style={styles.label}>学校名</Text>
@@ -272,15 +337,31 @@ export default function InitialSetupScreen() {
         
         {/* プログレスバー */}
         <View style={styles.progressContainer}>
-          {[1, 2, 3].map((step) => (
-            <View
-              key={step}
+          <View style={styles.progressBarContainer}>
+            <View style={styles.progressBarBackground} />
+            <View 
               style={[
-                styles.progressDot,
-                currentStep >= step && styles.progressDotActive
-              ]}
+                styles.progressBarFill, 
+                { width: `${(currentStep / 3) * 100}%` }
+              ]} 
             />
-          ))}
+            {[1, 2, 3].map((step) => (
+              <View
+                key={step}
+                style={[
+                  styles.progressDotWrapper,
+                  { left: `${((step - 1) / 2) * 100}%` }
+                ]}
+              >
+                <View
+                  style={[
+                    styles.progressDot,
+                    currentStep >= step && styles.progressDotActive
+                  ]}
+                />
+              </View>
+            ))}
+          </View>
         </View>
       </View>
 
@@ -305,13 +386,16 @@ export default function InitialSetupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#F9FAFB',
   },
   header: {
     alignItems: 'center',
     paddingTop: 60,
     paddingBottom: 32,
     paddingHorizontal: 20,
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
   logoContainer: {
     width: 80,
@@ -338,20 +422,68 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   progressContainer: {
-    flexDirection: 'row',
-    gap: 8,
+    width: '100%',
+    paddingHorizontal: 40,
+  },
+  progressBarContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressBarBackground: {
+    position: 'absolute',
+    width: '100%',
+    height: 2,
+    backgroundColor: '#E5E7EB',
+    top: 11,
+  },
+  progressBarFill: {
+    position: 'absolute',
+    height: 2,
+    backgroundColor: '#3B82F6',
+    top: 11,
+    left: 0,
+  },
+  progressDotWrapper: {
+    position: 'absolute',
+    top: 0,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: -12,
   },
   progressDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     backgroundColor: '#E5E7EB',
+    borderWidth: 2,
+    borderColor: 'white',
   },
   progressDotActive: {
     backgroundColor: '#3B82F6',
+    borderColor: 'white',
   },
   stepContent: {
     paddingHorizontal: 20,
+    backgroundColor: 'white',
+    marginHorizontal: 20,
+    marginVertical: 10,
+    padding: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
   stepTitle: {
     fontSize: 24,
@@ -431,6 +563,67 @@ const styles = StyleSheet.create({
   gradeOptionTextSelected: {
     color: '#3B82F6',
     fontWeight: '600',
+  },
+  // 学校種別セレクター
+  schoolTypeSelector: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  schoolTypeOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    backgroundColor: 'white',
+    alignItems: 'center',
+    flex: 1,
+  },
+  schoolTypeOptionSelected: {
+    borderColor: '#3B82F6',
+    backgroundColor: '#EBF8FF',
+  },
+  schoolTypeOptionText: {
+    fontSize: 16,
+    color: '#6B7280',
+  },
+  schoolTypeOptionTextSelected: {
+    color: '#3B82F6',
+    fontWeight: '600',
+  },
+  // 市区町村セレクター
+  cityScroll: {
+    maxHeight: 150,
+  },
+  cityContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  cityOption: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 16,
+    backgroundColor: 'white',
+  },
+  cityOptionSelected: {
+    borderColor: '#3B82F6',
+    backgroundColor: '#EBF8FF',
+  },
+  cityOptionText: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  cityOptionTextSelected: {
+    color: '#3B82F6',
+    fontWeight: '600',
+  },
+  noCityText: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontStyle: 'italic',
   },
   prefectureScroll: {
     maxHeight: 150,

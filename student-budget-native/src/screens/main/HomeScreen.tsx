@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
   savingsAmount: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: Colors.zaimBlue[400],
+    color: Colors.success[500],
   },
   savingsNote: {
     backgroundColor: Colors.gray[50],
